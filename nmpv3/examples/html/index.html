@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NMPv3 Browser Example</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family:
+          ui-sans-serif,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: #f5f6f8;
+        color: #17191f;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          background: #15161a;
+          color: #f6f7f9;
+        }
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 32px;
+      }
+
+      main {
+        width: min(920px, calc(100vw - 64px));
+        min-width: 0;
+        display: grid;
+        gap: 24px;
+      }
+
+      header,
+      .surface {
+        min-width: 0;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 100%;
+        font-size: clamp(26px, 5vw, 48px);
+        line-height: 1.05;
+        letter-spacing: 0;
+        overflow-wrap: anywhere;
+      }
+
+      p {
+        width: 100%;
+        max-width: 680px;
+        margin: 0;
+        color: #69707d;
+        font-size: 16px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+        text-wrap: pretty;
+      }
+
+      .surface {
+        display: grid;
+        gap: 18px;
+        padding: 24px;
+        border: 1px solid rgba(23, 25, 31, 0.1);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.68);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        p {
+          color: #b5bbc5;
+        }
+
+        .surface {
+          border-color: rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.04);
+        }
+      }
+
+      @media (max-width: 520px) {
+        body {
+          padding: 16px;
+        }
+
+        main {
+          width: min(920px, calc(100vw - 32px));
+        }
+
+        .surface {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>NeteaseMiniPlayer v3</h1>
+        <p>
+          Lightweight one-JavaScript NetEase Cloud Music player. This page uses
+          the built browser bundle and exercises Web Component, shortcode, and
+          NMPv2 DOM compatibility paths.
+        </p>
+      </header>
+
+      <section class="surface" aria-label="Article embed examples">
+        <nmp-player
+          song-id="1901371647"
+          api-base-url="/api/netease"
+          theme="dark"
+          embed="true"
+          embed-mode="article"
+          lyric="false"
+        ></nmp-player>
+
+        <p>
+          {nmpv3:song=1901371647, api-base-url=/api/netease, embed=article,
+          lyric=false}
+        </p>
+
+        <div
+          class="netease-mini-player"
+          data-song-id="1901371647"
+          data-api-base-url="/api/netease"
+          data-theme="auto"
+          data-embed="true"
+          data-lyric="true"
+        ></div>
+      </section>
+    </main>
+
+    <nmp-player
+      playlist-id="14273792576"
+      api-base-url="/api/netease"
+      theme="auto"
+      embed-mode="page"
+      layout="dock"
+      position="bottom-right"
+      default-minimized="true"
+      storage-key="browser-example-page"
+    ></nmp-player>
+
+    <script src="../../dist/nmpv3.min.js"></script>
+  </body>
+</html>

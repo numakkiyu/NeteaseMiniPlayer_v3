@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2020", "DOM"],
+    "rootDir": ".",
+    "outDir": "dist"
+  },
+  "include": ["packages/**/*.ts", "nmpv3-plus.config.ts"]
+}

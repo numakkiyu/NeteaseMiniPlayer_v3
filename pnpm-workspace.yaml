@@ -1,0 +1,9 @@
+packages:
+  - nmpv3
+  - nmpv3-plus
+  - nmpv3-plus/packages/*
+
+onlyBuiltDependencies:
+  - esbuild
+allowBuilds:
+  esbuild: true

@@ -1,0 +1,24 @@
+NeteaseMiniPlayer v3 (NMPv3)
+Copyright 2026 BHCN STUDIO & contributors
+
+This project is licensed under the Apache License, Version 2.0.
+
+This v3 rewrite preserves the open-source license model of NeteaseMiniPlayer v2
+and is informed by the public NeteaseMiniPlayer v2 project:
+
+    https://github.com/numakkiyu/NeteaseMiniPlayer
+
+NeteaseMiniPlayer v2 copyright notice:
+
+    Copyright 2025 BHCN STUDIO & 北海的佰川（ImBHCN[numakkiyu]）
+
+This software may be used with NetEase Cloud Music API proxy deployments,
+including NeteaseCloudMusicApi-compatible endpoints.
+NeteaseCloudMusicApi is an independent project by Binaryify and contributors.
+
+This project is not affiliated with, endorsed by, or sponsored by NetEase, Inc.
+or NetEase Cloud Music. All trademarks, service marks, and company names are
+the property of their respective owners.
+
+Users are responsible for ensuring compliance with NetEase Cloud Music's terms
+of service and applicable laws when using this software.

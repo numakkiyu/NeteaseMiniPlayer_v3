@@ -1,0 +1,27 @@
+{
+  "name": "@netease-mini-player/v3",
+  "version": "3.0.0-alpha.0",
+  "type": "module",
+  "description": "Lightweight single-JS NetEase Cloud Music player.",
+  "main": "./dist/nmpv3.min.js",
+  "module": "./dist/nmpv3.es.js",
+  "types": "./dist/nmpv3.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/nmpv3.es.js",
+      "types": "./dist/nmpv3.d.ts"
+    },
+    "./auto": {
+      "import": "./dist/nmpv3.es.js",
+      "types": "./dist/nmpv3.d.ts"
+    },
+    "./browser": "./dist/nmpv3.min.js"
+  },
+  "sideEffects": true,
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.json --emitDeclarationOnly --declaration --declarationMap false && node -e \"const fs=require('fs'); if (fs.existsSync('dist/index.d.ts')) fs.copyFileSync('dist/index.d.ts','dist/nmpv3.d.ts')\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {}
+}
