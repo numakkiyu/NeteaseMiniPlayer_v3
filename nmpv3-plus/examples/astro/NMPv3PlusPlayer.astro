@@ -1,0 +1,21 @@
+---
+import { createNMPv3PlusAstroIslandPlan } from "@netease-mini-player/v3-plus/astro";
+
+const plan = createNMPv3PlusAstroIslandPlan({
+  playlistId: "14273792576",
+  sourceType: "local-json",
+  source: "/music/playlist.json",
+  skin: "anime",
+  plusLayout: "card",
+  plusExtensions: ["advanced-layouts", "custom-source"],
+  skinUrl: "/skins/user/studio-deep/skin.json",
+  lyric: true,
+});
+---
+
+<script>
+  import "@netease-mini-player/v3/auto";
+  import "@netease-mini-player/v3-plus";
+</script>
+
+<Fragment set:html={plan.element.html} />

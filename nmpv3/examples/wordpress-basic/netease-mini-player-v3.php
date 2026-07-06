@@ -11,6 +11,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+const NMPV3_BASIC_DEFAULT_API_BASE_URL = 'https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php';
+
 function nmpv3_basic_enqueue_assets(): void
 {
     wp_enqueue_script(
@@ -23,13 +25,26 @@ function nmpv3_basic_enqueue_assets(): void
             'in_footer' => true,
         )
     );
+
+    $api_base_url = nmpv3_basic_default_api_base_url();
+
+    if (!empty($api_base_url)) {
+        wp_add_inline_script(
+            'nmpv3',
+            'window.NMPv3Config = Object.assign({}, window.NMPv3Config || {}, {"apiBaseUrl":' . wp_json_encode($api_base_url) . '});',
+            'before'
+        );
+    }
 }
 
 add_action('wp_enqueue_scripts', 'nmpv3_basic_enqueue_assets');
 
 function nmpv3_basic_default_api_base_url(): string
 {
-    return (string) apply_filters('nmpv3_basic_default_api_base_url', '');
+    return (string) apply_filters(
+        'nmpv3_basic_default_api_base_url',
+        NMPV3_BASIC_DEFAULT_API_BASE_URL
+    );
 }
 
 function nmpv3_render_player($args = array()): string

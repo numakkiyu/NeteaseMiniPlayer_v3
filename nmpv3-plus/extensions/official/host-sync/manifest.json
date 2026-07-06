@@ -1,0 +1,15 @@
+{
+  "name": "nmpv3-plus-extension-host-sync",
+  "displayName": "Host Sync",
+  "version": "1.0.0",
+  "entry": "./index.ts",
+  "type": "host",
+  "description": "Mirrors player state into host page attributes, classes, CSS tokens, and optional page links.",
+  "configSchema": {
+    "pageLinking": {
+      "type": "boolean",
+      "default": false,
+      "description": "Update the host page URL and linked-song attributes when the current song changes."
+    }
+  }
+}

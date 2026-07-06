@@ -105,6 +105,8 @@ declare global {
   interface Window {
     NMPv3?: NMPv3Global;
     NeteaseMiniPlayer?: NMPv3Global;
+    NMPv3ApiBaseUrl?: string;
+    NeteaseMiniPlayerApiBaseUrl?: string;
     NMPv3Config?: Partial<NMPv3Config>;
     NeteaseMiniPlayerConfig?: Partial<NMPv3Config>;
   }

@@ -1,0 +1,8 @@
+{
+  "name": "nmpv3-plus-extension-local-lyrics",
+  "displayName": "Local Lyrics",
+  "version": "1.0.0",
+  "entry": "./index.ts",
+  "type": "lyrics",
+  "description": "Registers local or static lyrics for NMPv3+."
+}

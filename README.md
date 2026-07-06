@@ -40,9 +40,14 @@ Use **NMPv3+** if you need:
 <nmp-player playlist-id="14273792576"></nmp-player>
 ```
 
-NMPv3 defaults to the v2.5-compatible NetEase proxy at
-`https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php`. You can replace it per
-player:
+NMPv3 hardcodes the v2.5-compatible NetEase proxy as the compiled default:
+
+```txt
+https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php
+```
+
+The default stays inside `dist/nmpv3.min.js`, but deployments can replace the
+API proxy without rebuilding. Set it per player from frontend markup:
 
 ```html
 <nmp-player playlist-id="14273792576" api-base-url="/api/netease"></nmp-player>
@@ -55,6 +60,25 @@ Or set it globally before the compiled browser bundle runs:
   window.NMPv3Config = { apiBaseUrl: "/api/netease" };
 </script>
 <script src="./dist/nmpv3.min.js"></script>
+```
+
+Backend-rendered JavaScript can output the same global before `nmpv3.min.js`.
+For simple templates, it may also print the scalar alias:
+
+```html
+<script>
+  window.NMPv3ApiBaseUrl = "/api/netease";
+  // Legacy brand alias is also accepted:
+  window.NeteaseMiniPlayerApiBaseUrl = "/api/netease";
+</script>
+<script src="./dist/nmpv3.min.js"></script>
+```
+
+A running page can also switch later, so an already compiled JS file can move
+to a backup proxy if the default API stops:
+
+```js
+window.NMPv3.setApiBaseUrl("/api/netease");
 ```
 
 ### NMPv3 in Frontend Projects
@@ -87,7 +111,8 @@ import "@netease-mini-player/v3/auto";
 
 If the default endpoint is unavailable, replace it with any
 NeteaseCloudMusicApi-compatible proxy by using `api-base-url`, `apiBaseUrl` in
-`create()`, or `NMPv3.setApiBaseUrl("/api/netease")`.
+`create()`, `window.NMPv3Config.apiBaseUrl`, `window.NMPv3ApiBaseUrl`,
+`window.NeteaseMiniPlayerApiBaseUrl`, or `NMPv3.setApiBaseUrl("/api/netease")`.
 
 ### NMPv3+
 

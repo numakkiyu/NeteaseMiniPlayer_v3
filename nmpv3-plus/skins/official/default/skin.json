@@ -1,0 +1,8 @@
+{
+  "name": "default",
+  "displayName": "Default",
+  "version": "1.0.0",
+  "author": "BHCN STUDIO",
+  "supports": ["mini", "compact", "dock", "card", "cover"],
+  "tokens": {}
+}

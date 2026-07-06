@@ -1,0 +1,15 @@
+{
+  "name": "minimal",
+  "displayName": "Minimal",
+  "version": "1.0.0",
+  "author": "BHCN STUDIO",
+  "supports": ["mini", "compact", "dock", "card", "cover"],
+  "tokens": {
+    "--nmpv3-bg": "#ffffff",
+    "--nmpv3-text": "#1d1f24",
+    "--nmpv3-muted": "#6d7280",
+    "--nmpv3-border": "rgba(29,31,36,0.12)",
+    "--nmpv3-shadow": "0 10px 28px rgba(16, 24, 40, 0.08)",
+    "--nmpv3-radius": "12px"
+  }
+}

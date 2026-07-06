@@ -11,3 +11,4 @@ NOTICE
 *.php
 *.vue
 *.astro
+*.svelte

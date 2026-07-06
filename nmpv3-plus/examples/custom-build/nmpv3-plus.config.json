@@ -1,0 +1,13 @@
+{
+  "extensions": ["visualizer", "host-sync", "media-session"],
+  "skins": ["default", "glass", "vinyl"],
+  "output": {
+    "runtime": "deploy/nmpv3-plus.runtime.js",
+    "bootstrap": "deploy/nmpv3-plus.bootstrap.js",
+    "extensionsDir": "deploy/extensions/official",
+    "skinsDir": "deploy/skins",
+    "packagesDir": "deploy/packages",
+    "chunksDir": "deploy/chunks",
+    "manifest": "deploy/nmpv3-plus.manifest.json"
+  }
+}

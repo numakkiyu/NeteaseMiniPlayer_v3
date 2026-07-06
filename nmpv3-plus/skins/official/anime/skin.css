@@ -1,0 +1,13 @@
+.nmpv3-plus-skin-anime .nmpv3-player {
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(255, 245, 248, 0.92)
+  );
+}
+
+.nmpv3-plus-skin-anime .nmpv3-cover {
+  box-shadow:
+    0 0 0 3px rgba(255, 111, 145, 0.16),
+    0 16px 38px rgba(255, 111, 145, 0.22);
+}

@@ -1,0 +1,16 @@
+{
+  "name": "cyber",
+  "displayName": "Cyber",
+  "version": "1.0.0",
+  "author": "BHCN STUDIO",
+  "supports": ["mini", "compact", "dock", "card", "cover"],
+  "tokens": {
+    "--nmpv3-bg": "rgba(11, 15, 20, 0.94)",
+    "--nmpv3-text": "#e8fbff",
+    "--nmpv3-muted": "#88a8b2",
+    "--nmpv3-accent": "#22d3ee",
+    "--nmpv3-border": "rgba(34, 211, 238, 0.32)",
+    "--nmpv3-shadow": "0 20px 54px rgba(0, 0, 0, 0.38)",
+    "--nmpv3-radius": "14px"
+  }
+}

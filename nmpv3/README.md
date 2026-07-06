@@ -67,6 +67,14 @@ Minimal integration examples are included for common frontend environments:
 
 Theme code can also call `nmpv3_render_player(array(...))`, and the site API proxy can be set with the `nmpv3_basic_default_api_base_url` filter.
 
+The WordPress example injects `window.NMPv3Config.apiBaseUrl` before the compiled browser bundle runs, so backend code can replace the default API without editing `dist/nmpv3.min.js`:
+
+```php
+add_filter('nmpv3_basic_default_api_base_url', function () {
+    return 'https://example.com/NeteaseMiniPlayer/nmp.php';
+});
+```
+
 ## Runtime Scope
 
 NMPv3 includes compact, mini, and dock layouts; NetEase song and playlist loading; playback controls; lyrics; playlist UI; page visibility pause/resume; state persistence for volume, play mode, lyrics, minimized state, and song progress; v2 shortcode/DOM compatibility; scoped hotkeys; MediaSession; and floating-player drag/snap.
@@ -77,11 +85,53 @@ Shortcodes keep the v2.5 default embed behavior: omitted `embed` plus no `positi
 
 Floating minimized players keep the v2.5 idle animation sequence: fade out, dock left/right, pop out on hover or focus, then fade in. Use `idle-opacity` or `--nmpv3-idle-opacity` to tune the docked opacity.
 
-NMPv3 does not include a hardcoded third-party API proxy. Set your own NeteaseCloudMusicApi-compatible endpoint with `api-base-url` or `apiBaseUrl` before loading NetEase data.
+NMPv3 ships with the v2.5-compatible default API proxy hardcoded into the
+compiled browser bundle:
+
+```txt
+https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php
+```
+
+If that endpoint is unavailable, replace it without rebuilding by using a
+per-player `api-base-url`, a preloaded `window.NMPv3Config.apiBaseUrl`, the
+scalar `window.NMPv3ApiBaseUrl`, the legacy scalar
+`window.NeteaseMiniPlayerApiBaseUrl`, or the runtime
+`window.NMPv3.setApiBaseUrl(url)` API.
 
 ```html
 <nmp-player playlist-id="14273792576" api-base-url="/api/netease"></nmp-player>
 ```
+
+```html
+<script>
+  window.NMPv3Config = { apiBaseUrl: "/api/netease" };
+</script>
+<script src="./dist/nmpv3.min.js"></script>
+```
+
+```html
+<script>
+  window.NMPv3ApiBaseUrl = "/api/netease";
+</script>
+<script src="./dist/nmpv3.min.js"></script>
+```
+
+```html
+<script>
+  window.NeteaseMiniPlayerApiBaseUrl = "/api/netease";
+</script>
+<script src="./dist/nmpv3.min.js"></script>
+```
+
+```js
+window.NMPv3.setApiBaseUrl("/api/netease");
+```
+
+Backend-generated JavaScript uses the same contract. PHP, WordPress, or another
+server renderer can print `window.NMPv3Config.apiBaseUrl` or
+`window.NMPv3ApiBaseUrl` / `window.NeteaseMiniPlayerApiBaseUrl` before
+`dist/nmpv3.min.js` loads, or call `window.NMPv3.setApiBaseUrl(url)` after the
+bundle has loaded.
 
 The required proxy surface is intentionally small: `/song/detail`, `/playlist/track/all`, `/song/url/v1`, and `/lyric`. Login, download URLs, dynamic covers, local matching, custom music sources, and host-page integration are not part of NMPv3.
 

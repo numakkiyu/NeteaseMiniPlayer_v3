@@ -5,5 +5,12 @@
     "rootDir": ".",
     "outDir": "dist"
   },
-  "include": ["packages/**/*.ts", "nmpv3-plus.config.ts"]
+  "include": [
+    "index.ts",
+    "browser.ts",
+    "packages/**/*.ts",
+    "extensions/**/*.ts",
+    "skins/**/*.ts",
+    "nmpv3-plus.config.ts"
+  ]
 }

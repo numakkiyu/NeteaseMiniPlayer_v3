@@ -1,0 +1,16 @@
+{
+  "id": "local-demo",
+  "name": "Local JSON Demo",
+  "songs": [
+    {
+      "id": "local-001",
+      "name": "Local Demo Song",
+      "artists": "Local Artist",
+      "album": "Local Album",
+      "picUrl": "/music/cover.jpg",
+      "url": "/music/song.mp3",
+      "lyricUrl": "/music/song.lrc",
+      "translationLyricUrl": "/music/song.zh.lrc"
+    }
+  ]
+}

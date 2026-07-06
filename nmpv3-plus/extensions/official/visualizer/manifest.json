@@ -1,0 +1,16 @@
+{
+  "name": "nmpv3-plus-extension-visualizer",
+  "displayName": "Visualizer",
+  "version": "1.0.0",
+  "entry": "./index.ts",
+  "style": "./style.css",
+  "type": "visual",
+  "description": "Adds a non-layout-shifting visualizer layer to the NMPv3 player.",
+  "configSchema": {
+    "mode": {
+      "type": "string",
+      "enum": ["bars", "wave", "ambient"],
+      "default": "bars"
+    }
+  }
+}

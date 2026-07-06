@@ -1,0 +1,13 @@
+{
+  "name": "glass",
+  "displayName": "Glass",
+  "version": "1.0.0",
+  "author": "BHCN STUDIO",
+  "supports": ["mini", "compact", "dock", "card", "cover"],
+  "tokens": {
+    "--nmpv3-bg": "rgba(255, 255, 255, 0.72)",
+    "--nmpv3-border": "rgba(255, 255, 255, 0.46)",
+    "--nmpv3-shadow": "0 18px 52px rgba(18, 24, 40, 0.18)",
+    "--nmpv3-radius": "20px"
+  }
+}

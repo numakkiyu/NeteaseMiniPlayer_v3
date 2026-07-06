@@ -3,11 +3,114 @@
   "version": "3.0.0-alpha.0",
   "type": "module",
   "description": "Advanced NeteaseMiniPlayer framework with extensions, skins, adapters, and custom sources.",
+  "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./browser": {
+      "import": "./dist/browser.js",
+      "types": "./dist/browser.d.ts"
+    },
+    "./core": {
+      "import": "./dist/packages/core/src/index.js",
+      "types": "./dist/packages/core/src/index.d.ts"
+    },
+    "./adapters": {
+      "import": "./dist/packages/adapters/src/elementProps.js",
+      "types": "./dist/packages/adapters/src/elementProps.d.ts"
+    },
+    "./cli": {
+      "import": "./dist/packages/cli/src/index.js",
+      "types": "./dist/packages/cli/src/index.d.ts"
+    },
+    "./react": {
+      "import": "./dist/packages/react/src/index.js",
+      "types": "./dist/packages/react/src/index.d.ts"
+    },
+    "./vue": {
+      "import": "./dist/packages/vue/src/index.js",
+      "types": "./dist/packages/vue/src/index.d.ts"
+    },
+    "./next": {
+      "import": "./dist/packages/next/src/index.js",
+      "types": "./dist/packages/next/src/index.d.ts"
+    },
+    "./nuxt": {
+      "import": "./dist/packages/nuxt/src/index.js",
+      "types": "./dist/packages/nuxt/src/index.d.ts"
+    },
+    "./astro": {
+      "import": "./dist/packages/astro/src/index.js",
+      "types": "./dist/packages/astro/src/index.d.ts"
+    },
+    "./svelte": {
+      "import": "./dist/packages/svelte/src/index.js",
+      "types": "./dist/packages/svelte/src/index.d.ts"
+    },
+    "./wordpress": {
+      "import": "./dist/packages/wordpress/src/index.js",
+      "types": "./dist/packages/wordpress/src/index.d.ts"
+    },
+    "./php": {
+      "import": "./dist/packages/php/src/index.js",
+      "types": "./dist/packages/php/src/index.d.ts"
+    },
+    "./extensions/official": {
+      "import": "./dist/extensions/official/index.js",
+      "types": "./dist/extensions/official/index.d.ts"
+    },
+    "./extensions/official/advanced-layouts": {
+      "import": "./dist/extensions/official/advanced-layouts/index.js",
+      "types": "./dist/extensions/official/advanced-layouts/index.d.ts"
+    },
+    "./extensions/official/visualizer": {
+      "import": "./dist/extensions/official/visualizer/index.js",
+      "types": "./dist/extensions/official/visualizer/index.d.ts"
+    },
+    "./extensions/official/host-sync": {
+      "import": "./dist/extensions/official/host-sync/index.js",
+      "types": "./dist/extensions/official/host-sync/index.d.ts"
+    },
+    "./extensions/official/cover-color": {
+      "import": "./dist/extensions/official/cover-color/index.js",
+      "types": "./dist/extensions/official/cover-color/index.d.ts"
+    },
+    "./extensions/official/cross-tab-sync": {
+      "import": "./dist/extensions/official/cross-tab-sync/index.js",
+      "types": "./dist/extensions/official/cross-tab-sync/index.d.ts"
+    },
+    "./extensions/official/media-session": {
+      "import": "./dist/extensions/official/media-session/index.js",
+      "types": "./dist/extensions/official/media-session/index.d.ts"
+    },
+    "./extensions/official/custom-source": {
+      "import": "./dist/extensions/official/custom-source/index.js",
+      "types": "./dist/extensions/official/custom-source/index.d.ts"
+    },
+    "./extensions/official/local-lyrics": {
+      "import": "./dist/extensions/official/local-lyrics/index.js",
+      "types": "./dist/extensions/official/local-lyrics/index.d.ts"
+    },
+    "./extensions/official/pwa-cache": {
+      "import": "./dist/extensions/official/pwa-cache/index.js",
+      "types": "./dist/extensions/official/pwa-cache/index.d.ts"
+    },
+    "./skins/official": {
+      "import": "./dist/skins/official/index.js",
+      "types": "./dist/skins/official/index.d.ts"
+    }
+  },
+  "bin": {
+    "nmpv3-plus": "./packages/cli/bin/nmpv3-plus.mjs"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "build": "vite build && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "ui:smoke": "node scripts/ui-smoke.mjs"
   }
 }

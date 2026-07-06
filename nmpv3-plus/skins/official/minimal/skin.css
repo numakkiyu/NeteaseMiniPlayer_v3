@@ -1,0 +1,7 @@
+.nmpv3-plus-skin-minimal .nmpv3-player {
+  border-style: solid;
+}
+
+.nmpv3-plus-skin-minimal .nmpv3-cover {
+  filter: saturate(0.92);
+}

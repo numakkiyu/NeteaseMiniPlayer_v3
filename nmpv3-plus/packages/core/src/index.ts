@@ -1,23 +1,14 @@
-export interface NMPv3PlusPlugin {
-  name: string;
-  version?: string;
-  setup(
-    ctx: NMPv3PlusPluginContext,
-  ): void | (() => void) | Promise<void | (() => void)>;
-}
-
-export interface NMPv3PlusPluginContext {
-  on(event: string, handler: (payload: unknown) => void): () => void;
-  emit(event: string, payload?: unknown): void;
-  logger: {
-    info(message: string, ...args: unknown[]): void;
-    warn(message: string, ...args: unknown[]): void;
-    error(message: string, ...args: unknown[]): void;
-  };
-}
-
-export function defineNMPv3PlusPlugin(
-  plugin: NMPv3PlusPlugin,
-): NMPv3PlusPlugin {
-  return plugin;
-}
+export * from "./types";
+export * from "./bridge/HostBridge";
+export * from "./event/EventBus";
+export * from "./logger/Logger";
+export * from "./lyric/LyricsAdapterManager";
+export * from "./player/NMPv3PlayerBridge";
+export * from "./plugin/PluginManifest";
+export * from "./plugin/PluginManager";
+export * from "./plugin/PluginPackage";
+export * from "./runtime/NMPv3PlusRuntime";
+export * from "./skin/SkinEngine";
+export * from "./skin/SkinPackage";
+export * from "./source/MusicSourceManager";
+export * from "./store/MemoryStore";

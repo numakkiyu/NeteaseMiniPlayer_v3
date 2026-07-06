@@ -1,0 +1,7 @@
+.nmpv3-plus-skin-glass .nmpv3-player {
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+
+.nmpv3-plus-skin-glass .nmpv3-cover {
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.24);
+}

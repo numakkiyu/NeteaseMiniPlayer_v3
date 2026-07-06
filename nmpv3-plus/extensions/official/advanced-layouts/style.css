@@ -1,0 +1,100 @@
+.nmpv3-plus-layout-card.nmpv3-player,
+.nmpv3-plus-layout-card .nmpv3-player {
+  width: min(520px, 100%);
+  transition:
+    width 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.nmpv3-plus-layout-card .nmpv3-main {
+  align-items: center;
+}
+
+.nmpv3-plus-layout-card .nmpv3-title,
+.nmpv3-plus-layout-card .nmpv3-artist,
+.nmpv3-plus-layout-card .nmpv3-lyric-original,
+.nmpv3-plus-layout-card .nmpv3-lyric-translation,
+.nmpv3-plus-layout-cover .nmpv3-title,
+.nmpv3-plus-layout-cover .nmpv3-artist,
+.nmpv3-plus-layout-cover .nmpv3-lyric-original,
+.nmpv3-plus-layout-cover .nmpv3-lyric-translation {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.nmpv3-plus-layout-card .nmpv3-cover-button {
+  width: 92px;
+  height: 92px;
+}
+
+.nmpv3-plus-layout-cover.nmpv3-player,
+.nmpv3-plus-layout-cover .nmpv3-player {
+  width: min(360px, 100%);
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.nmpv3-plus-layout-cover .nmpv3-main {
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.nmpv3-plus-layout-cover .nmpv3-cover-button {
+  width: 156px;
+  height: 156px;
+}
+
+.nmpv3-plus-layout-cover .nmpv3-body,
+.nmpv3-plus-layout-cover .nmpv3-controls,
+.nmpv3-plus-layout-cover .nmpv3-bottom {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.nmpv3-plus-layout-cover .nmpv3-body {
+  align-items: center;
+}
+
+.nmpv3-plus-layout-cover .nmpv3-title,
+.nmpv3-plus-layout-cover .nmpv3-artist,
+.nmpv3-plus-layout-cover .nmpv3-meta,
+.nmpv3-plus-layout-cover .nmpv3-lyrics,
+.nmpv3-plus-layout-cover .nmpv3-lyric-original,
+.nmpv3-plus-layout-cover .nmpv3-lyric-translation {
+  width: 100%;
+  min-width: 0;
+}
+
+.nmpv3-plus-layout-cover .nmpv3-controls {
+  justify-content: center;
+}
+
+@media (max-width: 520px) {
+  .nmpv3-plus-layout-card.nmpv3-player,
+  .nmpv3-plus-layout-card .nmpv3-player,
+  .nmpv3-plus-layout-cover.nmpv3-player,
+  .nmpv3-plus-layout-cover .nmpv3-player {
+    width: 100%;
+  }
+
+  .nmpv3-plus-layout-cover .nmpv3-cover-button {
+    width: 128px;
+    height: 128px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nmpv3-plus-layout-card.nmpv3-player,
+  .nmpv3-plus-layout-card .nmpv3-player {
+    transition: none;
+  }
+}

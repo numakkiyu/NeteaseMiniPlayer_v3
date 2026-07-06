@@ -1,0 +1,8 @@
+{
+  "name": "nmpv3-plus-extension-cover-color",
+  "displayName": "Cover Color",
+  "version": "1.0.0",
+  "entry": "./index.ts",
+  "type": "visual",
+  "description": "Extracts cover colors and exposes them as runtime tokens."
+}

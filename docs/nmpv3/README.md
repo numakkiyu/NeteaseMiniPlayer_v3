@@ -62,14 +62,15 @@ import "@netease-mini-player/v3/auto";
 ></nmp-player>
 ```
 
-NMPv3 defaults to the v2.5-compatible NetEase proxy:
+NMPv3 hardcodes the v2.5-compatible NetEase proxy as the compiled default:
 
 ```txt
 https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php
 ```
 
 If that endpoint is unavailable, or if you want to use your own proxy, replace
-it with any NeteaseCloudMusicApi-compatible endpoint.
+it with any NeteaseCloudMusicApi-compatible endpoint without rebuilding
+`dist/nmpv3.min.js`.
 
 Per-player HTML override:
 
@@ -86,10 +87,33 @@ Global override before loading the compiled browser bundle:
 <script src="./dist/nmpv3.min.js"></script>
 ```
 
+Backend templates that only need to print the endpoint string can use the
+scalar alias. The old brand scalar is accepted for legacy templates:
+
+```html
+<script>
+  window.NMPv3ApiBaseUrl = "/api/netease";
+  window.NeteaseMiniPlayerApiBaseUrl = "/api/netease";
+</script>
+<script src="./dist/nmpv3.min.js"></script>
+```
+
 Runtime override after the bundle is loaded:
 
 ```js
 window.NMPv3.setApiBaseUrl("/api/netease");
+```
+
+Backend-generated JavaScript can also set the same global before the compiled
+bundle runs, or call `window.NMPv3.setApiBaseUrl(url)` after the bundle has
+loaded. The WordPress Basic example does the pre-bundle form with
+`wp_add_inline_script(..., 'before')`, and exposes the
+`nmpv3_basic_default_api_base_url` filter:
+
+```php
+add_filter('nmpv3_basic_default_api_base_url', function () {
+    return 'https://example.com/NeteaseMiniPlayer/nmp.php';
+});
 ```
 
 The lightweight player only needs this NeteaseCloudMusicApi surface:
@@ -198,7 +222,8 @@ Legacy v2 DOM nodes are upgraded in place:
 ></div>
 ```
 
-Set the API proxy with `api-base-url`, `apiBaseUrl`, or the global runtime API:
+Set the API proxy with `api-base-url`, `apiBaseUrl`, `window.NMPv3ApiBaseUrl`,
+`window.NeteaseMiniPlayerApiBaseUrl`, or the global runtime API:
 
 ```html
 <nmp-player playlist-id="14273792576" api-base-url="/api/netease"></nmp-player>
@@ -207,6 +232,12 @@ Set the API proxy with `api-base-url`, `apiBaseUrl`, or the global runtime API:
 ```js
 window.NMPv3.setGlobalConfig({ apiBaseUrl: "/api/netease" });
 ```
+
+The compiled browser bundle keeps
+`https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php` as the default API, but the
+frontend config, backend-generated JS, and runtime APIs remain available after
+deployment so a site can move to another compatible proxy without rebuilding
+the player.
 
 Basic variables include `--nmpv3-accent`, `--nmpv3-radius`, `--nmpv3-bg`,
 `--nmpv3-text`, and `--nmpv3-idle-opacity`.

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "netease-mini-player/nmpv3-plus",
+  "title": "NMPv3+ Player",
+  "category": "widgets",
+  "icon": "format-audio",
+  "description": "Advanced NeteaseMiniPlayer block with skins, extensions, custom source, lyrics, and host sync settings.",
+  "supports": {
+    "html": false
+  },
+  "attributes": {
+    "source": {
+      "type": "string",
+      "default": "netease"
+    },
+    "songId": {
+      "type": "string",
+      "default": ""
+    },
+    "playlistId": {
+      "type": "string",
+      "default": ""
+    },
+    "localMusicJsonUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "customLyricsUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "customTranslationLyricsUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "skin": {
+      "type": "string",
+      "default": "default"
+    },
+    "hostSync": {
+      "type": "boolean",
+      "default": false
+    },
+    "pageLinking": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "editorScript": "nmpv3-plus-block-editor",
+  "script": "nmpv3-plus-runtime"
+}

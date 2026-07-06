@@ -1,0 +1,16 @@
+{
+  "name": "vinyl",
+  "displayName": "Vinyl",
+  "version": "1.0.0",
+  "author": "BHCN STUDIO",
+  "supports": ["mini", "compact", "dock", "card", "cover"],
+  "tokens": {
+    "--nmpv3-bg": "rgba(250, 248, 244, 0.95)",
+    "--nmpv3-text": "#2d2822",
+    "--nmpv3-muted": "#7c7167",
+    "--nmpv3-accent": "#b4532a",
+    "--nmpv3-border": "rgba(92, 70, 48, 0.16)",
+    "--nmpv3-shadow": "0 18px 42px rgba(65, 48, 33, 0.16)",
+    "--nmpv3-radius": "16px"
+  }
+}

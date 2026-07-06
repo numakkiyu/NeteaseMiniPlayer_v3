@@ -47,11 +47,33 @@ describe("globalConfig", () => {
     );
   });
 
+  it("supports a backend-rendered scalar NMPv3ApiBaseUrl alias", () => {
+    stubWindow({
+      NMPv3ApiBaseUrl: "https://example.test/server-rendered",
+    });
+
+    expect(refreshGlobalConfigFromWindow().apiBaseUrl).toBe(
+      "https://example.test/server-rendered",
+    );
+  });
+
+  it("supports the legacy backend-rendered scalar API alias", () => {
+    stubWindow({
+      NeteaseMiniPlayerApiBaseUrl: "https://example.test/legacy-scalar",
+    });
+
+    expect(refreshGlobalConfigFromWindow().apiBaseUrl).toBe(
+      "https://example.test/legacy-scalar",
+    );
+  });
+
   it("lets NMPv3Config override the legacy global alias", () => {
     stubWindow({
       NeteaseMiniPlayerConfig: {
         apiBaseUrl: "https://example.test/legacy",
       },
+      NeteaseMiniPlayerApiBaseUrl: "https://example.test/legacy-scalar",
+      NMPv3ApiBaseUrl: "https://example.test/scalar",
       NMPv3Config: { apiBaseUrl: "https://example.test/modern" },
     });
 
@@ -86,11 +108,17 @@ describe("globalConfig", () => {
     expect(browserWindow.NMPv3Config).toMatchObject({
       apiBaseUrl: "https://example.test/runtime",
     });
+    expect(browserWindow.NMPv3ApiBaseUrl).toBe("https://example.test/runtime");
+    expect(browserWindow.NeteaseMiniPlayerApiBaseUrl).toBe(
+      "https://example.test/runtime",
+    );
   });
 });
 
 function stubWindow(config: Partial<Window>): Window {
   const browserWindow = config as Window & {
+    NMPv3ApiBaseUrl?: string;
+    NeteaseMiniPlayerApiBaseUrl?: string;
     NMPv3Config?: Partial<NMPv3Config>;
     NeteaseMiniPlayerConfig?: Partial<NMPv3Config>;
   };

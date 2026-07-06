@@ -48,6 +48,12 @@ function readWindowRuntimeConfig(): Partial<NMPv3Config> {
 
   return mergeConfig(
     browserWindow.NeteaseMiniPlayerConfig,
+    browserWindow.NeteaseMiniPlayerApiBaseUrl
+      ? { apiBaseUrl: browserWindow.NeteaseMiniPlayerApiBaseUrl }
+      : undefined,
+    browserWindow.NMPv3ApiBaseUrl
+      ? { apiBaseUrl: browserWindow.NMPv3ApiBaseUrl }
+      : undefined,
     browserWindow.NMPv3Config,
   );
 }
@@ -60,4 +66,9 @@ function syncWindowRuntimeConfig(config: Partial<NMPv3Config>): void {
   }
 
   browserWindow.NMPv3Config = mergeConfig(browserWindow.NMPv3Config, config);
+
+  if (config.apiBaseUrl) {
+    browserWindow.NMPv3ApiBaseUrl = config.apiBaseUrl;
+    browserWindow.NeteaseMiniPlayerApiBaseUrl = config.apiBaseUrl;
+  }
 }

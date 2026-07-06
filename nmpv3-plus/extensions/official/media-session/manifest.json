@@ -1,0 +1,8 @@
+{
+  "name": "nmpv3-plus-extension-media-session",
+  "displayName": "Media Session",
+  "version": "1.0.0",
+  "entry": "./index.ts",
+  "type": "media",
+  "description": "Updates browser Media Session metadata and handlers."
+}

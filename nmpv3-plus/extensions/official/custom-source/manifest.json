@@ -1,0 +1,8 @@
+{
+  "name": "nmpv3-plus-extension-custom-source",
+  "displayName": "Custom Source",
+  "version": "1.0.0",
+  "entry": "./index.ts",
+  "type": "source",
+  "description": "Registers a custom NMPv3+ music source adapter."
+}

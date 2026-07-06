@@ -1,0 +1,17 @@
+{
+  "name": "nmpv3-plus-extension-advanced-layouts",
+  "displayName": "Advanced Layouts",
+  "version": "1.0.0",
+  "author": "BHCN STUDIO",
+  "entry": "./index.ts",
+  "style": "./style.css",
+  "type": "layout",
+  "description": "Adds opt-in card and cover layouts for NMPv3+ without changing the default NMPv3 UI.",
+  "configSchema": {
+    "layout": {
+      "type": "string",
+      "enum": ["card", "cover"],
+      "default": "card"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "nmpv3-plus-extension-pwa-cache",
+  "displayName": "PWA Cache",
+  "version": "1.0.0",
+  "author": "BHCN STUDIO",
+  "entry": "./index.ts",
+  "type": "cache",
+  "description": "Optionally cache NMPv3+ runtime assets, cover images, and song URLs through the browser Cache API.",
+  "configSchema": {
+    "cacheName": {
+      "type": "string",
+      "default": "nmpv3-plus-cache-v1"
+    }
+  }
+}

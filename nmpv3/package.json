@@ -3,6 +3,7 @@
   "version": "3.0.0-alpha.0",
   "type": "module",
   "description": "Lightweight single-JS NetEase Cloud Music player.",
+  "license": "Apache-2.0",
   "main": "./dist/nmpv3.min.js",
   "module": "./dist/nmpv3.es.js",
   "types": "./dist/nmpv3.d.ts",

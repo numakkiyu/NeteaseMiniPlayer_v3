@@ -1,0 +1,8 @@
+{
+  "name": "nmpv3-plus-extension-cross-tab-sync",
+  "displayName": "Cross-tab Sync",
+  "version": "1.0.0",
+  "entry": "./index.ts",
+  "type": "sync",
+  "description": "Synchronizes selected playback events across tabs."
+}
