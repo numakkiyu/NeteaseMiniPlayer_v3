@@ -17,7 +17,7 @@ Use [NMPv3](../nmpv3/) for normal embedding.
 ## Loading order
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
 <script>
   window.NMPv3PlusConfig = {
     apiBaseUrl: "/api/netease",
@@ -26,7 +26,7 @@ Use [NMPv3](../nmpv3/) for normal embedding.
 </script>
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@latest/dist/browser.js"
+  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@3.0.0-alpha.0/dist/browser.js"
 ></script>
 
 <nmp-player playlist-id="14273792576" layout="compact"></nmp-player>

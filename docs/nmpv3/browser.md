@@ -45,7 +45,7 @@ nmpv3/dist/nmpv3.d.ts
 ## CDN HTML
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"

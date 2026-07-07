@@ -17,7 +17,7 @@ NMPv3:
 
 ```html
 <link rel="stylesheet" href="/site.css" />
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"
@@ -29,7 +29,7 @@ NMPv3:
 NMPv3+:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
 <script>
   window.NMPv3PlusConfig = {
     enabledExtensions: ["host-sync"],
@@ -38,7 +38,7 @@ NMPv3+:
 </script>
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@latest/dist/browser.js"
+  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@3.0.0-alpha.0/dist/browser.js"
 ></script>
 
 <nmp-player playlist-id="14273792576" plus-extensions="host-sync"></nmp-player>
@@ -52,7 +52,7 @@ $playlist_id = '14273792576';
 $api_base_url = '/api/netease';
 ?>
 
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
 <nmp-player
   playlist-id="<?php echo esc_attr($playlist_id); ?>"
   api-base-url="<?php echo esc_url($api_base_url); ?>"
