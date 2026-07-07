@@ -2,6 +2,7 @@
   "name": "netease-mini-player-workspace",
   "version": "3.0.0-alpha.0",
   "private": true,
+  "packageManager": "pnpm@11.7.0",
   "type": "module",
   "description": "NeteaseMiniPlayer v3 and v3 Plus workspace.",
   "license": "Apache-2.0",
