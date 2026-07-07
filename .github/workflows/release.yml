@@ -1,0 +1,137 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version without the leading v, for example 3.0.0-alpha.0"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: corepack enable
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+
+          ROOT_VERSION="$(node -p "require('./package.json').version")"
+          NMPV3_VERSION="$(node -p "require('./nmpv3/package.json').version")"
+          PLUS_VERSION="$(node -p "require('./nmpv3-plus/package.json').version")"
+
+          if [ "$VERSION" != "$ROOT_VERSION" ] || [ "$VERSION" != "$NMPV3_VERSION" ] || [ "$VERSION" != "$PLUS_VERSION" ]; then
+            echo "Version mismatch: input=$VERSION root=$ROOT_VERSION nmpv3=$NMPV3_VERSION plus=$PLUS_VERSION"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - run: pnpm validate
+
+      - run: pnpm --filter netease-mini-player-v3 build
+
+      - run: pnpm --filter netease-mini-player-v3-plus build
+
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p release-assets
+
+          cp nmpv3/dist/nmpv3.min.js "release-assets/nmpv3-$VERSION.min.js"
+          cp nmpv3/dist/nmpv3.es.js "release-assets/nmpv3-$VERSION.es.js"
+          cp nmpv3/dist/nmpv3.d.ts "release-assets/nmpv3-$VERSION.d.ts"
+          cp nmpv3-plus/dist/browser.js "release-assets/nmpv3-plus-$VERSION.browser.js"
+          cp nmpv3-plus/dist/index.js "release-assets/nmpv3-plus-$VERSION.index.js"
+          cp nmpv3-plus/dist/browser.d.ts "release-assets/nmpv3-plus-$VERSION.browser.d.ts"
+
+          npm pack ./nmpv3 --pack-destination release-assets
+          npm pack ./nmpv3-plus --pack-destination release-assets
+
+          (cd release-assets && sha256sum * > checksums.txt)
+
+      - name: Write release notes
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          cat > release-notes.md <<EOF
+          NeteaseMiniPlayer v3 是基于 NeteaseCloudMusicApi 的轻量级可插入式音乐播放器 UI 组件库。
+
+          本版本包含两条产品线：
+
+          - NMPv3：轻量播放器，默认只面向网易云音乐，浏览器部署仅需一个 nmpv3.min.js，运行时零依赖。
+          - NMPv3+：高级扩展框架，面向插件、皮肤、自定义音乐源、自定义歌词、宿主页面联动与框架适配器。
+
+          ## 版本
+
+          $VERSION
+
+          ## CDN
+
+          NMPv3:
+
+          https://cdn.jsdelivr.net/npm/netease-mini-player-v3@$VERSION/dist/nmpv3.min.js
+
+          https://unpkg.com/netease-mini-player-v3@$VERSION/dist/nmpv3.min.js
+
+          NMPv3+:
+
+          https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@$VERSION/dist/browser.js
+
+          https://unpkg.com/netease-mini-player-v3-plus@$VERSION/dist/browser.js
+
+          ## Release 文件
+
+          - nmpv3-$VERSION.min.js
+          - nmpv3-$VERSION.es.js
+          - nmpv3-$VERSION.d.ts
+          - nmpv3-plus-$VERSION.browser.js
+          - nmpv3-plus-$VERSION.index.js
+          - nmpv3-plus-$VERSION.browser.d.ts
+          - netease-mini-player-v3-$VERSION.tgz
+          - netease-mini-player-v3-plus-$VERSION.tgz
+          - checksums.txt
+          EOF
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          PRERELEASE_FLAG=""
+
+          if [[ "$VERSION" == *"-"* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release-assets/* --clobber
+            gh release edit "$TAG" --title "NeteaseMiniPlayer v3 $VERSION" --notes-file release-notes.md $PRERELEASE_FLAG
+          else
+            gh release create "$TAG" release-assets/* --title "NeteaseMiniPlayer v3 $VERSION" --notes-file release-notes.md $PRERELEASE_FLAG
+          fi
