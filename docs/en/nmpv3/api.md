@@ -23,7 +23,7 @@ import {
   defineNMPv3,
   parseLrc,
   syncLyric,
-} from "@netease-mini-player/v3";
+} from "netease-mini-player-v3";
 ```
 
 ## Player instance

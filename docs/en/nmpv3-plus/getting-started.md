@@ -5,14 +5,14 @@ NMPv3+ needs a base NMPv3 player first. Then the Plus framework attaches plugins
 ## Install
 
 ```bash
-npm install @netease-mini-player/v3 @netease-mini-player/v3-plus
-pnpm add @netease-mini-player/v3 @netease-mini-player/v3-plus
+npm install netease-mini-player-v3 netease-mini-player-v3-plus
+pnpm add netease-mini-player-v3 netease-mini-player-v3-plus
 ```
 
 ## Browser usage
 
 ```html
-<script src="/node_modules/@netease-mini-player/v3/dist/nmpv3.min.js"></script>
+<script src="/node_modules/netease-mini-player-v3/dist/nmpv3.min.js"></script>
 <script>
   window.NMPv3PlusConfig = {
     apiBaseUrl: "/api/netease",
@@ -21,7 +21,7 @@ pnpm add @netease-mini-player/v3 @netease-mini-player/v3-plus
 </script>
 <script
   type="module"
-  src="/node_modules/@netease-mini-player/v3-plus/dist/browser.js"
+  src="/node_modules/netease-mini-player-v3-plus/dist/browser.js"
 ></script>
 
 <nmp-player playlist-id="14273792576" layout="compact"></nmp-player>
@@ -77,7 +77,7 @@ Without advanced options, the player stays on the base compact UI.
 ## Verification
 
 ```bash
-pnpm --filter @netease-mini-player/v3 build
-pnpm --filter @netease-mini-player/v3-plus build
-pnpm --filter @netease-mini-player/v3-plus ui:smoke
+pnpm --filter netease-mini-player-v3 build
+pnpm --filter netease-mini-player-v3-plus build
+pnpm --filter netease-mini-player-v3-plus ui:smoke
 ```

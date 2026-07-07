@@ -55,5 +55,5 @@ NMPv3 与 NMPv3+ 的边界保持不变：需要插件、皮肤包、自定义来
 - 页面中只注册一次 `<nmp-player>` 自定义元素
 - API 代理可访问 `/song/detail`、`/playlist/track/all`、`/song/url/v1` 和 `/lyric`
 - 单曲与歌单 ID 以字符串形式传递
-- SSR 框架仅在客户端导入 `@netease-mini-player/v3/auto`
+- SSR 框架仅在客户端导入 `netease-mini-player-v3/auto`
 - 未引入 NMPv3+ 的适配器包或插件系统

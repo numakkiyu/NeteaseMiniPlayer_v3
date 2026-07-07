@@ -9,8 +9,8 @@ NMPv3+ adapters do not replace the player. They turn framework-friendly options 
 ## React
 
 ```tsx
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusReactProps } from "@netease-mini-player/v3-plus/react";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusReactProps } from "netease-mini-player-v3-plus/react";
 
 export function NMPv3PlusPlayer() {
   return (
@@ -34,8 +34,8 @@ export function NMPv3PlusPlayer() {
 
 ```vue
 <script setup lang="ts">
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusVueBinding } from "@netease-mini-player/v3-plus/vue";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusVueBinding } from "netease-mini-player-v3-plus/vue";
 
 const player = createNMPv3PlusVueBinding({
   playlistId: "14273792576",
@@ -57,8 +57,8 @@ const player = createNMPv3PlusVueBinding({
 ```tsx
 "use client";
 
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusNextClientPlan } from "@netease-mini-player/v3-plus/next";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusNextClientPlan } from "netease-mini-player-v3-plus/next";
 
 const plan = createNMPv3PlusNextClientPlan({
   playlistId: "14273792576",
@@ -78,11 +78,11 @@ export function NMPv3PlusPlayer() {
 
 ## Adapter entries
 
-| Framework | Entry                                 |
-| --------- | ------------------------------------- |
-| React     | `@netease-mini-player/v3-plus/react`  |
-| Vue       | `@netease-mini-player/v3-plus/vue`    |
-| Next      | `@netease-mini-player/v3-plus/next`   |
-| Nuxt      | `@netease-mini-player/v3-plus/nuxt`   |
-| Astro     | `@netease-mini-player/v3-plus/astro`  |
-| Svelte    | `@netease-mini-player/v3-plus/svelte` |
+| Framework | Entry                                |
+| --------- | ------------------------------------ |
+| React     | `netease-mini-player-v3-plus/react`  |
+| Vue       | `netease-mini-player-v3-plus/vue`    |
+| Next      | `netease-mini-player-v3-plus/next`   |
+| Nuxt      | `netease-mini-player-v3-plus/nuxt`   |
+| Astro     | `netease-mini-player-v3-plus/astro`  |
+| Svelte    | `netease-mini-player-v3-plus/svelte` |

@@ -1,7 +1,7 @@
 "use client";
 
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusNextClientPlan } from "@netease-mini-player/v3-plus/next";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusNextClientPlan } from "netease-mini-player-v3-plus/next";
 
 const plan = createNMPv3PlusNextClientPlan({
   playlistId: "14273792576",

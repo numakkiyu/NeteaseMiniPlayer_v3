@@ -1,5 +1,5 @@
 {
-  "name": "@netease-mini-player/v3",
+  "name": "netease-mini-player-v3",
   "version": "3.0.0-alpha.0",
   "type": "module",
   "description": "Lightweight single-JS NetEase Cloud Music player.",

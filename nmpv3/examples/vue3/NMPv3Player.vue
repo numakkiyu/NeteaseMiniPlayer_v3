@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 </script>
 
 <template>

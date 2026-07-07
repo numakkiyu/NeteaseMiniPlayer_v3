@@ -8,9 +8,9 @@
 
 <p>
   <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square">
-  <img alt="NPM Version" src="https://img.shields.io/npm/v/@netease-mini-player/v3?style=flat-square&label=%40netease-mini-player%2Fv3">
-  <img alt="NPM Version Plus" src="https://img.shields.io/npm/v/@netease-mini-player/v3-plus?style=flat-square&label=%40netease-mini-player%2Fv3-plus">
-  <img alt="jsDelivr" src="https://img.shields.io/jsdelivr/npm/hm/@netease-mini-player/v3?style=flat-square&label=jsDelivr">
+  <img alt="NPM Version" src="https://img.shields.io/npm/v/netease-mini-player-v3?style=flat-square&label=%40netease-mini-player%2Fv3">
+  <img alt="NPM Version Plus" src="https://img.shields.io/npm/v/netease-mini-player-v3-plus?style=flat-square&label=%40netease-mini-player%2Fv3-plus">
+  <img alt="jsDelivr" src="https://img.shields.io/jsdelivr/npm/hm/netease-mini-player-v3?style=flat-square&label=jsDelivr">
   <img alt="Node" src="https://img.shields.io/badge/node-%E2%89%A518-22c55e?style=flat-square">
   <img alt="Package Manager" src="https://img.shields.io/badge/pnpm-workspace-F69D20?style=flat-square">
   <img alt="Language" src="https://img.shields.io/badge/TypeScript-5.5%2B-3178C6?style=flat-square">
@@ -81,7 +81,7 @@
 通过 jsDelivr 引入 NMPv3（推荐）：
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"
@@ -93,7 +93,7 @@
 通过 unpkg 引入：
 
 ```html
-<script src="https://unpkg.com/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://unpkg.com/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 
 <nmp-player song-id="1901371647" theme="auto" layout="mini"></nmp-player>
 ```
@@ -102,7 +102,7 @@
 > 生产环境应固定版本号，避免 `latest` 带来不可预期的升级：
 >
 > ```html
-> <script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
+> <script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
 > ```
 
 更多用法见 [CDN 引用指南](./docs/guide/cdn.md)。
@@ -110,15 +110,15 @@
 ### npm / pnpm 安装
 
 ```bash
-npm install @netease-mini-player/v3
+npm install netease-mini-player-v3
 # 或
-pnpm add @netease-mini-player/v3
+pnpm add netease-mini-player-v3
 ```
 
 引入自动注册入口：
 
 ```ts
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 ```
 
 在页面中使用自定义元素：
@@ -132,15 +132,15 @@ import "@netease-mini-player/v3/auto";
 NMPv3+ 面向需要扩展能力的集成者，需同时安装基础播放器与 Plus 框架：
 
 ```bash
-npm install @netease-mini-player/v3 @netease-mini-player/v3-plus
+npm install netease-mini-player-v3 netease-mini-player-v3-plus
 # 或
-pnpm add @netease-mini-player/v3 @netease-mini-player/v3-plus
+pnpm add netease-mini-player-v3 netease-mini-player-v3-plus
 ```
 
 浏览器端先加载基础播放器，再加载 Plus 浏览器入口。未选择任何高级扩展时，界面停留在 NMPv3 基础 UI：
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 <script>
   window.NMPv3PlusConfig = {
     apiBaseUrl: "https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php",
@@ -149,7 +149,7 @@ pnpm add @netease-mini-player/v3 @netease-mini-player/v3-plus
 </script>
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3-plus@latest/dist/browser.js"
+  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@latest/dist/browser.js"
 ></script>
 
 <nmp-player playlist-id="14273792576" layout="compact"></nmp-player>
@@ -203,8 +203,8 @@ pnpm install
 构建两条产品线：
 
 ```bash
-pnpm --filter @netease-mini-player/v3 build
-pnpm --filter @netease-mini-player/v3-plus build
+pnpm --filter netease-mini-player-v3 build
+pnpm --filter netease-mini-player-v3-plus build
 ```
 
 启动文档站点的本地预览：

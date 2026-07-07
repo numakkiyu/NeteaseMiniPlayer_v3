@@ -24,7 +24,7 @@ NMPv3+ WordPress：
 ## Enqueue plan
 
 ```ts
-import { createNMPv3PlusWordPressEnqueuePlan } from "@netease-mini-player/v3-plus/wordpress";
+import { createNMPv3PlusWordPressEnqueuePlan } from "netease-mini-player-v3-plus/wordpress";
 
 const plan = createNMPv3PlusWordPressEnqueuePlan({
   apiBaseUrl: "https://example.com/NeteaseMiniPlayer/nmp.php",
@@ -39,7 +39,7 @@ const plan = createNMPv3PlusWordPressEnqueuePlan({
 ## 构建 WordPress 插件包
 
 ```ts
-import { buildNMPv3PlusWordPressPluginPackage } from "@netease-mini-player/v3-plus/wordpress";
+import { buildNMPv3PlusWordPressPluginPackage } from "netease-mini-player-v3-plus/wordpress";
 
 await buildNMPv3PlusWordPressPluginPackage({
   settings: {
@@ -66,7 +66,7 @@ await buildNMPv3PlusWordPressPluginPackage({
 ## Gutenberg block metadata
 
 ```ts
-import { createNMPv3PlusBlockMetadata } from "@netease-mini-player/v3-plus/wordpress";
+import { createNMPv3PlusBlockMetadata } from "netease-mini-player-v3-plus/wordpress";
 
 const block = createNMPv3PlusBlockMetadata({
   defaultSkin: "default",
@@ -87,7 +87,7 @@ nmpv3-plus/packages/php/nmpv3-plus-helper.php
 TypeScript 入口可以渲染 Plus 属性：
 
 ```ts
-import { renderNMPv3PlusShortcode } from "@netease-mini-player/v3-plus/php";
+import { renderNMPv3PlusShortcode } from "netease-mini-player-v3-plus/php";
 
 renderNMPv3PlusShortcode({
   source: "local-json",

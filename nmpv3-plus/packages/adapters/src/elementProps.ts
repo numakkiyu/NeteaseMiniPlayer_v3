@@ -115,8 +115,8 @@ export function createNMPv3PlusElementPlan(
     events: { ...nmpv3PlusElementEvents },
     clientOnly: true,
     requiredImports: [
-      "@netease-mini-player/v3/auto",
-      "@netease-mini-player/v3-plus",
+      "netease-mini-player-v3/auto",
+      "netease-mini-player-v3-plus",
     ],
   };
 }

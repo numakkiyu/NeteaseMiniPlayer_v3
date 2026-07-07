@@ -19,7 +19,7 @@ const viewports = [
 for (const file of requiredFiles) {
   if (!existsSync(resolve(workspaceRoot, file))) {
     throw new Error(
-      `Missing ${file}. Run pnpm --filter @netease-mini-player/v3 build and pnpm --filter @netease-mini-player/v3-plus build first.`,
+      `Missing ${file}. Run pnpm --filter netease-mini-player-v3 build and pnpm --filter netease-mini-player-v3-plus build first.`,
     );
   }
 }

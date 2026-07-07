@@ -1,8 +1,8 @@
-# @netease-mini-player/v3-plus
+# netease-mini-player-v3-plus
 
 NMPv3+ 是 NeteaseMiniPlayer v3 Plus 的高级扩展框架。它在 NMPv3 基础播放器之上提供插件、皮肤、自定义来源、自定义歌词、宿主页面联动、框架适配器和自定义构建能力。
 
-NMPv3+ 不替代 NMPv3 的轻量入口。普通网页嵌入优先使用 `@netease-mini-player/v3`，只有在需要高级扩展时再加载 NMPv3+。
+NMPv3+ 不替代 NMPv3 的轻量入口。普通网页嵌入优先使用 `netease-mini-player-v3`，只有在需要高级扩展时再加载 NMPv3+。
 
 ## 适合场景
 
@@ -17,8 +17,8 @@ NMPv3+ 不替代 NMPv3 的轻量入口。普通网页嵌入优先使用 `@neteas
 ## 安装
 
 ```bash
-npm install @netease-mini-player/v3 @netease-mini-player/v3-plus
-pnpm add @netease-mini-player/v3 @netease-mini-player/v3-plus
+npm install netease-mini-player-v3 netease-mini-player-v3-plus
+pnpm add netease-mini-player-v3 netease-mini-player-v3-plus
 ```
 
 NMPv3+ 需要先有一个基础 NMPv3 播放器实例。未启用高级扩展时，默认界面保持 NMPv3 的基础 compact UI。
@@ -26,7 +26,7 @@ NMPv3+ 需要先有一个基础 NMPv3 播放器实例。未启用高级扩展时
 ## 浏览器引用
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 <script>
   window.NMPv3PlusConfig = {
     apiBaseUrl: "/api/netease",
@@ -35,7 +35,7 @@ NMPv3+ 需要先有一个基础 NMPv3 播放器实例。未启用高级扩展时
 </script>
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3-plus@latest/dist/browser.js"
+  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@latest/dist/browser.js"
 ></script>
 
 <nmp-player playlist-id="14273792576" layout="compact"></nmp-player>
@@ -44,10 +44,10 @@ NMPv3+ 需要先有一个基础 NMPv3 播放器实例。未启用高级扩展时
 也可以使用 unpkg：
 
 ```html
-<script src="https://unpkg.com/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://unpkg.com/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 <script
   type="module"
-  src="https://unpkg.com/@netease-mini-player/v3-plus@latest/dist/browser.js"
+  src="https://unpkg.com/netease-mini-player-v3-plus@latest/dist/browser.js"
 ></script>
 ```
 
@@ -62,7 +62,7 @@ import {
   createNMPv3PlusApp,
   createStaticLyricsAdapter,
   officialNMPv3PlusSkins,
-} from "@netease-mini-player/v3-plus";
+} from "netease-mini-player-v3-plus";
 
 await createNMPv3PlusApp()
   .source(createLocalJsonSourceAdapter())
@@ -86,7 +86,7 @@ await createNMPv3PlusApp()
 import {
   createCoverColorPlugin,
   createNMPv3PlusRuntime,
-} from "@netease-mini-player/v3-plus";
+} from "netease-mini-player-v3-plus";
 
 const runtime = createNMPv3PlusRuntime({
   root: document.querySelector("nmp-player"),
@@ -138,7 +138,7 @@ await runtime.installPlugin(createCoverColorPlugin());
 import {
   createNMPv3PlusRuntime,
   officialNMPv3PlusSkins,
-} from "@netease-mini-player/v3-plus";
+} from "netease-mini-player-v3-plus";
 
 const runtime = createNMPv3PlusRuntime({
   root: document.querySelector("nmp-player"),
@@ -163,7 +163,7 @@ runtime.applySkin("glass");
 NMPv3+ 支持本地 JSON、静态歌单、手动来源和自定义 API 来源。
 
 ```ts
-import { createLocalJsonSourceAdapter } from "@netease-mini-player/v3-plus/core";
+import { createLocalJsonSourceAdapter } from "netease-mini-player-v3-plus/core";
 
 runtime.registerSource(createLocalJsonSourceAdapter());
 
@@ -176,7 +176,7 @@ await runtime.loadPlaylist({
 静态歌词示例：
 
 ```ts
-import { createStaticLyricsAdapter } from "@netease-mini-player/v3-plus/core";
+import { createStaticLyricsAdapter } from "netease-mini-player-v3-plus/core";
 
 runtime.registerLyrics(
   createStaticLyricsAdapter({
@@ -192,19 +192,19 @@ runtime.registerLyrics(
 
 NMPv3+ 提供面向常见框架的适配器入口：
 
-- `@netease-mini-player/v3-plus/react`
-- `@netease-mini-player/v3-plus/vue`
-- `@netease-mini-player/v3-plus/next`
-- `@netease-mini-player/v3-plus/nuxt`
-- `@netease-mini-player/v3-plus/astro`
-- `@netease-mini-player/v3-plus/svelte`
+- `netease-mini-player-v3-plus/react`
+- `netease-mini-player-v3-plus/vue`
+- `netease-mini-player-v3-plus/next`
+- `netease-mini-player-v3-plus/nuxt`
+- `netease-mini-player-v3-plus/astro`
+- `netease-mini-player-v3-plus/svelte`
 
 这些适配器不会把框架运行时打进 NMPv3+。它们主要负责把框架友好的属性转换成 `<nmp-player>` 可以识别的原生属性和事件。
 
 React 示例：
 
 ```ts
-import { createNMPv3PlusReactProps } from "@netease-mini-player/v3-plus/react";
+import { createNMPv3PlusReactProps } from "netease-mini-player-v3-plus/react";
 
 const props = createNMPv3PlusReactProps({
   playlistId: "14273792576",
@@ -219,7 +219,7 @@ const props = createNMPv3PlusReactProps({
 NMPv3+ 可以按项目选择插件、皮肤和运行时代码，生成可部署的自定义包。
 
 ```bash
-pnpm --filter @netease-mini-player/v3-plus build
+pnpm --filter netease-mini-player-v3-plus build
 nmpv3-plus add examples/custom-build/nmpv3-plus.config.json visualizer host-sync glass
 nmpv3-plus plan examples/custom-build/nmpv3-plus.config.json
 nmpv3-plus build examples/custom-build/nmpv3-plus.config.json
@@ -243,7 +243,7 @@ import {
   buildNMPv3PlusWordPressPluginPackage,
   createNMPv3PlusBlockMetadata,
   createNMPv3PlusWordPressEnqueuePlan,
-} from "@netease-mini-player/v3-plus/wordpress";
+} from "netease-mini-player-v3-plus/wordpress";
 
 const block = createNMPv3PlusBlockMetadata({
   defaultSkin: "default",
@@ -255,17 +255,17 @@ const block = createNMPv3PlusBlockMetadata({
 
 ```bash
 pnpm install
-pnpm --filter @netease-mini-player/v3-plus build
-pnpm --filter @netease-mini-player/v3-plus typecheck
-pnpm --filter @netease-mini-player/v3-plus test
+pnpm --filter netease-mini-player-v3-plus build
+pnpm --filter netease-mini-player-v3-plus typecheck
+pnpm --filter netease-mini-player-v3-plus test
 ```
 
 渲染冒烟检查：
 
 ```bash
-pnpm --filter @netease-mini-player/v3 build
-pnpm --filter @netease-mini-player/v3-plus build
-pnpm --filter @netease-mini-player/v3-plus ui:smoke
+pnpm --filter netease-mini-player-v3 build
+pnpm --filter netease-mini-player-v3-plus build
+pnpm --filter netease-mini-player-v3-plus ui:smoke
 ```
 
 ## 能力边界

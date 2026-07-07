@@ -13,9 +13,9 @@ pnpm install
 只验证 NMPv3：
 
 ```bash
-pnpm --filter @netease-mini-player/v3 typecheck
-pnpm --filter @netease-mini-player/v3 build
-pnpm --filter @netease-mini-player/v3 test
+pnpm --filter netease-mini-player-v3 typecheck
+pnpm --filter netease-mini-player-v3 build
+pnpm --filter netease-mini-player-v3 test
 ```
 
 ## 常用源码位置
@@ -121,9 +121,9 @@ nmpv3/src/shortcode/legacyV2.ts
 ## 构建与检查
 
 ```bash
-pnpm --filter @netease-mini-player/v3 typecheck
-pnpm --filter @netease-mini-player/v3 test
-pnpm --filter @netease-mini-player/v3 build
+pnpm --filter netease-mini-player-v3 typecheck
+pnpm --filter netease-mini-player-v3 test
+pnpm --filter netease-mini-player-v3 build
 ```
 
 修改完成后还要人工检查：

@@ -9,8 +9,8 @@ NMPv3+ 的框架适配器不会替换播放器本体。播放器仍然是 `<nmp-
 ## React
 
 ```tsx
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusReactProps } from "@netease-mini-player/v3-plus/react";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusReactProps } from "netease-mini-player-v3-plus/react";
 
 export function NMPv3PlusPlayer() {
   return (
@@ -36,8 +36,8 @@ React 适配器提供 JSX 类型和属性映射，适合在组件中统一管理
 
 ```vue
 <script setup lang="ts">
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusVueBinding } from "@netease-mini-player/v3-plus/vue";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusVueBinding } from "netease-mini-player-v3-plus/vue";
 
 const player = createNMPv3PlusVueBinding({
   playlistId: "14273792576",
@@ -61,8 +61,8 @@ Vue 适配器输出 `attrs`，可以直接绑定到自定义元素。
 ```tsx
 "use client";
 
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusNextClientPlan } from "@netease-mini-player/v3-plus/next";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusNextClientPlan } from "netease-mini-player-v3-plus/next";
 
 const plan = createNMPv3PlusNextClientPlan({
   playlistId: "14273792576",
@@ -87,8 +87,8 @@ Next.js 中要放在客户端组件里。不要在服务端直接访问浏览器
 
 ```vue
 <script setup lang="ts">
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusNuxtClientPlan } from "@netease-mini-player/v3-plus/nuxt";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusNuxtClientPlan } from "netease-mini-player-v3-plus/nuxt";
 
 const plan = createNMPv3PlusNuxtClientPlan({
   playlistId: "14273792576",
@@ -112,7 +112,7 @@ Nuxt 中建议使用 client-only 组件或客户端插件加载 NMPv3。
 
 ```astro
 ---
-import { createNMPv3PlusAstroIslandPlan } from "@netease-mini-player/v3-plus/astro";
+import { createNMPv3PlusAstroIslandPlan } from "netease-mini-player-v3-plus/astro";
 
 const plan = createNMPv3PlusAstroIslandPlan({
   playlistId: "14273792576",
@@ -127,8 +127,8 @@ const plan = createNMPv3PlusAstroIslandPlan({
 ---
 
 <script>
-  import "@netease-mini-player/v3/auto";
-  import "@netease-mini-player/v3-plus";
+  import "netease-mini-player-v3/auto";
+  import "netease-mini-player-v3-plus";
 </script>
 
 <Fragment set:html={plan.element.html} />
@@ -141,7 +141,7 @@ Astro 适配器适合静态页面中生成播放器 island 所需的 HTML。
 ```svelte
 <script lang="ts">
   import { onMount } from "svelte";
-  import { createNMPv3PlusSvelteBinding } from "@netease-mini-player/v3-plus/svelte";
+  import { createNMPv3PlusSvelteBinding } from "netease-mini-player-v3-plus/svelte";
 
   const binding = createNMPv3PlusSvelteBinding({
     playlistId: "14273792576",
@@ -155,8 +155,8 @@ Astro 适配器适合静态页面中生成播放器 island 所需的 HTML。
   });
 
   onMount(async () => {
-    await import("@netease-mini-player/v3/auto");
-    await import("@netease-mini-player/v3-plus");
+    await import("netease-mini-player-v3/auto");
+    await import("netease-mini-player-v3-plus");
   });
 </script>
 
@@ -165,13 +165,13 @@ Astro 适配器适合静态页面中生成播放器 island 所需的 HTML。
 
 ## 适配器选型
 
-| 框架   | 入口                                  |
-| ------ | ------------------------------------- |
-| React  | `@netease-mini-player/v3-plus/react`  |
-| Vue    | `@netease-mini-player/v3-plus/vue`    |
-| Next   | `@netease-mini-player/v3-plus/next`   |
-| Nuxt   | `@netease-mini-player/v3-plus/nuxt`   |
-| Astro  | `@netease-mini-player/v3-plus/astro`  |
-| Svelte | `@netease-mini-player/v3-plus/svelte` |
+| 框架   | 入口                                 |
+| ------ | ------------------------------------ |
+| React  | `netease-mini-player-v3-plus/react`  |
+| Vue    | `netease-mini-player-v3-plus/vue`    |
+| Next   | `netease-mini-player-v3-plus/next`   |
+| Nuxt   | `netease-mini-player-v3-plus/nuxt`   |
+| Astro  | `netease-mini-player-v3-plus/astro`  |
+| Svelte | `netease-mini-player-v3-plus/svelte` |
 
 适配器不是必需的。基础播放器场景直接使用 NMPv3 的 Web Component 即可。

@@ -13,22 +13,22 @@ const examplesRoot = dirname(fileURLToPath(import.meta.url));
 describe("NMPv3+ framework examples", () => {
   it("keeps React, Vue, Next, Nuxt, Astro, and Svelte examples wired to real adapter entry points", () => {
     expect(example("react/NMPv3PlusPlayer.tsx")).toContain(
-      "@netease-mini-player/v3-plus/react",
+      "netease-mini-player-v3-plus/react",
     );
     expect(example("vue3/NMPv3PlusPlayer.vue")).toContain(
-      "@netease-mini-player/v3-plus/vue",
+      "netease-mini-player-v3-plus/vue",
     );
     expect(example("next/NMPv3PlusPlayer.tsx")).toContain(
-      "@netease-mini-player/v3-plus/next",
+      "netease-mini-player-v3-plus/next",
     );
     expect(example("nuxt/NMPv3PlusPlayer.client.vue")).toContain(
-      "@netease-mini-player/v3-plus/nuxt",
+      "netease-mini-player-v3-plus/nuxt",
     );
     expect(example("astro/NMPv3PlusPlayer.astro")).toContain(
-      "@netease-mini-player/v3-plus/astro",
+      "netease-mini-player-v3-plus/astro",
     );
     expect(example("svelte/NMPv3PlusPlayer.svelte")).toContain(
-      "@netease-mini-player/v3-plus/svelte",
+      "netease-mini-player-v3-plus/svelte",
     );
   });
 

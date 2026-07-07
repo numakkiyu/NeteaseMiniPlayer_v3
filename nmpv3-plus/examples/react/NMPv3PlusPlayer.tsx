@@ -1,5 +1,5 @@
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusReactProps } from "@netease-mini-player/v3-plus/react";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusReactProps } from "netease-mini-player-v3-plus/react";
 
 export function NMPv3PlusPlayer() {
   return (

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { createNMPv3PlusSvelteBinding } from "@netease-mini-player/v3-plus/svelte";
+  import { createNMPv3PlusSvelteBinding } from "netease-mini-player-v3-plus/svelte";
 
   const binding = createNMPv3PlusSvelteBinding({
     playlistId: "14273792576",
@@ -14,8 +14,8 @@
   });
 
   onMount(async () => {
-    await import("@netease-mini-player/v3/auto");
-    await import("@netease-mini-player/v3-plus");
+    await import("netease-mini-player-v3/auto");
+    await import("netease-mini-player-v3-plus");
   });
 </script>
 

@@ -1,7 +1,7 @@
 import {
   createNMPv3PlusBlockMetadata,
   createNMPv3PlusWordPressEnqueuePlan,
-} from "@netease-mini-player/v3-plus/wordpress";
+} from "netease-mini-player-v3-plus/wordpress";
 
 export const nmpv3PlusWordPressSettings = {
   defaultSkin: "glass",

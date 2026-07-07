@@ -7,18 +7,18 @@ React 通过原生 Web Component 使用 NMPv3。由于 `<nmp-player>` 不是 Rea
 - Node.js 18+
 - React 18+ 或 React 19
 - 支持 ES modules 的构建工具（Vite、Create React App、Rspack 等）
-- 已安装 `@netease-mini-player/v3`：`npm install @netease-mini-player/v3`
+- 已安装 `netease-mini-player-v3`：`npm install netease-mini-player-v3`
 
 ## NMPv3 包安装与配置流程
 
 ```bash
-npm install @netease-mini-player/v3
+npm install netease-mini-player-v3
 ```
 
 入口文件导入自动注册入口：
 
 ```ts
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 ```
 
 导入后，`window.NMPv3` 会挂载到浏览器全局，且 `<nmp-player>` 自定义元素已注册。
@@ -44,7 +44,7 @@ window.NMPv3?.setApiBaseUrl("/api/netease");
 ### 使用 createElement 渲染
 
 ```tsx
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 import { createElement } from "react";
 
 export function NMPv3Player() {
@@ -62,7 +62,7 @@ export function NMPv3Player() {
 如果项目已配置自定义元素类型，可以直接写 JSX：
 
 ```tsx
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 
 export function NMPv3Player() {
   return (
@@ -134,7 +134,7 @@ export function NMPv3Player() {
 
 ### 构建产物报错 window is not defined
 
-- 确认在浏览器环境导入 `@netease-mini-player/v3/auto`
+- 确认在浏览器环境导入 `netease-mini-player-v3/auto`
 - 不要在服务端渲染组件中直接导入该包
 
 ### React StrictMode 下重复挂载
@@ -153,7 +153,7 @@ React 中可通过 `window.NMPv3.getPlayers()` 获取所有实例，或通过 DO
 
 ```tsx
 import { createElement } from "react";
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 
 interface NMPv3PlayerProps {
   playlistId?: string;

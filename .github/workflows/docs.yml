@@ -25,8 +25,8 @@ jobs:
           node-version: 22
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @netease-mini-player/v3 build
-      - run: pnpm --filter @netease-mini-player/v3-plus build
+      - run: pnpm --filter netease-mini-player-v3 build
+      - run: pnpm --filter netease-mini-player-v3-plus build
       - run: pnpm docs:build
         env:
           VITEPRESS_BASE: /${{ github.event.repository.name }}/

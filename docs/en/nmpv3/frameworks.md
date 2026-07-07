@@ -9,7 +9,7 @@ NMPv3 is a native Web Component. Most frameworks only need the auto registration
 ## React
 
 ```tsx
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 import { createElement } from "react";
 
 export function NMPv3Player() {
@@ -26,7 +26,7 @@ export function NMPv3Player() {
 
 ```vue
 <script setup lang="ts">
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 </script>
 
 <template>
@@ -48,7 +48,7 @@ import { createElement, useEffect } from "react";
 
 export function NMPv3Player() {
   useEffect(() => {
-    void import("@netease-mini-player/v3/auto");
+    void import("netease-mini-player-v3/auto");
   }, []);
 
   return createElement("nmp-player", {
@@ -64,7 +64,7 @@ export function NMPv3Player() {
 
 ```ts
 // plugins/nmpv3.client.ts
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 
 export default defineNuxtPlugin(() => {});
 ```
@@ -73,7 +73,7 @@ export default defineNuxtPlugin(() => {});
 
 ```astro
 ---
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 ---
 
 <nmp-player
@@ -91,7 +91,7 @@ import "@netease-mini-player/v3/auto";
   import { onMount } from "svelte";
 
   onMount(async () => {
-    await import("@netease-mini-player/v3/auto");
+    await import("netease-mini-player-v3/auto");
   });
 </script>
 

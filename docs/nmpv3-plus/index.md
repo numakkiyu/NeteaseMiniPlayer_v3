@@ -17,7 +17,7 @@ NMPv3+ 是 NeteaseMiniPlayer v3 Plus 的高级扩展框架。它在 NMPv3 基础
 ## 基础加载顺序
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 <script>
   window.NMPv3PlusConfig = {
     apiBaseUrl: "/api/netease",
@@ -26,7 +26,7 @@ NMPv3+ 是 NeteaseMiniPlayer v3 Plus 的高级扩展框架。它在 NMPv3 基础
 </script>
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3-plus@latest/dist/browser.js"
+  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@latest/dist/browser.js"
 ></script>
 
 <nmp-player playlist-id="14273792576" layout="compact"></nmp-player>

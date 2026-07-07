@@ -7,12 +7,12 @@ Svelte 对自定义元素无额外抽象，可直接在模板中书写 `<nmp-pla
 - Node.js 18+
 - Svelte 4+ 或 Svelte 5
 - Vite/SvelteKit 构建环境
-- 已安装 `@netease-mini-player/v3`：`npm install @netease-mini-player/v3`
+- 已安装 `netease-mini-player-v3`：`npm install netease-mini-player-v3`
 
 ## NMPv3 包安装与配置流程
 
 ```bash
-npm install @netease-mini-player/v3
+npm install netease-mini-player-v3
 ```
 
 在组件 `onMount` 中动态导入：
@@ -22,7 +22,7 @@ npm install @netease-mini-player/v3
   import { onMount } from "svelte";
 
   onMount(async () => {
-    await import("@netease-mini-player/v3/auto");
+    await import("netease-mini-player-v3/auto");
   });
 </script>
 
@@ -43,7 +43,7 @@ npm install @netease-mini-player/v3
 
 ```ts
 onMount(async () => {
-  await import("@netease-mini-player/v3/auto");
+  await import("netease-mini-player-v3/auto");
   window.NMPv3?.setApiBaseUrl("/api/netease");
 });
 ```
@@ -57,7 +57,7 @@ onMount(async () => {
   import { onMount } from "svelte";
 
   onMount(async () => {
-    await import("@netease-mini-player/v3/auto");
+    await import("netease-mini-player-v3/auto");
   });
 </script>
 
@@ -81,7 +81,7 @@ onMount(async () => {
   export let apiBaseUrl = "/api/netease";
 
   onMount(async () => {
-    await import("@netease-mini-player/v3/auto");
+    await import("netease-mini-player-v3/auto");
   });
 </script>
 
@@ -102,7 +102,7 @@ onMount(async () => {
   let player: HTMLElement;
 
   onMount(async () => {
-    await import("@netease-mini-player/v3/auto");
+    await import("netease-mini-player-v3/auto");
 
     player.addEventListener("nmpv3:play", () => {
       console.log("播放开始");
@@ -118,7 +118,7 @@ onMount(async () => {
 ### SSR 报错 window is not defined
 
 - SvelteKit 中必须在 `onMount` 或 `browser` 条件下导入
-- 不要直接 `import "@netease-mini-player/v3/auto"` 在模块顶层
+- 不要直接 `import "netease-mini-player-v3/auto"` 在模块顶层
 
 ### 播放器未渲染
 
@@ -170,7 +170,7 @@ Svelte 5 用户可参考项目类型声明方式调整命名空间。
 
   onMount(async () => {
     if (browser) {
-      await import("@netease-mini-player/v3/auto");
+      await import("netease-mini-player-v3/auto");
     }
   });
 </script>

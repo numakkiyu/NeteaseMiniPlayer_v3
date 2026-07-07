@@ -30,7 +30,7 @@ import {
   defineNMPv3,
   parseLrc,
   syncLyric,
-} from "@netease-mini-player/v3";
+} from "netease-mini-player-v3";
 ```
 
 `defineNMPv3()` 会注册 `<nmp-player>` 并注入样式。`createNMPv3Player()` 会在指定 DOM 上创建播放器实例。

@@ -1,5 +1,5 @@
 ---
-import { createNMPv3PlusAstroIslandPlan } from "@netease-mini-player/v3-plus/astro";
+import { createNMPv3PlusAstroIslandPlan } from "netease-mini-player-v3-plus/astro";
 
 const plan = createNMPv3PlusAstroIslandPlan({
   playlistId: "14273792576",
@@ -14,8 +14,8 @@ const plan = createNMPv3PlusAstroIslandPlan({
 ---
 
 <script>
-  import "@netease-mini-player/v3/auto";
-  import "@netease-mini-player/v3-plus";
+  import "netease-mini-player-v3/auto";
+  import "netease-mini-player-v3-plus";
 </script>
 
 <Fragment set:html={plan.element.html} />

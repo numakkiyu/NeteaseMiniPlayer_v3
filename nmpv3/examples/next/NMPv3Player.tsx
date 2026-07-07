@@ -4,7 +4,7 @@ import { createElement, useEffect } from "react";
 
 export function NMPv3Player() {
   useEffect(() => {
-    void import("@netease-mini-player/v3/auto");
+    void import("netease-mini-player-v3/auto");
   }, []);
 
   return createElement("nmp-player", {

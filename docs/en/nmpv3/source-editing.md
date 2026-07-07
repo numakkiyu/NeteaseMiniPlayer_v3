@@ -6,9 +6,9 @@ NMPv3 can be edited and rebuilt. Keep the lightweight promises intact: one JavaS
 
 ```bash
 pnpm install
-pnpm --filter @netease-mini-player/v3 typecheck
-pnpm --filter @netease-mini-player/v3 test
-pnpm --filter @netease-mini-player/v3 build
+pnpm --filter netease-mini-player-v3 typecheck
+pnpm --filter netease-mini-player-v3 test
+pnpm --filter netease-mini-player-v3 build
 ```
 
 ## Important files

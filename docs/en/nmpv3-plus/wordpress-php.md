@@ -5,7 +5,7 @@ NMPv3+ owns advanced WordPress and PHP integration. NMPv3 Basic only loads one f
 ## Enqueue plan
 
 ```ts
-import { createNMPv3PlusWordPressEnqueuePlan } from "@netease-mini-player/v3-plus/wordpress";
+import { createNMPv3PlusWordPressEnqueuePlan } from "netease-mini-player-v3-plus/wordpress";
 
 const plan = createNMPv3PlusWordPressEnqueuePlan({
   apiBaseUrl: "https://example.com/NeteaseMiniPlayer/nmp.php",
@@ -18,7 +18,7 @@ const plan = createNMPv3PlusWordPressEnqueuePlan({
 ## Build a WordPress package
 
 ```ts
-import { buildNMPv3PlusWordPressPluginPackage } from "@netease-mini-player/v3-plus/wordpress";
+import { buildNMPv3PlusWordPressPluginPackage } from "netease-mini-player-v3-plus/wordpress";
 
 await buildNMPv3PlusWordPressPluginPackage({
   settings: {
@@ -42,7 +42,7 @@ nmpv3-plus/packages/php/nmpv3-plus-helper.php
 TypeScript helper:
 
 ```ts
-import { renderNMPv3PlusShortcode } from "@netease-mini-player/v3-plus/php";
+import { renderNMPv3PlusShortcode } from "netease-mini-player-v3-plus/php";
 
 renderNMPv3PlusShortcode({
   source: "local-json",

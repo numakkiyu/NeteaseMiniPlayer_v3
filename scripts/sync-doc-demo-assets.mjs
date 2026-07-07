@@ -16,7 +16,7 @@ for (const asset of assets) {
     await stat(source);
   } catch {
     process.stderr.write(
-      `Docs demo asset skipped: ${asset.from} was not found. Build @netease-mini-player/v3 to enable the local demo bundle.\n`,
+      `Docs demo asset skipped: ${asset.from} was not found. Build netease-mini-player-v3 to enable the local demo bundle.\n`,
     );
     continue;
   }

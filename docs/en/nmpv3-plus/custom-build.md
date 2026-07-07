@@ -5,8 +5,8 @@ NMPv3+ can generate deployment packages from selected extensions and skins.
 ## Build first
 
 ```bash
-pnpm --filter @netease-mini-player/v3 build
-pnpm --filter @netease-mini-player/v3-plus build
+pnpm --filter netease-mini-player-v3 build
+pnpm --filter netease-mini-player-v3-plus build
 ```
 
 ## CLI flow
@@ -20,7 +20,7 @@ nmpv3-plus build examples/custom-build/nmpv3-plus.config.json
 ## Build plan API
 
 ```ts
-import { resolveNMPv3PlusBuildPlan } from "@netease-mini-player/v3-plus/cli";
+import { resolveNMPv3PlusBuildPlan } from "netease-mini-player-v3-plus/cli";
 
 const plan = resolveNMPv3PlusBuildPlan({
   extensions: ["visualizer", "host-sync"],

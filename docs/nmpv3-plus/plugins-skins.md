@@ -137,7 +137,7 @@ await runtime.installPlugin(extension.plugin);
 import {
   createNMPv3PlusRuntime,
   officialNMPv3PlusSkins,
-} from "@netease-mini-player/v3-plus";
+} from "netease-mini-player-v3-plus";
 
 const runtime = createNMPv3PlusRuntime({
   root: document.querySelector("nmp-player"),

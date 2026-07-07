@@ -135,8 +135,8 @@ describe("NMPv3+ framework adapters", () => {
       tagName: "nmp-player",
       clientOnly: true,
       requiredImports: [
-        "@netease-mini-player/v3/auto",
-        "@netease-mini-player/v3-plus",
+        "netease-mini-player-v3/auto",
+        "netease-mini-player-v3-plus",
       ],
       events: {
         ready: "nmpv3:ready",
@@ -230,8 +230,8 @@ describe("NMPv3+ framework adapters", () => {
         error: "nmpv3:error",
       },
       onMountImports: [
-        "@netease-mini-player/v3/auto",
-        "@netease-mini-player/v3-plus",
+        "netease-mini-player-v3/auto",
+        "netease-mini-player-v3-plus",
       ],
     });
   });

@@ -7,7 +7,7 @@ This page covers the two most common open-source usage paths: CDN embedding and 
 NMPv3 is the default recommended embed path:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"
@@ -19,18 +19,18 @@ NMPv3 is the default recommended embed path:
 Pin a version in production:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
 ```
 
 ## Use NMPv3 from npm
 
 ```bash
-npm install @netease-mini-player/v3
-pnpm add @netease-mini-player/v3
+npm install netease-mini-player-v3
+pnpm add netease-mini-player-v3
 ```
 
 ```ts
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 ```
 
 ```html
@@ -71,12 +71,12 @@ Global config before the script loads:
 NMPv3+ is for extension-heavy integration. Load the base NMPv3 player first:
 
 ```bash
-npm install @netease-mini-player/v3 @netease-mini-player/v3-plus
-pnpm add @netease-mini-player/v3 @netease-mini-player/v3-plus
+npm install netease-mini-player-v3 netease-mini-player-v3-plus
+pnpm add netease-mini-player-v3 netease-mini-player-v3-plus
 ```
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 <script>
   window.NMPv3PlusConfig = {
     apiBaseUrl: "/api/netease",
@@ -85,7 +85,7 @@ pnpm add @netease-mini-player/v3 @netease-mini-player/v3-plus
 </script>
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3-plus@latest/dist/browser.js"
+  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@latest/dist/browser.js"
 ></script>
 
 <nmp-player playlist-id="14273792576" layout="compact"></nmp-player>
@@ -97,8 +97,8 @@ Without enabled extensions, Plus keeps the base player surface.
 
 ```bash
 pnpm install
-pnpm --filter @netease-mini-player/v3 build
-pnpm --filter @netease-mini-player/v3-plus build
+pnpm --filter netease-mini-player-v3 build
+pnpm --filter netease-mini-player-v3-plus build
 pnpm docs:dev
 ```
 

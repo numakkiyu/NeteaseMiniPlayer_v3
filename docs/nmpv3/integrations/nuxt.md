@@ -6,18 +6,18 @@ Nuxt 在 SSR 模式下构建时无法访问浏览器 API。NMPv3 的注册与脚
 
 - Node.js 18+
 - Nuxt 3.6+
-- 已安装 `@netease-mini-player/v3`：`npm install @netease-mini-player/v3`
+- 已安装 `netease-mini-player-v3`：`npm install netease-mini-player-v3`
 
 ## NMPv3 包安装与配置流程
 
 ```bash
-npm install @netease-mini-player/v3
+npm install netease-mini-player-v3
 ```
 
 创建客户端插件 `plugins/nmpv3.client.ts`：
 
 ```ts
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 
 export default defineNuxtPlugin(() => {});
 ```
@@ -30,7 +30,7 @@ export default defineNuxtPlugin(() => {});
 
 ```ts
 // plugins/nmpv3.client.ts
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 
 export default defineNuxtPlugin(() => {
   window.NMPv3Config = Object.assign({}, window.NMPv3Config || {}, {
@@ -105,7 +105,7 @@ onMounted(() => {
 ### 500 window is not defined
 
 - 确认插件文件后缀为 `.client.ts`
-- 确认未在服务端组件或 API 路由中导入 `@netease-mini-player/v3/auto`
+- 确认未在服务端组件或 API 路由中导入 `netease-mini-player-v3/auto`
 
 ### 自定义元素未注册
 

@@ -17,7 +17,7 @@ NMPv3：
 
 ```html
 <link rel="stylesheet" href="/site.css" />
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"
@@ -36,7 +36,7 @@ nmp-player {
 NMPv3+：
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 <script>
   window.NMPv3PlusConfig = {
     enabledExtensions: ["host-sync"],
@@ -45,7 +45,7 @@ NMPv3+：
 </script>
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3-plus@latest/dist/browser.js"
+  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@latest/dist/browser.js"
 ></script>
 
 <nmp-player playlist-id="14273792576" plus-extensions="host-sync"></nmp-player>
@@ -61,7 +61,7 @@ $playlist_id = '14273792576';
 $api_base_url = '/api/netease';
 ?>
 
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 <nmp-player
   playlist-id="<?php echo esc_attr($playlist_id); ?>"
   api-base-url="<?php echo esc_url($api_base_url); ?>"
@@ -71,14 +71,14 @@ $api_base_url = '/api/netease';
 NMPv3+：
 
 ```php
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 <script>
   window.NMPv3PlusConfig = {
     apiBaseUrl: "<?php echo esc_js($api_base_url); ?>",
     enabledExtensions: ["host-sync"]
   };
 </script>
-<script type="module" src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3-plus@latest/dist/browser.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@latest/dist/browser.js"></script>
 ```
 
 ## React
@@ -86,7 +86,7 @@ NMPv3+：
 NMPv3：
 
 ```tsx
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 import { createElement } from "react";
 
 export function Player() {
@@ -102,8 +102,8 @@ export function Player() {
 NMPv3+：
 
 ```tsx
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusReactProps } from "@netease-mini-player/v3-plus/react";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusReactProps } from "netease-mini-player-v3-plus/react";
 
 export function PlusPlayer() {
   return (
@@ -125,7 +125,7 @@ NMPv3：
 
 ```vue
 <script setup lang="ts">
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 </script>
 
 <template>
@@ -137,8 +137,8 @@ NMPv3+：
 
 ```vue
 <script setup lang="ts">
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusVueBinding } from "@netease-mini-player/v3-plus/vue";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusVueBinding } from "netease-mini-player-v3-plus/vue";
 
 const player = createNMPv3PlusVueBinding({
   playlistId: "14273792576",
@@ -158,7 +158,7 @@ NMPv3 客户端插件：
 
 ```ts
 // plugins/nmpv3.client.ts
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 
 export default defineNuxtPlugin(() => {});
 ```
@@ -167,7 +167,7 @@ NMPv3+ 客户端组件：
 
 ```vue
 <script setup lang="ts">
-import { createNMPv3PlusNuxtClientPlan } from "@netease-mini-player/v3-plus/nuxt";
+import { createNMPv3PlusNuxtClientPlan } from "netease-mini-player-v3-plus/nuxt";
 
 const plan = createNMPv3PlusNuxtClientPlan({
   playlistId: "14273792576",
@@ -190,7 +190,7 @@ NMPv3：
 
 ```astro
 ---
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 ---
 
 <nmp-player playlist-id="14273792576" api-base-url="/api/netease"></nmp-player>
@@ -200,7 +200,7 @@ NMPv3+：
 
 ```astro
 ---
-import { createNMPv3PlusAstroIslandPlan } from "@netease-mini-player/v3-plus/astro";
+import { createNMPv3PlusAstroIslandPlan } from "netease-mini-player-v3-plus/astro";
 
 const plan = createNMPv3PlusAstroIslandPlan({
   playlistId: "14273792576",
@@ -210,8 +210,8 @@ const plan = createNMPv3PlusAstroIslandPlan({
 ---
 
 <script>
-  import "@netease-mini-player/v3/auto";
-  import "@netease-mini-player/v3-plus";
+  import "netease-mini-player-v3/auto";
+  import "netease-mini-player-v3-plus";
 </script>
 
 <Fragment set:html={plan.element.html} />
@@ -226,7 +226,7 @@ NMPv3：
   import { onMount } from "svelte";
 
   onMount(async () => {
-    await import("@netease-mini-player/v3/auto");
+    await import("netease-mini-player-v3/auto");
   });
 </script>
 
@@ -238,7 +238,7 @@ NMPv3+：
 ```svelte
 <script lang="ts">
   import { onMount } from "svelte";
-  import { createNMPv3PlusSvelteBinding } from "@netease-mini-player/v3-plus/svelte";
+  import { createNMPv3PlusSvelteBinding } from "netease-mini-player-v3-plus/svelte";
 
   const binding = createNMPv3PlusSvelteBinding({
     playlistId: "14273792576",
@@ -247,8 +247,8 @@ NMPv3+：
   });
 
   onMount(async () => {
-    await import("@netease-mini-player/v3/auto");
-    await import("@netease-mini-player/v3-plus");
+    await import("netease-mini-player-v3/auto");
+    await import("netease-mini-player-v3-plus");
   });
 </script>
 

@@ -6,16 +6,16 @@ NMPv3+ source changes should follow the framework boundaries. Do not move advanc
 
 ```bash
 pnpm install
-pnpm --filter @netease-mini-player/v3 build
-pnpm --filter @netease-mini-player/v3-plus typecheck
-pnpm --filter @netease-mini-player/v3-plus test
-pnpm --filter @netease-mini-player/v3-plus build
+pnpm --filter netease-mini-player-v3 build
+pnpm --filter netease-mini-player-v3-plus typecheck
+pnpm --filter netease-mini-player-v3-plus test
+pnpm --filter netease-mini-player-v3-plus build
 ```
 
 For UI, browser bootstrap, layouts, skins, sources, or host sync:
 
 ```bash
-pnpm --filter @netease-mini-player/v3-plus ui:smoke
+pnpm --filter netease-mini-player-v3-plus ui:smoke
 ```
 
 ## Important paths

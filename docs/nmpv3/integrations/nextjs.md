@@ -7,12 +7,12 @@ Next.js 区分服务端组件与客户端组件。NMPv3 依赖浏览器全局对
 - Node.js 18+
 - Next.js 14+（App Router 或 Pages Router 均可）
 - React 18+
-- 已安装 `@netease-mini-player/v3`：`npm install @netease-mini-player/v3`
+- 已安装 `netease-mini-player-v3`：`npm install netease-mini-player-v3`
 
 ## NMPv3 包安装与配置流程
 
 ```bash
-npm install @netease-mini-player/v3
+npm install netease-mini-player-v3
 ```
 
 创建客户端组件，使用 `"use client"` 指令：
@@ -24,7 +24,7 @@ import { createElement, useEffect } from "react";
 
 export function NMPv3Player() {
   useEffect(() => {
-    void import("@netease-mini-player/v3/auto");
+    void import("netease-mini-player-v3/auto");
   }, []);
 
   return createElement("nmp-player", {
@@ -65,7 +65,7 @@ export default function RootLayout({
 
 ```tsx
 useEffect(() => {
-  void import("@netease-mini-player/v3/auto").then(() => {
+  void import("netease-mini-player-v3/auto").then(() => {
     window.NMPv3?.setApiBaseUrl("/api/netease");
   });
 }, []);
@@ -82,7 +82,7 @@ import { createElement, useEffect } from "react";
 
 export function NMPv3Player() {
   useEffect(() => {
-    void import("@netease-mini-player/v3/auto");
+    void import("netease-mini-player-v3/auto");
   }, []);
 
   return createElement("nmp-player", {
@@ -119,7 +119,7 @@ export function NMPv3Player() {
   const playerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    void import("@netease-mini-player/v3/auto");
+    void import("netease-mini-player-v3/auto");
   }, []);
 
   useEffect(() => {
@@ -146,7 +146,7 @@ export function NMPv3Player() {
 
 ### 服务端组件报错 window is not defined
 
-- 包含 `import("@netease-mini-player/v3/auto")` 的文件必须添加 `"use client"`
+- 包含 `import("netease-mini-player-v3/auto")` 的文件必须添加 `"use client"`
 - 不要在服务端组件中访问 `window.NMPv3`
 
 ### 水合错误
@@ -156,7 +156,7 @@ export function NMPv3Player() {
 
 ### 构建产物包含服务端导入
 
-- 检查动态导入是否使用 `import("@netease-mini-player/v3/auto")` 而非顶层 import
+- 检查动态导入是否使用 `import("netease-mini-player-v3/auto")` 而非顶层 import
 - 确认 `"use client"` 指令未被移除
 
 ### 自定义元素类型缺失

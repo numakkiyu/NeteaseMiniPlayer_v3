@@ -1,4 +1,4 @@
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 import { createElement } from "react";
 
 export function NMPv3Player() {

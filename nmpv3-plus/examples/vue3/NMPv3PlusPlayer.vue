@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusVueBinding } from "@netease-mini-player/v3-plus/vue";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusVueBinding } from "netease-mini-player-v3-plus/vue";
 
 const player = createNMPv3PlusVueBinding({
   playlistId: "14273792576",

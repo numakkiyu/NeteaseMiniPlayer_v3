@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import "@netease-mini-player/v3/auto";
-import { createNMPv3PlusNuxtClientPlan } from "@netease-mini-player/v3-plus/nuxt";
+import "netease-mini-player-v3/auto";
+import { createNMPv3PlusNuxtClientPlan } from "netease-mini-player-v3-plus/nuxt";
 
 const plan = createNMPv3PlusNuxtClientPlan({
   playlistId: "14273792576",

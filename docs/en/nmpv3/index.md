@@ -14,7 +14,7 @@ NMPv3 is the lightweight player package for GitHub Pages, blogs, CMS templates, 
 ## CDN example
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"
@@ -26,12 +26,12 @@ NMPv3 is the lightweight player package for GitHub Pages, blogs, CMS templates, 
 ## npm example
 
 ```bash
-npm install @netease-mini-player/v3
-pnpm add @netease-mini-player/v3
+npm install netease-mini-player-v3
+pnpm add netease-mini-player-v3
 ```
 
 ```ts
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 ```
 
 ## Feature scope

@@ -7,7 +7,7 @@ For a copyable standalone page, use the minimal HTML on this page. For public CD
 ## Build the file
 
 ```bash
-pnpm --filter @netease-mini-player/v3 build
+pnpm --filter netease-mini-player-v3 build
 ```
 
 Use this output in the browser:
@@ -39,7 +39,7 @@ The script registers `<nmp-player>`, scans the page, and injects the base CSS.
 ## CDN HTML
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@latest/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"

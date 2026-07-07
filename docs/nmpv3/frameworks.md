@@ -11,7 +11,7 @@ NMPv3 使用原生 Web Component。多数框架只需导入自动注册入口，
 ## Vite 或普通 TypeScript 项目
 
 ```ts
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 ```
 
 ```html
@@ -28,7 +28,7 @@ import "@netease-mini-player/v3/auto";
 React 可以用 `createElement` 避免 JSX 类型声明问题：
 
 ```tsx
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 import { createElement } from "react";
 
 export function NMPv3Player() {
@@ -64,7 +64,7 @@ declare namespace JSX {
 
 ```vue
 <script setup lang="ts">
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 </script>
 
 <template>
@@ -90,7 +90,7 @@ import { createElement, useEffect } from "react";
 
 export function NMPv3Player() {
   useEffect(() => {
-    void import("@netease-mini-player/v3/auto");
+    void import("netease-mini-player-v3/auto");
   }, []);
 
   return createElement("nmp-player", {
@@ -110,7 +110,7 @@ export function NMPv3Player() {
 
 ```ts
 // plugins/nmpv3.client.ts
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 
 export default defineNuxtPlugin(() => {});
 ```
@@ -127,7 +127,7 @@ export default defineNuxtPlugin(() => {});
 
 ```astro
 ---
-import "@netease-mini-player/v3/auto";
+import "netease-mini-player-v3/auto";
 ---
 
 <nmp-player
@@ -147,7 +147,7 @@ import "@netease-mini-player/v3/auto";
   import { onMount } from "svelte";
 
   onMount(async () => {
-    await import("@netease-mini-player/v3/auto");
+    await import("netease-mini-player-v3/auto");
   });
 </script>
 
