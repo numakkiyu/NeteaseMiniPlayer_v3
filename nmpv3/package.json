@@ -4,14 +4,14 @@
   "type": "module",
   "description": "Lightweight single-JS NetEase Cloud Music player.",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/BHCN-STUDIO/NeteaseMiniPlayer_v3#readme",
+  "homepage": "https://github.com/numakkiyu/NeteaseMiniPlayer_v3#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BHCN-STUDIO/NeteaseMiniPlayer_v3.git",
+    "url": "git+https://github.com/numakkiyu/NeteaseMiniPlayer_v3.git",
     "directory": "nmpv3"
   },
   "bugs": {
-    "url": "https://github.com/BHCN-STUDIO/NeteaseMiniPlayer_v3/issues"
+    "url": "https://github.com/numakkiyu/NeteaseMiniPlayer_v3/issues"
   },
   "keywords": [
     "netease",

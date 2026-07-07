@@ -13,8 +13,8 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "lint": "eslint . --max-warnings=0",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write --ignore-unknown README.md docs scripts .github nmpv3 nmpv3-plus package.json pnpm-workspace.yaml eslint.config.js .gitignore .prettierignore",
+    "format:check": "prettier --check --ignore-unknown README.md docs scripts .github nmpv3 nmpv3-plus package.json pnpm-workspace.yaml eslint.config.js .gitignore .prettierignore",
     "validate": "pnpm typecheck && pnpm test && pnpm lint && pnpm format:check"
   },
   "devDependencies": {

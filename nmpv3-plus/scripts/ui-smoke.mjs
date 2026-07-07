@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* global console, process, window, document, getComputedStyle, CustomEvent, URL */
 import { createServer } from "node:http";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";

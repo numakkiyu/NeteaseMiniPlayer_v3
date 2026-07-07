@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* global console, process */
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

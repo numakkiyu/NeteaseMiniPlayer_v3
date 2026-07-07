@@ -3,7 +3,7 @@ import { defineConfig } from "vitepress";
 const siteBase = process.env.VITEPRESS_BASE ?? "/";
 const repositoryUrl =
   process.env.VITEPRESS_REPO_URL ??
-  "https://github.com/BHCN-STUDIO/NeteaseMiniPlayer_v3";
+  "https://github.com/numakkiyu/NeteaseMiniPlayer_v3";
 
 const zhNav = [
   { text: "文档首页", link: "/" },

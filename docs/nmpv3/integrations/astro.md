@@ -158,7 +158,8 @@ export default defineConfig({
         "/api/netease": {
           target: "https://api.hypcvgm.top",
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/netease/, "/NeteaseMiniPlayer/nmp.php"),
+          rewrite: (path) =>
+            path.replace(/^\/api\/netease/, "/NeteaseMiniPlayer/nmp.php"),
         },
       },
     },

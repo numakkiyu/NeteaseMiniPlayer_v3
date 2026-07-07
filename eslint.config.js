@@ -8,13 +8,14 @@ export default [
       "**/node_modules/**",
       "**/dist/**",
       "**/coverage/**",
-      "test_docs/**",
+      "**/.vitepress/cache/**",
+      "docs/public/demo/assets/**",
     ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["**/*.{js,ts}"],
+    files: ["**/*.{js,mjs,ts}"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",

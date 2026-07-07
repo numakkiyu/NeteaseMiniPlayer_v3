@@ -43,7 +43,11 @@ export function NMPv3Player() {
 ```tsx
 import Script from "next/script";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="zh-CN">
       <head>
@@ -128,7 +132,13 @@ export function NMPv3Player() {
     return () => el.removeEventListener("nmpv3:play", handlePlay);
   }, []);
 
-  return <nmp-player ref={playerRef} playlist-id="14273792576" api-base-url="/api/netease" />;
+  return (
+    <nmp-player
+      ref={playerRef}
+      playlist-id="14273792576"
+      api-base-url="/api/netease"
+    />
+  );
 }
 ```
 
@@ -180,7 +190,10 @@ declare namespace JSX {
 // app/api/netease/[...path]/route.ts
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const target = new URL(url.pathname.replace("/api/netease", "/NeteaseMiniPlayer/nmp.php"), "https://api.hypcvgm.top");
+  const target = new URL(
+    url.pathname.replace("/api/netease", "/NeteaseMiniPlayer/nmp.php"),
+    "https://api.hypcvgm.top",
+  );
   target.search = url.search;
 
   return fetch(target.toString(), {
