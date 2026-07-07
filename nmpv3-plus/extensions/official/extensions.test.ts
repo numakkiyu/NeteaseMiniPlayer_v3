@@ -50,7 +50,7 @@ describe("official NMPv3+ extensions", () => {
     expect(visualizer?.attributes["aria-hidden"]).toBe("true");
     expect(visualizer?.children).toHaveLength(4);
 
-    runtime.destroy();
+    await runtime.destroy();
 
     expect(root.children.some((child) => child === visualizer)).toBe(false);
   });

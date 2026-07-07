@@ -37,7 +37,7 @@ describe("NMPv3+ plugin packages", () => {
     );
     expect(ctx.tokens.get("--nmpv3-user-wave")).toBe("3");
 
-    cleanup?.();
+    await cleanup?.();
 
     expect(ctx.tokens.get("--nmpv3-user-wave")).toBe("0");
     expect(ctx.root.classList.remove).toHaveBeenCalledWith(
@@ -84,6 +84,47 @@ describe("NMPv3+ plugin packages", () => {
     expect(importer).toHaveBeenCalledTimes(1);
     expect(packageResult.plugin.version).toBe("1.0.0");
     expect(packageResult.plugin.manifest?.style).toBe("./style.css");
+  });
+
+  it("fails when an explicit exportName is missing instead of falling back", () => {
+    expect(() =>
+      createNMPv3PlusPluginPackage({
+        manifest: userExtensionManifest(),
+        module: {
+          default: {
+            name: "nmpv3-plus-extension-user-wave",
+            setup() {},
+          },
+        },
+        exportName: "missingPlugin",
+      }),
+    ).toThrow("NMPv3+ plugin package export not found: missingPlugin");
+  });
+
+  it("removes injected CSS even when async plugin cleanup rejects", async () => {
+    const ctx = createPluginContextStub();
+    const packageResult = createNMPv3PlusPluginPackage({
+      manifest: userExtensionManifest(),
+      module: {
+        default: {
+          name: "nmpv3-plus-extension-user-wave",
+          setup() {
+            return async () => {
+              throw new Error("cleanup failed");
+            };
+          },
+        },
+      },
+      cssText: ".nmpv3-player{opacity:.9}",
+    });
+
+    const cleanup = await packageResult.plugin.setup(ctx);
+
+    await expect(cleanup?.()).rejects.toThrow("cleanup failed");
+    expect(ctx.root.classList.remove).toHaveBeenCalledWith(
+      "nmpv3-plus-extension-nmpv3-plus-extension-user-wave",
+    );
+    expect(ctx.root.ownerDocument.head.appended[0].remove).toHaveBeenCalled();
   });
 });
 

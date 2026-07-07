@@ -24,6 +24,23 @@ export interface NMPv3PlusElementConfig {
 
 export type NMPv3PlusElementAttrs = Record<string, string | boolean>;
 
+export type NMPv3PlusNativeElementProps = NMPv3PlusElementConfig & {
+  "song-id"?: string;
+  "playlist-id"?: string;
+  "source-type"?: string;
+  "skin-url"?: string;
+  "plus-layout"?: "card" | "cover";
+  "plus-extensions"?: string[] | string;
+  "extension-url"?: string;
+  "extension-entry-url"?: string;
+  "extension-style-url"?: string;
+  "lyrics-url"?: string;
+  "translation-lyrics-url"?: string;
+  "api-base-url"?: string;
+  "host-sync"?: boolean;
+  "page-linking"?: boolean;
+};
+
 export interface NMPv3PlusElementPlan {
   tagName: "nmp-player";
   attrs: NMPv3PlusElementAttrs;
@@ -32,6 +49,16 @@ export interface NMPv3PlusElementPlan {
   clientOnly: boolean;
   requiredImports: string[];
 }
+
+export type NMPv3PlusFrameworkAdapter<
+  TOutput,
+  TConfig extends NMPv3PlusElementConfig = NMPv3PlusElementConfig,
+> = (config: TConfig) => TOutput;
+
+export type NMPv3PlusFrameworkAdapterTransform<
+  TOutput,
+  TConfig extends NMPv3PlusElementConfig = NMPv3PlusElementConfig,
+> = (plan: NMPv3PlusElementPlan, config: TConfig) => TOutput;
 
 export const nmpv3PlusElementEvents = {
   ready: "nmpv3:ready",
@@ -73,8 +100,8 @@ export function toNMPv3PlusElementAttrs(
 }
 
 /**
- * 框架适配器核心：将 NMPv3+ 配置转为 <nmp-player> DOM 属性
- * 同时生成完整的元素计划（含 HTML 序列化、事件映射、客户端导入）
+ * Shared adapter core: converts NMPv3+ config into <nmp-player> DOM
+ * attributes and a complete element plan for framework wrappers.
  */
 export function createNMPv3PlusElementPlan(
   config: NMPv3PlusElementConfig,
@@ -92,6 +119,15 @@ export function createNMPv3PlusElementPlan(
       "@netease-mini-player/v3-plus",
     ],
   };
+}
+
+export function createNMPv3PlusFrameworkAdapter<
+  TOutput,
+  TConfig extends NMPv3PlusElementConfig = NMPv3PlusElementConfig,
+>(
+  transform: NMPv3PlusFrameworkAdapterTransform<TOutput, TConfig>,
+): NMPv3PlusFrameworkAdapter<TOutput, TConfig> {
+  return (config) => transform(createNMPv3PlusElementPlan(config), config);
 }
 
 export function renderNMPv3PlusElement(attrs: NMPv3PlusElementAttrs): string {

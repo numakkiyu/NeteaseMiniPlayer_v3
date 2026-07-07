@@ -1,214 +1,138 @@
 # @netease-mini-player/v3-plus
 
-NMPv3+ is the advanced product line for developers and deep customization.
+NMPv3+ 是 NeteaseMiniPlayer v3 Plus 的高级扩展框架。它在 NMPv3 基础播放器之上提供插件、皮肤、自定义来源、自定义歌词、宿主页面联动、框架适配器和自定义构建能力。
 
-It may include:
+NMPv3+ 不替代 NMPv3 的轻量入口。普通网页嵌入优先使用 `@netease-mini-player/v3`，只有在需要高级扩展时再加载 NMPv3+。
 
-- PluginManager
-- SkinEngine
-- SourceAdapter
-- LyricsAdapter
-- HostBridge
-- CLI
-- Framework adapters
-- WordPress advanced integration
+## 适合场景
 
-NMPv3+ can use multiple files and optional third-party dependencies because it is not the default lightweight CDN product.
+- 需要本地 JSON 歌单、业务 API 或自定义音乐来源
+- 需要加载本地 LRC、翻译歌词或静态歌词
+- 需要插件系统、皮肤系统或用户扩展包
+- 需要页面背景、DOM 属性、CSS 变量或 URL 跟随播放状态变化
+- 需要 React、Vue 3、Next.js、Nuxt、Astro、Svelte 等框架适配器
+- 需要 WordPress 高级集成、PHP 辅助函数或自定义部署包
+- 需要按项目选择插件、皮肤和运行时代码的自定义构建流程
 
-## Install
+## 安装
 
 ```bash
-npm install @netease-mini-player/v3-plus
-pnpm add @netease-mini-player/v3-plus
+npm install @netease-mini-player/v3 @netease-mini-player/v3-plus
+pnpm add @netease-mini-player/v3 @netease-mini-player/v3-plus
 ```
 
-## Core Runtime
+NMPv3+ 需要先有一个基础 NMPv3 播放器实例。未启用高级扩展时，默认界面保持 NMPv3 的基础 compact UI。
 
-NMPv3+ builds on top of an existing NMPv3 player instance. The base player UI
-stays intact; Plus features are explicit opt-in runtime extensions.
+## 浏览器引用
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script>
+  window.NMPv3PlusConfig = {
+    apiBaseUrl: "/api/netease",
+    defaultSkin: "default",
+  };
+</script>
+<script
+  type="module"
+  src="https://cdn.jsdelivr.net/npm/@netease-mini-player/v3-plus@latest/dist/browser.js"
+></script>
+
+<nmp-player playlist-id="14273792576" layout="compact"></nmp-player>
+```
+
+也可以使用 unpkg：
+
+```html
+<script src="https://unpkg.com/@netease-mini-player/v3@latest/dist/nmpv3.min.js"></script>
+<script
+  type="module"
+  src="https://unpkg.com/@netease-mini-player/v3-plus@latest/dist/browser.js"
+></script>
+```
+
+## 推荐应用入口
+
+在前端项目中，推荐使用类似 Vue `createApp()` 的组合式入口。这样可以把来源、歌词、皮肤和插件集中注册，再挂载到现有播放器。
 
 ```ts
 import {
-  createNMPv3PlusRuntime,
-  createVisualizerPlugin,
-  createCoverColorPlugin,
   createHostSyncPlugin,
+  createLocalJsonSourceAdapter,
+  createNMPv3PlusApp,
+  createStaticLyricsAdapter,
+  officialNMPv3PlusSkins,
 } from "@netease-mini-player/v3-plus";
 
-const playerElement = document.querySelector("nmp-player");
+await createNMPv3PlusApp()
+  .source(createLocalJsonSourceAdapter())
+  .lyrics(
+    createStaticLyricsAdapter({
+      "local-001": "[00:01.00]本地歌词",
+    }),
+  )
+  .skin(...officialNMPv3PlusSkins)
+  .skin("default")
+  .use(createHostSyncPlugin())
+  .mount({
+    root: document.querySelector("nmp-player"),
+    player: window.NMPv3?.getPlayers()[0],
+  });
+```
+
+低层运行时 API 也可以直接使用：
+
+```ts
+import {
+  createCoverColorPlugin,
+  createNMPv3PlusRuntime,
+} from "@netease-mini-player/v3-plus";
+
 const runtime = createNMPv3PlusRuntime({
-  root: playerElement,
-  player: window.NMPv3?.getPlayers()[0],
+  root: document.querySelector("nmp-player"),
 });
 
 await runtime.installPlugin(createCoverColorPlugin());
-await runtime.installPlugin(createVisualizerPlugin({ mode: "bars" }));
-await runtime.installPlugin(createHostSyncPlugin());
 ```
 
-By default the runtime bridges `nmpv3:play`, `nmpv3:pause`,
-`nmpv3:songchange`, `nmpv3:playlistchange`, and `nmpv3:error` DOM events into
-Plus runtime events such as `play`, `songchange`, and `nmp:songchange`. If
-`root` points at the internal `.nmpv3-player` node instead of `<nmp-player>`,
-pass the host element as `eventTarget` so plugins still receive real player
-events.
+## 插件能力
 
-## Official Extensions
+官方扩展包括：
 
-The current official extension entry points are:
+| 扩展               | 用途                              |
+| ------------------ | --------------------------------- |
+| `advanced-layouts` | 启用 `card` 和 `cover` 等高级布局 |
+| `visualizer`       | 添加播放频谱、波形或氛围视觉层    |
+| `cover-color`      | 从封面提取主色并写入 CSS 变量     |
+| `host-sync`        | 将播放状态同步到宿主页面          |
+| `cross-tab-sync`   | 在多个标签页之间同步选定事件      |
+| `media-session`    | 配置系统媒体控制信息              |
+| `custom-source`    | 注册自定义音乐来源                |
+| `local-lyrics`     | 注册本地或静态歌词                |
+| `pwa-cache`        | 为运行时和资源提供可选缓存        |
 
-- `advanced-layouts`: opt-in `card` and `cover` layouts.
-- `visualizer`: non-layout-shifting bars, wave, or ambient visualizer layer.
-- `cover-color`: extracts a dominant cover color into a CSS token.
-- `host-sync`: mirrors player events into host page attributes, classes, CSS
-  variables, and optional page links.
-- `cross-tab-sync`: uses BroadcastChannel for selected playback events.
-- `media-session`: configurable Media Session metadata and handlers.
-- `custom-source`: registers a user-provided source adapter.
-- `local-lyrics`: registers local/static LRC lyrics.
-- `pwa-cache`: optional Cache API integration for runtime and song assets.
-
-These are NMPv3+ features. They are not added to the lightweight `nmpv3/`
-package.
-
-Every official extension has a validated manifest contract. Runtime code can
-bind a manifest to a plugin factory with `defineNMPv3PlusPluginPackage`, and
-custom deployment packages copy each selected extension's `manifest.json`
-beside its `index.js`.
-
-When `page-linking` is enabled on a player, or `pageLinkingEnabled` is enabled
-in the host integration settings, host sync updates linked-song attributes and
-the page URL query parameter without changing the base player UI.
-For custom host integrations, bridge rules can map runtime payloads into
-attributes, CSS tokens, style properties, and classes on a host element or
-selector:
-
-```ts
-runtime.bridgeHost({
-  target: "body",
-  rules: [
-    {
-      on: "songchange",
-      attribute: {
-        "data-current-song": "{{song.id}}",
-      },
-      style: {
-        "--site-accent": "{{song.themeColor}}",
-        "--site-cover": "url({{song.picUrl}})",
-      },
-      className: {
-        "nmp-is-playing": "{{player.isPlaying}}",
-      },
-    },
-  ],
-});
-```
-
-Advanced layouts are explicit plugins, so the default NMPv3 compact/mini/dock
-UI stays unchanged:
-
-```ts
-await runtime.installPlugin(createAdvancedLayoutPlugin({ layout: "cover" }));
-```
-
-User extension packages can be loaded from an `extensions/user/*` folder with a
-`manifest.json`, module entry, and optional `style.css`:
+高级布局和视觉扩展需要显式启用，不会自动改变 NMPv3 的默认界面。
 
 ```html
 <nmp-player
   playlist-id="14273792576"
-  extension-url="/extensions/user/wave/manifest.json"
+  plus-extensions="advanced-layouts,visualizer"
+  plus-layout="cover"
 ></nmp-player>
 ```
 
-```json
-{
-  "name": "nmpv3-plus-extension-user-wave",
-  "displayName": "User Wave",
-  "version": "1.0.0",
-  "author": "User",
-  "entry": "./index.js",
-  "style": "./style.css",
-  "type": "visual",
-  "description": "Adds a user visual extension."
-}
-```
+## 皮肤能力
 
-The module must export a real NMPv3+ plugin object or factory:
+官方皮肤包括：
 
-```js
-export default {
-  name: "nmpv3-plus-extension-user-wave",
-  setup(ctx) {
-    return ctx.on("songchange", () => {
-      ctx.setToken("--nmpv3-user-wave-active", "1");
-    });
-  },
-};
-```
+- `default`：保留基础 NMPv3 外观
+- `glass`：透明表面和模糊效果
+- `minimal`：克制的工具型界面
+- `anime`：更轻的强调色皮肤
+- `cyber`：深色高对比方向
+- `vinyl`：偏唱片机的视觉方向
 
-When `style.css` is present, NMPv3+ injects it only while the plugin is
-installed and scopes selectors under a generated extension class. TypeScript
-users can call `loadNMPv3PlusPluginPackage()` and then install
-`package.plugin` on a runtime.
-
-## Custom Sources and Lyrics
-
-Core source adapters cover the source types exposed by NMPv3+:
-
-```ts
-import {
-  createLocalJsonSourceAdapter,
-  createManualSourceAdapter,
-  createStaticPlaylistSourceAdapter,
-} from "@netease-mini-player/v3-plus/core";
-
-runtime.registerSource(createLocalJsonSourceAdapter());
-await runtime.loadPlaylist({
-  source: "local-json",
-  url: "/music/playlist.json",
-});
-```
-
-`netease` is also available as an explicit Plus source adapter for custom
-source pipelines that need to route NetEase songs or playlists through the same
-adapter system as local JSON and custom APIs.
-
-Lyrics can be static LRC, JSON lines, plain text, or translated lyric objects:
-
-```ts
-import { createStaticLyricsAdapter } from "@netease-mini-player/v3-plus/core";
-
-runtime.registerLyrics(
-  createStaticLyricsAdapter({
-    "local-001": {
-      lyric: "[00:01.00]Original line",
-      translation: "[00:01.00]Translated line",
-    },
-  }),
-);
-```
-
-When a `local-json` song includes `lyricUrl` and `translationLyricUrl`, the
-browser and WordPress bootstraps load and merge those files automatically after
-the playlist is applied to the base NMPv3 player.
-
-For offline-oriented sites, install `createPwaCachePlugin()` explicitly. It uses
-the browser Cache API and remains out of the default NMPv3 runtime.
-
-## Official Skins
-
-Official skins are real `NMPv3PlusSkin` objects plus `skin.json` metadata under
-`skins/official/`:
-
-- `default`: preserves the base NMPv3 look.
-- `glass`: translucent surface tokens and blur.
-- `minimal`: quiet white tool-style surface.
-- `anime`: lighter accent skin with soft cover emphasis.
-- `cyber`: dark high-contrast skin.
-- `vinyl`: warm record-player visual direction.
-
-Register and apply them explicitly:
+注册并应用皮肤：
 
 ```ts
 import {
@@ -224,9 +148,7 @@ const runtime = createNMPv3PlusRuntime({
 runtime.applySkin("glass");
 ```
 
-User skin packages can be loaded at runtime from a `skin.json` file plus an
-optional adjacent `skin.css` file. The browser bootstrap registers the package
-before applying the named skin:
+用户皮肤可以通过 `skin-url` 加载：
 
 ```html
 <nmp-player
@@ -236,171 +158,85 @@ before applying the named skin:
 ></nmp-player>
 ```
 
-The matching `skin.json` follows the same manifest contract as official skins:
+## 自定义来源与歌词
 
-```json
-{
-  "name": "studio-deep",
-  "displayName": "Studio Deep",
-  "version": "1.0.0",
-  "author": "User",
-  "supports": ["mini", "compact", "dock", "card", "cover"],
-  "tokens": {
-    "--nmpv3-bg": "rgba(16, 20, 28, 0.92)",
-    "--nmpv3-text": "#f7f2e8",
-    "--nmpv3-accent": "#ff8a50",
-    "--nmpv3-radius": "18px"
-  }
-}
-```
-
-When `skin.css` is present beside the manifest, NMPv3+ scopes selectors under
-the generated skin class, for example
-`.nmpv3-plus-skin-studio-deep .nmpv3-player`, so a user skin does not leak into
-other players on the host page. TypeScript users can use
-`loadNMPv3PlusSkinPackage()` or `createNMPv3PlusSkinPackage()` from the core
-entry point and then call `runtime.registerSkin(skin)`.
-
-## Custom Build Package
-
-The CLI core resolves selected extensions and skins into a deployment plan
-instead of pretending that every deployment is a single fixed bundle:
+NMPv3+ 支持本地 JSON、静态歌单、手动来源和自定义 API 来源。
 
 ```ts
-import { resolveNMPv3PlusBuildPlan } from "@netease-mini-player/v3-plus/cli";
+import { createLocalJsonSourceAdapter } from "@netease-mini-player/v3-plus/core";
 
-const plan = resolveNMPv3PlusBuildPlan({
-  extensions: ["visualizer", "host-sync"],
-  skins: ["glass", "vinyl"],
+runtime.registerSource(createLocalJsonSourceAdapter());
+
+await runtime.loadPlaylist({
+  source: "local-json",
+  url: "/music/playlist.json",
 });
 ```
 
-After `pnpm --filter @netease-mini-player/v3-plus build`, the bundled command
-can either write a manifest-only plan or materialize a real deploy package from
-JSON config:
+静态歌词示例：
 
-```bash
-nmpv3-plus add examples/custom-build/nmpv3-plus.config.json visualizer host-sync glass
-nmpv3-plus plan examples/custom-build/nmpv3-plus.config.json
-nmpv3-plus build examples/custom-build/nmpv3-plus.config.json
+```ts
+import { createStaticLyricsAdapter } from "@netease-mini-player/v3-plus/core";
+
+runtime.registerLyrics(
+  createStaticLyricsAdapter({
+    "local-001": {
+      lyric: "[00:01.00]原文歌词",
+      translation: "[00:01.00]翻译歌词",
+    },
+  }),
+);
 ```
 
-`add` updates the JSON build config with validated official extension and skin
-names. `build` copies `dist/index.js` to the configured runtime file, preserves
-the
-compiled `packages/`, `extensions/`, and `chunks/` dependency trees next to that
-runtime, copies the browser bootstrap, copies selected extension
-`manifest.json` files, copies selected skin metadata, and writes
-`nmpv3-plus.manifest.json`. The extension output path must keep the Vite ESM
-layout, for example `deploy/extensions/official/visualizer/index.js` plus
-`deploy/extensions/official/visualizer/manifest.json`, so compiled relative
-imports and extension metadata continue to resolve. Unknown extension or skin
-names fail the command instead of producing placeholder assets.
+## 框架适配器
 
-For ordinary HTML deployment, load the base NMPv3 bundle first, then the Plus
-bootstrap. The bootstrap waits for `<nmp-player>`, reads `NMPv3PlusConfig`,
-applies selected skins, and installs requested extensions without changing the
-base NMPv3 UI:
+NMPv3+ 提供面向常见框架的适配器入口：
 
-```html
-<script src="/nmpv3.min.js"></script>
-<script>
-  window.NMPv3PlusConfig = {
-    apiBaseUrl: "/api/netease",
-    defaultSkin: "glass",
-    enabledExtensions: ["visualizer", "host-sync"],
-  };
-</script>
-<script type="module" src="/deploy/nmpv3-plus.bootstrap.js"></script>
+- `@netease-mini-player/v3-plus/react`
+- `@netease-mini-player/v3-plus/vue`
+- `@netease-mini-player/v3-plus/next`
+- `@netease-mini-player/v3-plus/nuxt`
+- `@netease-mini-player/v3-plus/astro`
+- `@netease-mini-player/v3-plus/svelte`
 
-<nmp-player
-  playlist-id="14273792576"
-  skin="glass"
-  plus-extensions="advanced-layouts,visualizer,host-sync"
-  plus-layout="cover"
-></nmp-player>
-```
+这些适配器不会把框架运行时打进 NMPv3+。它们主要负责把框架友好的属性转换成 `<nmp-player>` 可以识别的原生属性和事件。
 
-If `apiBaseUrl` is omitted, NMPv3+ first keeps an API already injected for the
-base player through `window.NMPv3Config.apiBaseUrl` or
-`window.NMPv3ApiBaseUrl`. Legacy backend templates may also use
-`window.NeteaseMiniPlayerApiBaseUrl`. If none is present, NMPv3+ falls back to
-the same compiled default as the base player:
-
-```txt
-https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php
-```
-
-The bootstrap mirrors `NMPv3PlusConfig.apiBaseUrl` into
-`window.NMPv3Config.apiBaseUrl`, `window.NMPv3ApiBaseUrl`, and the legacy
-`window.NeteaseMiniPlayerApiBaseUrl`, then calls
-`window.NMPv3.setApiBaseUrl(url)` when the base player is already loaded.
-Frontend code or backend-generated JavaScript can move a deployed bundle to
-another compatible NetEase API proxy without rebuilding.
-When no global override is provided, NMPv3+ does not push its default fallback
-back into the base player; a per-player `<nmp-player api-base-url="...">`
-continues to take priority for that player and for Plus `custom-api` loading.
-
-## UI Smoke Verification
-
-NMPv3+ includes a Playwright smoke script for rendered layout checks. It serves
-the already built NMPv3 and NMPv3+ bundles, installs the cover layout,
-visualizer, host sync, and glass skin on a real `<nmp-player>`, then checks
-desktop, tablet, and mobile viewports for console errors, blank output,
-horizontal overflow, hidden single-song previous/next controls, and plugin
-event response:
-
-```bash
-pnpm --filter @netease-mini-player/v3 build
-pnpm --filter @netease-mini-player/v3-plus build
-pnpm --filter @netease-mini-player/v3-plus ui:smoke
-```
-
-## Framework Adapters
-
-React, Vue, Next, Nuxt, Astro, and Svelte adapters expose framework-friendly
-props, attrs, or client-only element plans while keeping the actual player as
-the native `<nmp-player>` element:
+React 示例：
 
 ```ts
 import { createNMPv3PlusReactProps } from "@netease-mini-player/v3-plus/react";
 
 const props = createNMPv3PlusReactProps({
   playlistId: "14273792576",
-  skin: "glass",
-  plusExtensions: ["advanced-layouts", "visualizer", "host-sync"],
-  plusLayout: "cover",
-  lyricsUrl: "/lyrics/song.lrc",
-  translationLyricsUrl: "/lyrics/song.zh.lrc",
+  skin: "default",
+  plusExtensions: ["host-sync"],
   hostSync: true,
 });
 ```
 
-```ts
-import { createNMPv3PlusNextClientPlan } from "@netease-mini-player/v3-plus/next";
+## 自定义构建
 
-const plan = createNMPv3PlusNextClientPlan({
-  playlistId: "14273792576",
-  sourceType: "local-json",
-  source: "/music/playlist.json",
-  skin: "glass",
-  plusExtensions: ["custom-source", "local-lyrics"],
-  lyricsUrl: "/lyrics/song.lrc",
-});
+NMPv3+ 可以按项目选择插件、皮肤和运行时代码，生成可部署的自定义包。
+
+```bash
+pnpm --filter @netease-mini-player/v3-plus build
+nmpv3-plus add examples/custom-build/nmpv3-plus.config.json visualizer host-sync glass
+nmpv3-plus plan examples/custom-build/nmpv3-plus.config.json
+nmpv3-plus build examples/custom-build/nmpv3-plus.config.json
 ```
 
-The framework adapters do not import framework runtimes. They return native
-custom-element attributes, event names, and client-only loading hints for the
-host framework to consume. Plus-specific fields map directly to deployable
-custom-element attributes such as `plus-extensions`, `plus-layout`,
-`lyrics-url`, `translation-lyrics-url`, `host-sync`, `page-linking`,
-`skin-url`, and `extension-url`.
+构建结果会保留运行时模块、扩展清单、皮肤元数据和部署清单，适合放到普通静态目录或后端模板目录中。
 
-## WordPress and PHP Advanced Integration
+## WordPress 与 PHP 高级集成
 
-NMPv3+ owns advanced WordPress/PHP integration. The package exposes helpers for
-settings pages, Gutenberg block metadata, enqueue plans, shortcodes, and PHP
-theme rendering:
+NMPv3+ 负责高级 WordPress 和 PHP 集成，包括：
+
+- 设置页
+- Gutenberg 区块元数据
+- enqueue 计划
+- 短代码渲染
+- PHP 辅助函数
+- 插件包构建
 
 ```ts
 import {
@@ -410,36 +246,59 @@ import {
 } from "@netease-mini-player/v3-plus/wordpress";
 
 const block = createNMPv3PlusBlockMetadata({
-  defaultSkin: "glass",
+  defaultSkin: "default",
   hostSyncEnabled: true,
 });
 ```
 
-The installable WordPress package is materialized from real build output. It
-copies the base `nmpv3.min.js`, the WordPress bootstrap module, the NMPv3+
-runtime module, its `packages/`, `extensions/`, and `chunks/` dependency trees,
-selected extension manifest files, selected skin JSON files, block metadata,
-editor script, and a manifest:
+## 本地开发
 
-```ts
-await buildNMPv3PlusWordPressPluginPackage({
-  settings: {
-    enabledExtensions: ["visualizer", "host-sync"],
-    enabledSkins: ["glass"],
-    defaultSkin: "glass",
-  },
-});
+```bash
+pnpm install
+pnpm --filter @netease-mini-player/v3-plus build
+pnpm --filter @netease-mini-player/v3-plus typecheck
+pnpm --filter @netease-mini-player/v3-plus test
 ```
 
-```ts
-import { renderNMPv3PlusShortcode } from "@netease-mini-player/v3-plus/php";
+渲染冒烟检查：
 
-renderNMPv3PlusShortcode({
-  source: "local-json",
-  localMusicJson: "/music/playlist.json",
-  skin: "vinyl",
-});
+```bash
+pnpm --filter @netease-mini-player/v3 build
+pnpm --filter @netease-mini-player/v3-plus build
+pnpm --filter @netease-mini-player/v3-plus ui:smoke
 ```
 
-An actual PHP helper file is included at
-`packages/php/nmpv3-plus-helper.php`.
+## 能力边界
+
+NMPv3+ 负责：
+
+- 插件系统
+- 皮肤系统
+- 自定义音乐来源
+- 自定义歌词来源
+- 宿主页面联动
+- 框架适配器
+- 自定义构建
+- WordPress 与 PHP 高级集成
+
+NMPv3+ 不应该：
+
+- 取代 NMPv3 作为普通网页的默认轻量入口
+- 让 NMPv3 用户为了基础播放理解插件或皮肤系统
+- 把高级扩展能力反向塞进 `nmpv3/`
+- 默认启用大封面、频谱或强视觉皮肤
+
+## 相关文档
+
+- [NMPv3+ 文档](../docs/nmpv3-plus/index.md)
+- [快速开始](../docs/nmpv3-plus/getting-started.md)
+- [深度自定义流程](../docs/nmpv3-plus/deep-customization.md)
+- [框架适配](../docs/nmpv3-plus/frameworks.md)
+- [插件与皮肤](../docs/nmpv3-plus/plugins-skins.md)
+- [音乐源与歌词](../docs/nmpv3-plus/sources-lyrics.md)
+- [自定义构建](../docs/nmpv3-plus/custom-build.md)
+- [WordPress 与 PHP 高级集成](../docs/nmpv3-plus/wordpress-php.md)
+
+## 许可证
+
+Apache 2.0 许可证

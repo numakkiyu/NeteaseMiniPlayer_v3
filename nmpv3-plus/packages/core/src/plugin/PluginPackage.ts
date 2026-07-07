@@ -78,15 +78,18 @@ export async function loadNMPv3PlusPluginPackage(
 
 function pluginFromModule(
   moduleInput: unknown,
-  exportName = "default",
+  exportName?: string,
   config?: Record<string, unknown>,
 ): NMPv3PlusPlugin {
   const module = asPluginModule(moduleInput);
-  const exported =
-    module[exportName] ??
-    module.default ??
-    module.plugin ??
-    module.createPlugin;
+  const exported = exportName
+    ? module[exportName]
+    : (module.default ?? module.plugin ?? module.createPlugin);
+  const exportLabel = exportName ?? "default/plugin/createPlugin";
+
+  if (exportName && !(exportName in module)) {
+    throw new Error(`NMPv3+ plugin package export not found: ${exportName}`);
+  }
 
   if (typeof exported === "function") {
     return exported(config);
@@ -97,14 +100,12 @@ function pluginFromModule(
   }
 
   throw new Error(
-    `NMPv3+ plugin package export is not a plugin: ${exportName}`,
+    `NMPv3+ plugin package export is not a plugin: ${exportLabel}`,
   );
 }
 
 /**
- * 为插件注入 CSS 样式和 className
- * setup 时注入样式到文档、添加 className，cleanup 时移除
- * 同时处理原始插件的同步/异步 cleanup 返回值
+ * Wraps a plugin with scoped CSS injection and async-safe cleanup.
  */
 function withPluginCss(
   plugin: NMPv3PlusPlugin,
@@ -133,12 +134,28 @@ function withPluginCss(
       }
 
       return Promise.resolve(cleanupResult)
-        .then((cleanup) => () => {
+        .then((cleanup) => async () => {
+          let cleanupError: unknown;
+
           if (typeof cleanup === "function") {
-            cleanup();
+            try {
+              await cleanup();
+            } catch (error) {
+              cleanupError = error;
+            }
           }
 
-          cleanupStyle();
+          try {
+            cleanupStyle();
+          } catch (error) {
+            if (cleanupError === undefined) {
+              cleanupError = error;
+            }
+          }
+
+          if (cleanupError) {
+            throw cleanupError;
+          }
         })
         .catch((error) => {
           cleanupStyle();

@@ -650,11 +650,34 @@ nmp-player,
     4px 4px 10px var(--nmpv3-shadow-dark),
     -4px -4px 10px var(--nmpv3-shadow-light);
   z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.985);
+  transform-origin: top center;
+  clip-path: inset(0 0 100% 0 round 14px);
+  transition:
+    opacity 170ms ease,
+    transform 210ms cubic-bezier(0.18, 0.9, 0.2, 1),
+    clip-path 210ms cubic-bezier(0.18, 0.9, 0.2, 1);
+  will-change: opacity, transform, clip-path;
+}
+
+.nmpv3-player.nmpv3-playlist-open .nmpv3-playlist-panel {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  clip-path: inset(0 0 0 0 round 14px);
 }
 
 .nmpv3-player[data-position^="bottom"] .nmpv3-playlist-panel {
   top: auto;
   bottom: calc(100% + 10px);
+  transform: translateY(8px) scale(0.985);
+  transform-origin: bottom center;
+}
+
+.nmpv3-player[data-position^="bottom"].nmpv3-playlist-open .nmpv3-playlist-panel {
+  transform: translateY(0) scale(1);
 }
 
 .nmpv3-playlist-list {
@@ -671,6 +694,7 @@ nmp-player,
 }
 
 .nmpv3-playlist-item {
+  --nmpv3-playlist-item-delay: 0ms;
   width: 100%;
   min-height: var(--nmpv3-playlist-row-height);
   display: grid;
@@ -686,7 +710,13 @@ nmp-player,
   text-align: left;
   transition:
     background-color 160ms ease,
-    color 160ms ease;
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.nmpv3-player.nmpv3-playlist-open .nmpv3-playlist-item {
+  animation: nmpv3-playlist-item-in 180ms cubic-bezier(0.18, 0.9, 0.2, 1) both;
+  animation-delay: var(--nmpv3-playlist-item-delay);
 }
 
 .nmpv3-playlist-item:last-child {
@@ -1151,12 +1181,25 @@ nmp-player,
   }
 }
 
+@keyframes nmpv3-playlist-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nmpv3-player,
   .nmpv3-player::before,
   .nmpv3-cover,
   .nmpv3-vinyl-ring,
-  .nmpv3-icon-button {
+  .nmpv3-icon-button,
+  .nmpv3-playlist-panel,
+  .nmpv3-playlist-item {
     animation: none !important;
     transition: none !important;
   }

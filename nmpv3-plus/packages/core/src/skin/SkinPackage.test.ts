@@ -39,6 +39,17 @@ describe("NMPv3+ skin packages", () => {
     );
   });
 
+  it("ignores braces inside comments, strings, and url functions while scoping", () => {
+    expect(
+      scopeNMPv3PlusSkinCss(
+        '/* { ignored } */.nmpv3-player{background:url("data:image/svg+xml;utf8,<svg>{}</svg>");content:"{not a rule}"}.nmpv3-title{color:red}',
+        "nmpv3-plus-skin-user",
+      ),
+    ).toBe(
+      '/* { ignored } */.nmpv3-plus-skin-user .nmpv3-player{background:url("data:image/svg+xml;utf8,<svg>{}</svg>");content:"{not a rule}"}.nmpv3-plus-skin-user .nmpv3-title{color:red}',
+    );
+  });
+
   it("loads skin.json and adjacent skin.css through fetch", async () => {
     const fetcher = vi.fn(async (url: string) => {
       if (url === "/skins/user/studio/skin.json") {

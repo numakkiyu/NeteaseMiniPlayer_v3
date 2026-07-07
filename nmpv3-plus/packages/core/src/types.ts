@@ -13,8 +13,14 @@ export interface NMPv3PlusStore {
   set<TValue>(key: string, value: TValue): void;
   delete(key: string): void;
   has(key: string): boolean;
+  subscribe?<TValue>(
+    key: string,
+    callback: (value: TValue | undefined, previous: TValue | undefined) => void,
+  ): () => void;
   clear(): void;
 }
+
+export type NMPv3PlusPluginCleanup = () => void | Promise<void>;
 
 export interface NMPv3PlusPlayerLike {
   play?(): Promise<void>;
@@ -134,6 +140,7 @@ export interface NMPv3PlusExtensionManifest {
   style?: string;
   type: NMPv3PlusExtensionType;
   description: string;
+  dependencies?: Record<string, string>;
   configSchema?: Record<string, NMPv3PlusManifestFieldSchema>;
 }
 
@@ -164,10 +171,11 @@ export interface NMPv3PlusRemoteSkinPackageInput {
 export interface NMPv3PlusPlugin {
   name: string;
   version?: string;
+  dependencies?: Record<string, string>;
   manifest?: NMPv3PlusExtensionManifest;
   setup(
     ctx: NMPv3PlusPluginContext,
-  ): void | (() => void) | Promise<void | (() => void)>;
+  ): void | NMPv3PlusPluginCleanup | Promise<void | NMPv3PlusPluginCleanup>;
 }
 
 export interface NMPv3PlusPluginPackage {
@@ -237,6 +245,7 @@ export interface NMPv3PlusRuntimeOptions {
   root?: HTMLElement | null;
   eventTarget?: EventTarget | null;
   bridgeNMPv3Events?: boolean;
+  debug?: boolean;
   player?: NMPv3PlusPlayerLike | null;
   audio?: HTMLAudioElement | null;
   api?: NMPv3PlusApiLike | null;

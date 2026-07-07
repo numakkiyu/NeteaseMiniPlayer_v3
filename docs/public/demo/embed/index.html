@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ff6b35" />
+    <title>NeteaseMiniPlayer v3 Embed Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --demo-bg: #f6f7fb;
+        --demo-surface: #ffffff;
+        --demo-text: #171923;
+        --demo-muted: #5d6472;
+        --demo-border: rgba(23, 25, 35, 0.12);
+        --demo-accent: #ff6b35;
+        --demo-blue: #2f6feb;
+        --demo-shadow: 0 24px 70px rgba(23, 25, 35, 0.1);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --demo-bg: #101218;
+          --demo-surface: #171a23;
+          --demo-text: #f6f8fc;
+          --demo-muted: #a8b0bf;
+          --demo-border: rgba(246, 248, 252, 0.14);
+          --demo-shadow: 0 24px 70px rgba(0, 0, 0, 0.36);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, rgba(255, 107, 53, 0.1), transparent 340px),
+          var(--demo-bg);
+        color: var(--demo-text);
+        font-family: "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      }
+
+      a {
+        color: var(--demo-blue);
+      }
+
+      .shell {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 42px 0;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 42px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .brand img {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+
+      .brand strong {
+        display: block;
+        font-size: 16px;
+      }
+
+      .brand span {
+        display: block;
+        color: var(--demo-muted);
+        font-size: 13px;
+      }
+
+      .status {
+        border: 1px solid var(--demo-border);
+        border-radius: 999px;
+        padding: 7px 12px;
+        background: rgba(255, 255, 255, 0.56);
+        color: var(--demo-muted);
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .status {
+          background: rgba(23, 26, 35, 0.7);
+        }
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+        gap: 28px;
+        align-items: center;
+      }
+
+      .panel {
+        border: 1px solid var(--demo-border);
+        border-radius: 8px;
+        background: var(--demo-surface);
+        box-shadow: var(--demo-shadow);
+      }
+
+      .copy {
+        padding: 34px;
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: var(--demo-accent);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 720px;
+        margin: 0;
+        font-size: clamp(34px, 5vw, 58px);
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .lede {
+        max-width: 640px;
+        margin: 18px 0 0;
+        color: var(--demo-muted);
+        font-size: 17px;
+        line-height: 1.75;
+        text-wrap: pretty;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        border: 1px solid var(--demo-border);
+        border-radius: 8px;
+        padding: 9px 14px;
+        color: var(--demo-text);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .button.primary {
+        border-color: transparent;
+        background: var(--demo-accent);
+        color: #ffffff;
+      }
+
+      .player-panel {
+        padding: 22px;
+      }
+
+      .player-frame {
+        display: grid;
+        min-height: 330px;
+        place-items: center;
+        border: 1px dashed var(--demo-border);
+        border-radius: 8px;
+        padding: 24px;
+        background: rgba(255, 107, 53, 0.05);
+      }
+
+      .fallback {
+        display: none;
+        color: var(--demo-muted);
+        font-size: 14px;
+        line-height: 1.7;
+        text-align: center;
+      }
+
+      .fallback[data-visible="true"] {
+        display: block;
+      }
+
+      .notes {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 28px;
+      }
+
+      .note {
+        border: 1px solid var(--demo-border);
+        border-radius: 8px;
+        padding: 18px;
+        background: rgba(255, 255, 255, 0.58);
+      }
+
+      .note strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .note code {
+        word-break: break-word;
+      }
+
+      .note p {
+        margin: 0;
+        color: var(--demo-muted);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .note {
+          background: rgba(23, 26, 35, 0.7);
+        }
+      }
+
+      @media (max-width: 860px) {
+        .hero,
+        .notes {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .shell {
+          width: min(100% - 20px, 1080px);
+          padding: 24px 0;
+        }
+
+        .copy,
+        .player-panel {
+          padding: 18px;
+        }
+
+        .actions {
+          flex-direction: column;
+        }
+
+        .button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <img src="../../nmpv3Logo.png" alt="NMP" />
+          <div>
+            <strong>NeteaseMiniPlayer v3</strong>
+            <span>GitHub Pages embed demo</span>
+          </div>
+        </div>
+        <div class="status" id="asset-status">准备加载播放器脚本</div>
+      </header>
+
+      <section class="hero">
+        <div class="panel copy">
+          <p class="eyebrow">Standalone embed</p>
+          <h1>一个静态页面即可运行的播放器嵌入示例</h1>
+          <p class="lede">
+            这个 demo 不依赖 VitePress 运行时。它适合放在 GitHub
+            Pages、任意静态站点或 PHP 模板旁边，用来验证 NMPv3
+            的浏览器引用路径和 API 代理配置。
+          </p>
+          <div class="actions">
+            <a class="button primary" href="../../guide/cdn">查看 CDN 说明</a>
+            <a class="button" href="?bundle=jsdelivr">使用 jsDelivr</a>
+            <a class="button" href="?bundle=unpkg">使用 unpkg</a>
+          </div>
+        </div>
+
+        <div class="panel player-panel">
+          <div class="player-frame">
+            <nmp-player
+              playlist-id="14273792576"
+              theme="auto"
+              layout="compact"
+              api-base-url="https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php"
+            ></nmp-player>
+            <div class="fallback" id="fallback">
+              播放器脚本暂未加载。请先构建 NMPv3，或切换到 CDN 模式。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="notes" aria-label="Demo notes">
+        <article class="note">
+          <strong>GitHub Pages</strong>
+          <p>
+            文档构建会把本地 bundle 同步到
+            <code>/demo/assets/</code>，静态页面使用相对路径加载。
+          </p>
+        </article>
+        <article class="note">
+          <strong>本地预览</strong>
+          <p>
+            运行
+            <code>pnpm --filter @netease-mini-player/v3 build</code> 后再启动
+            <code>pnpm docs:dev</code>。
+          </p>
+        </article>
+        <article class="note">
+          <strong>CDN 回退</strong>
+          <p>
+            地址参数 <code>?bundle=jsdelivr</code> 或
+            <code>?bundle=unpkg</code> 可验证公共 CDN 引用。
+          </p>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      window.NMPv3Config = {
+        apiBaseUrl: "https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php",
+      };
+
+      const cdnBundles = {
+        jsdelivr:
+          "https://cdn.jsdelivr.net/npm/@netease-mini-player/v3@latest/dist/nmpv3.min.js",
+        unpkg:
+          "https://unpkg.com/@netease-mini-player/v3@latest/dist/nmpv3.min.js",
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const requestedBundle = params.get("bundle");
+      const customBundle = params.get("src");
+      const localBundle = new URL(
+        "../assets/nmpv3.min.js",
+        window.location.href,
+      ).href;
+      const status = document.querySelector("#asset-status");
+      const fallback = document.querySelector("#fallback");
+
+      const bundleUrl =
+        customBundle || cdnBundles[requestedBundle] || localBundle;
+
+      loadScript(bundleUrl)
+        .then(() => {
+          status.textContent =
+            bundleUrl === localBundle
+              ? "已加载本地 demo bundle"
+              : "已加载 CDN bundle";
+        })
+        .catch(() => {
+          if (bundleUrl !== cdnBundles.jsdelivr) {
+            return loadScript(cdnBundles.jsdelivr).then(() => {
+              status.textContent = "本地 bundle 不可用，已回退到 jsDelivr";
+            });
+          }
+
+          throw new Error("NMPv3 bundle failed to load");
+        })
+        .catch(() => {
+          status.textContent = "播放器脚本加载失败";
+          fallback.dataset.visible = "true";
+        });
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = src;
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.append(script);
+        });
+      }
+    </script>
+  </body>
+</html>

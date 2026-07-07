@@ -21,8 +21,8 @@ import type {
 } from "../types";
 
 /**
- * NMPv3+ 运行时核心，组合所有子系统（事件总线、存储、音乐源、歌词、皮肤、插件）
- * 提供统一的 start/installPlugin/applySkin/bridgeHost 等顶层 API
+ * NMPv3+ runtime core. Composes events, store, sources, lyrics, skins, and
+ * plugins behind one start/installPlugin/applySkin/bridgeHost API surface.
  */
 export class NMPv3PlusRuntime {
   readonly events = new NMPv3PlusEventBus();
@@ -37,7 +37,8 @@ export class NMPv3PlusRuntime {
 
   constructor(private readonly options: NMPv3PlusRuntimeOptions = {}) {
     this.store = options.store ?? new NMPv3PlusMemoryStore();
-    this.logger = options.logger ?? new NMPv3PlusConsoleLogger();
+    this.logger =
+      options.logger ?? new NMPv3PlusConsoleLogger(options.debug ?? true);
     this.plugins = new NMPv3PlusPluginManager(
       () => this.createPluginContext(),
       this.logger,
@@ -50,9 +51,11 @@ export class NMPv3PlusRuntime {
   }
 
   async start(): Promise<void> {
-    for (const plugin of this.options.plugins ?? []) {
-      await this.installPlugin(plugin);
-    }
+    const installed = await this.plugins.installAll(this.options.plugins ?? []);
+
+    installed.forEach(({ plugin }) => {
+      this.emit("plugin:installed", { plugin });
+    });
 
     this.emit("ready", { runtime: this });
   }
@@ -120,13 +123,17 @@ export class NMPv3PlusRuntime {
     this.events.emit(event, payload);
   }
 
-  destroy(): void {
+  async destroy(): Promise<void> {
     while (this.cleanup.length > 0) {
-      this.cleanup.pop()?.();
+      try {
+        this.cleanup.pop()?.();
+      } catch (error) {
+        this.logger.error("Runtime cleanup failed", error);
+      }
     }
 
     this.hostBridge?.stop();
-    this.plugins.clear();
+    await this.plugins.clear();
     this.events.clear();
     this.skins.clear();
     this.store.clear();
@@ -186,7 +193,7 @@ export class NMPv3PlusRuntime {
       return;
     }
 
-    // 将 nmpv3 基础播放器的 DOM 事件桥接到运行时事件总线，同时以 nmp: 前缀转发
+    // Bridge base NMPv3 DOM events into the runtime bus and nmp: aliases.
     const eventMap = {
       "nmpv3:ready": "ready",
       "nmpv3:play": "play",

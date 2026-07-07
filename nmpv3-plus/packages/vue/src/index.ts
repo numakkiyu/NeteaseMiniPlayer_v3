@@ -1,7 +1,9 @@
+import "./global-components";
+
 import {
+  createNMPv3PlusFrameworkAdapter,
   nmpv3PlusElementEvents,
-  toNMPv3PlusElementAttrs,
-  type NMPv3PlusElementConfig,
+  type NMPv3PlusNativeElementProps,
 } from "../../adapters/src/elementProps";
 
 export interface NMPv3PlusVueBinding {
@@ -9,11 +11,11 @@ export interface NMPv3PlusVueBinding {
   events: Record<string, string>;
 }
 
-export function createNMPv3PlusVueBinding(
-  config: NMPv3PlusElementConfig,
-): NMPv3PlusVueBinding {
-  return {
-    attrs: toNMPv3PlusElementAttrs(config),
+export type NMPv3PlusVuePlayerProps = NMPv3PlusNativeElementProps;
+
+export const createNMPv3PlusVueBinding = createNMPv3PlusFrameworkAdapter(
+  (plan): NMPv3PlusVueBinding => ({
+    attrs: plan.attrs,
     events: { ...nmpv3PlusElementEvents },
-  };
-}
+  }),
+);

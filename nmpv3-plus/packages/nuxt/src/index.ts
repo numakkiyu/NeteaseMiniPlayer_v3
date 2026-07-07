@@ -1,5 +1,5 @@
 import {
-  createNMPv3PlusElementPlan,
+  createNMPv3PlusFrameworkAdapter,
   type NMPv3PlusElementConfig,
   type NMPv3PlusElementPlan,
 } from "../../adapters/src/elementProps";
@@ -15,10 +15,12 @@ export function createNMPv3PlusNuxtClientPlan(
   config: NMPv3PlusElementConfig,
   componentName = "NMPv3PlusPlayer",
 ): NMPv3PlusNuxtClientPlan {
-  return {
-    pluginFilename: "nmpv3-plus.client.ts",
-    componentName,
-    mode: "client",
-    element: createNMPv3PlusElementPlan(config),
-  };
+  return createNMPv3PlusFrameworkAdapter(
+    (element): NMPv3PlusNuxtClientPlan => ({
+      pluginFilename: "nmpv3-plus.client.ts",
+      componentName,
+      mode: "client",
+      element,
+    }),
+  )(config);
 }

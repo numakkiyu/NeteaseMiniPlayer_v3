@@ -15,6 +15,9 @@ describe("NMPv3+ manifest contracts", () => {
       entry: "./index.ts",
       type: "visual",
       description: "Adds a visualizer.",
+      dependencies: {
+        "nmpv3-plus-extension-cover-color": ">=1.0.0",
+      },
       configSchema: {
         mode: {
           type: "string",
@@ -36,8 +39,29 @@ describe("NMPv3+ manifest contracts", () => {
       manifest: {
         displayName: "Visualizer",
         type: "visual",
+        dependencies: {
+          "nmpv3-plus-extension-cover-color": ">=1.0.0",
+        },
       },
     });
+  });
+
+  it("rejects invalid dependency declarations", () => {
+    expect(() =>
+      parseNMPv3PlusExtensionManifest({
+        name: "nmpv3-plus-extension-bad",
+        displayName: "Bad",
+        version: "1.0.0",
+        entry: "./index.ts",
+        type: "utility",
+        description: "Bad dependency manifest.",
+        dependencies: {
+          "nmpv3-plus-extension-host-sync": 1,
+        },
+      }),
+    ).toThrow(
+      "Invalid NMPv3+ manifest dependency range: nmpv3-plus-extension-host-sync",
+    );
   });
 
   it("rejects plugin packages whose factory name does not match the manifest", () => {

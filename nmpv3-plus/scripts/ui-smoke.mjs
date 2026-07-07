@@ -82,21 +82,16 @@ const html = `<!doctype html>
         theme="auto"
         lyric="true"
         playlist="false"
-        skin="glass"
-        plus-extensions="advanced-layouts,visualizer,host-sync,custom-source,local-lyrics"
-        plus-layout="cover"
         source-type="local-json"
         source="/__tmp__/playlist.json"
         lyrics-url="/__tmp__/lyrics.lrc"
         page-linking="true"
-        api-base-url=""
       ></nmp-player>
     </main>
     <script src="/nmpv3/dist/nmpv3.min.js"></script>
     <script>
       window.NMPv3PlusConfig = {
-        defaultSkin: "glass",
-        enabledExtensions: ["advanced-layouts", "visualizer", "host-sync", "custom-source", "local-lyrics"]
+        defaultSkin: "default"
       };
     </script>
     <script type="module" src="/nmpv3-plus/dist/browser.js"></script>
@@ -107,6 +102,10 @@ const html = `<!doctype html>
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       await waitForText(".nmpv3-title", ${JSON.stringify(smokeSongTitle)});
       await waitForText(".nmpv3-lyric-original", ${JSON.stringify(smokeLyric)});
+      playerElement.dispatchEvent(new CustomEvent("nmpv3:songchange", {
+        bubbles: true,
+        detail: { song: { id: "smoke-song", name: ${JSON.stringify(smokeSongTitle)} } }
+      }));
       playerElement.dispatchEvent(new CustomEvent("nmpv3:play", {
         bubbles: true,
         detail: { song: { id: "smoke-song", name: ${JSON.stringify(smokeSongTitle)} } }
@@ -154,7 +153,7 @@ await writeFile(
         {
           id: "smoke-song",
           name: smokeSongTitle,
-          artists: "NMPv3+ Local JSON / Visualizer / Host Sync / Cover Layout",
+          artists: "NMPv3+ Local JSON / Host Sync / Base Compact UI",
           album: "Smoke fixture",
           url: "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=",
           duration: 185000,
@@ -200,19 +199,20 @@ try {
     const metrics = await page.evaluate(() => {
       const player = document.querySelector("#plus-player");
       const shell = document.querySelector(".nmpv3-player");
-      const visualizer = document.querySelector(".nmpv3-plus-visualizer");
+      const cover = document.querySelector(".nmpv3-cover-button");
+      const play = document.querySelector(".nmpv3-play");
       const previous = document.querySelector(".nmpv3-previous");
       const next = document.querySelector(".nmpv3-next");
       const selectors = [
         ".nmpv3-player",
         ".nmpv3-main",
+        ".nmpv3-cover-button",
         ".nmpv3-title",
         ".nmpv3-artist",
         ".nmpv3-lyric-original",
         ".nmpv3-controls",
+        ".nmpv3-play",
         ".nmpv3-bottom",
-        ".nmpv3-tools",
-        ".nmpv3-plus-visualizer",
       ];
 
       function rectFor(selector) {
@@ -237,29 +237,12 @@ try {
         };
       }
 
-      function overlaps(a, b) {
-        if (!a || !b) {
-          return false;
-        }
-
-        const first = a.getBoundingClientRect();
-        const second = b.getBoundingClientRect();
-
-        return !(
-          first.right <= second.left ||
-          first.left >= second.right ||
-          first.bottom <= second.top ||
-          first.top >= second.bottom
-        );
-      }
-
       player.dispatchEvent(
         new CustomEvent("nmpv3:pause", {
           bubbles: true,
           detail: { song: { id: "smoke-song" } },
         }),
       );
-      const stateAfterPause = visualizer?.getAttribute("data-state") ?? null;
       player.dispatchEvent(
         new CustomEvent("nmpv3:play", {
           bubbles: true,
@@ -291,13 +274,25 @@ try {
           "nmpv3-plus-is-playing",
         ),
         shellLayout: shell?.dataset.nmpv3PlusLayout ?? null,
+        shellClasses: shell?.className ?? "",
+        baseLayout: shell?.getAttribute("data-layout") ?? null,
+        skinData: player?.dataset.nmpv3PlusSkin ?? null,
         skin: player?.className ?? "",
-        visualizerState: visualizer?.getAttribute("data-state") ?? null,
-        stateAfterPause,
-        visualizerOverlapsTools: overlaps(
+        hasVisualizer: Boolean(
           document.querySelector(".nmpv3-plus-visualizer"),
-          document.querySelector(".nmpv3-tools"),
         ),
+        hasAdvancedLayout: Boolean(
+          document.querySelector(
+            ".nmpv3-plus-layout-card, .nmpv3-plus-layout-cover",
+          ),
+        ),
+        playButtonAlignedWithMain: isVerticallyAligned(play, shell),
+        coverSize: cover
+          ? {
+              width: cover.getBoundingClientRect().width,
+              height: cover.getBoundingClientRect().height,
+            }
+          : null,
         previousHidden:
           previous?.hidden === true ||
           getComputedStyle(previous).display === "none",
@@ -305,6 +300,21 @@ try {
           next?.hidden === true || getComputedStyle(next).display === "none",
         rects: selectors.map(rectFor).filter(Boolean),
       };
+
+      function isVerticallyAligned(node, container) {
+        if (!node || !container) {
+          return false;
+        }
+
+        const nodeRect = node.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const nodeCenterY = nodeRect.top + nodeRect.height / 2;
+
+        return (
+          nodeCenterY >= containerRect.top + 20 &&
+          nodeCenterY <= containerRect.bottom - 20
+        );
+      }
     });
 
     const screenshotPath = join(screenshotDir, `${viewport.name}.png`);
@@ -340,7 +350,8 @@ console.log(
         screenshotPath: result.screenshotPath,
         scrollWidth: result.metrics.scrollWidth,
         innerWidth: result.metrics.innerWidth,
-        visualizerState: result.metrics.visualizerState,
+        baseLayout: result.metrics.baseLayout,
+        skin: result.metrics.skinData,
         hostSong: result.metrics.htmlSong,
       })),
     },
@@ -374,12 +385,26 @@ function assertSmokeMetrics(viewport, metrics, messages) {
     );
   }
 
-  if (metrics.shellLayout !== "cover") {
-    failures.push(`advanced layout not applied: ${metrics.shellLayout}`);
+  if (metrics.baseLayout !== "compact") {
+    failures.push(`base compact layout not preserved: ${metrics.baseLayout}`);
   }
 
-  if (!metrics.skin.includes("nmpv3-plus-skin-glass")) {
-    failures.push(`glass skin class not applied: ${metrics.skin}`);
+  if (metrics.shellLayout !== null || metrics.hasAdvancedLayout) {
+    failures.push(
+      `advanced layout leaked into default smoke: layout=${metrics.shellLayout}, class=${metrics.shellClasses}`,
+    );
+  }
+
+  if (metrics.hasVisualizer) {
+    failures.push("visualizer leaked into default smoke");
+  }
+
+  if (metrics.skinData !== "default") {
+    failures.push(`default skin was not applied: ${metrics.skinData}`);
+  }
+
+  if (metrics.skin.includes("nmpv3-plus-skin-glass")) {
+    failures.push(`glass skin leaked into default smoke: ${metrics.skin}`);
   }
 
   if (metrics.htmlSong !== smokeSongTitle) {
@@ -408,21 +433,35 @@ function assertSmokeMetrics(viewport, metrics, messages) {
     failures.push("host sync playing class was not applied");
   }
 
-  if (
-    metrics.stateAfterPause !== "idle" ||
-    metrics.visualizerState !== "playing"
-  ) {
-    failures.push(
-      `visualizer event state mismatch: pause=${metrics.stateAfterPause}, play=${metrics.visualizerState}`,
-    );
-  }
-
-  if (metrics.visualizerOverlapsTools) {
-    failures.push("visualizer overlaps the player tools area");
+  if (!metrics.playButtonAlignedWithMain) {
+    failures.push("play button is visually detached from the main player");
   }
 
   if (!metrics.previousHidden || !metrics.nextHidden) {
     failures.push("single-song previous/next controls are visible");
+  }
+
+  const playerRect = metrics.rects.find(
+    (rect) => rect.selector === ".nmpv3-player",
+  );
+  const maxPlayerHeight = viewport.name === "mobile" ? 250 : 220;
+
+  if (playerRect && playerRect.height > maxPlayerHeight) {
+    failures.push(
+      `player is too tall for ${viewport.name}: ${playerRect.height} > ${maxPlayerHeight}`,
+    );
+  }
+
+  const maxCoverSize = viewport.name === "mobile" ? 54 : 64;
+
+  if (
+    !metrics.coverSize ||
+    metrics.coverSize.width > maxCoverSize ||
+    metrics.coverSize.height > maxCoverSize
+  ) {
+    failures.push(
+      `cover is too large for base ${viewport.name}: ${JSON.stringify(metrics.coverSize)}`,
+    );
   }
 
   for (const rect of metrics.rects) {

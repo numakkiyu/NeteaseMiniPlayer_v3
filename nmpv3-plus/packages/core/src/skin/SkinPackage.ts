@@ -69,14 +69,15 @@ function scopeCssBlock(cssText: string, scopeSelector: string): string {
   let cursor = 0;
 
   while (cursor < cssText.length) {
-    const openIndex = cssText.indexOf("{", cursor);
+    const openIndex = findNextRuleOpen(cssText, cursor);
 
     if (openIndex === -1) {
       output += cssText.slice(cursor);
       break;
     }
 
-    const selector = cssText.slice(cursor, openIndex).trim();
+    const rawSelector = cssText.slice(cursor, openIndex);
+    const { comments, selector } = extractLeadingComments(rawSelector);
     const closeIndex = findMatchingBrace(cssText, openIndex);
 
     if (!selector || closeIndex === -1) {
@@ -85,11 +86,84 @@ function scopeCssBlock(cssText: string, scopeSelector: string): string {
     }
 
     const body = cssText.slice(openIndex + 1, closeIndex);
+    output += comments;
     output += renderScopedRule(selector, body, scopeSelector);
     cursor = closeIndex + 1;
   }
 
   return output;
+}
+
+function findNextRuleOpen(cssText: string, startIndex: number): number {
+  let quote: string | null = null;
+  let parenDepth = 0;
+
+  for (let index = startIndex; index < cssText.length; index += 1) {
+    const char = cssText[index];
+    const next = cssText[index + 1];
+
+    if (quote) {
+      if (char === "\\") {
+        index += 1;
+      } else if (char === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === "/" && next === "*") {
+      index = skipCssComment(cssText, index);
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (char === "(") {
+      parenDepth += 1;
+      continue;
+    }
+
+    if (char === ")" && parenDepth > 0) {
+      parenDepth -= 1;
+      continue;
+    }
+
+    if (char === "{" && parenDepth === 0) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function extractLeadingComments(rawSelector: string): {
+  comments: string;
+  selector: string;
+} {
+  let rest = rawSelector;
+  let comments = "";
+
+  while (rest.trimStart().startsWith("/*")) {
+    const whitespaceLength = rest.length - rest.trimStart().length;
+    const whitespace = rest.slice(0, whitespaceLength);
+    const trimmed = rest.trimStart();
+    const closeIndex = trimmed.indexOf("*/");
+
+    if (closeIndex === -1) {
+      break;
+    }
+
+    comments += `${whitespace}${trimmed.slice(0, closeIndex + 2)}`;
+    rest = trimmed.slice(closeIndex + 2);
+  }
+
+  return {
+    comments,
+    selector: rest.trim(),
+  };
 }
 
 function renderScopedRule(
@@ -137,15 +211,47 @@ function scopeSelectors(selector: string, scopeSelector: string): string {
 
 function findMatchingBrace(cssText: string, openIndex: number): number {
   let depth = 0;
+  let quote: string | null = null;
+  let parenDepth = 0;
 
   for (let index = openIndex; index < cssText.length; index += 1) {
     const char = cssText[index];
+    const next = cssText[index + 1];
 
-    if (char === "{") {
+    if (quote) {
+      if (char === "\\") {
+        index += 1;
+      } else if (char === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === "/" && next === "*") {
+      index = skipCssComment(cssText, index);
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (char === "(") {
+      parenDepth += 1;
+      continue;
+    }
+
+    if (char === ")" && parenDepth > 0) {
+      parenDepth -= 1;
+      continue;
+    }
+
+    if (char === "{" && parenDepth === 0) {
       depth += 1;
     }
 
-    if (char === "}") {
+    if (char === "}" && parenDepth === 0) {
       depth -= 1;
 
       if (depth === 0) {
@@ -155,6 +261,11 @@ function findMatchingBrace(cssText: string, openIndex: number): number {
   }
 
   return -1;
+}
+
+function skipCssComment(cssText: string, startIndex: number): number {
+  const closeIndex = cssText.indexOf("*/", startIndex + 2);
+  return closeIndex === -1 ? cssText.length - 1 : closeIndex + 1;
 }
 
 async function fetchOptionalCss(

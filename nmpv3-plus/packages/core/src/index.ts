@@ -1,4 +1,5 @@
 export * from "./types";
+export * from "./app/NMPv3PlusApp";
 export * from "./bridge/HostBridge";
 export * from "./event/EventBus";
 export * from "./logger/Logger";

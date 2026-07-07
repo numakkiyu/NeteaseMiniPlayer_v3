@@ -48,6 +48,7 @@ export function parseNMPv3PlusExtensionManifest(
     style: optionalString(record, "style", source),
     type: type as NMPv3PlusExtensionType,
     description: requiredString(record, "description", source),
+    dependencies: parseDependencyRecord(record.dependencies, source),
     configSchema: parseConfigSchema(record.configSchema, source),
   };
 }
@@ -115,9 +116,32 @@ export function defineNMPv3PlusPluginPackage(input: {
     plugin: {
       ...input.plugin,
       version: input.plugin.version ?? manifest.version,
+      dependencies: input.plugin.dependencies ?? manifest.dependencies,
       manifest,
     },
   };
+}
+
+function parseDependencyRecord(
+  value: unknown,
+  source: string,
+): Record<string, string> | undefined {
+  if (value == null) {
+    return undefined;
+  }
+
+  const record = asRecord(value, `${source}.dependencies`);
+  const dependencies: Record<string, string> = {};
+
+  for (const [name, range] of Object.entries(record)) {
+    if (typeof range !== "string" || range.trim() === "") {
+      throw new Error(`Invalid NMPv3+ manifest dependency range: ${name}`);
+    }
+
+    dependencies[name] = range;
+  }
+
+  return dependencies;
 }
 
 function parseConfigSchema(

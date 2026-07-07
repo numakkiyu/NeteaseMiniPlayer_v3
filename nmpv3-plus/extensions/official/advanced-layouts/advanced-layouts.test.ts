@@ -26,7 +26,7 @@ describe("advanced layouts extension", () => {
       target: player,
     });
 
-    runtime.destroy();
+    await runtime.destroy();
 
     expect(player.classList.remove).toHaveBeenCalledWith(
       "nmpv3-plus-layout-card",
@@ -48,11 +48,15 @@ describe("advanced layouts extension", () => {
     expect(root.dataset.nmpv3PlusLayout).toBe("cover");
   });
 
-  it("keeps the cover layout on a vertical axis with shrinkable content", () => {
+  it("keeps the cover layout as an integrated large-cover player", () => {
     expect(nmpv3PlusAdvancedLayoutCss).toBe(nmpv3PlusAdvancedLayoutCssText);
-    expect(nmpv3PlusAdvancedLayoutCss).toContain("flex-direction: column");
+    expect(nmpv3PlusAdvancedLayoutCss).toContain("--nmpv3-plus-cover-size");
+    expect(nmpv3PlusAdvancedLayoutCss).toContain(
+      'grid-template-areas: "cover body controls"',
+    );
     expect(nmpv3PlusAdvancedLayoutCss).toContain("min-width: 0");
     expect(nmpv3PlusAdvancedLayoutCss).toContain("white-space: normal");
+    expect(nmpv3PlusAdvancedLayoutCss).toContain("border-left: 2px solid");
     expect(nmpv3PlusAdvancedLayoutCss).toContain(
       ".nmpv3-plus-layout-cover .nmpv3-title",
     );

@@ -6,6 +6,7 @@ import { createNMPv3PlusReactProps } from "../../react/src/index";
 import { createNMPv3PlusSvelteBinding } from "../../svelte/src/index";
 import { createNMPv3PlusVueBinding } from "../../vue/src/index";
 import {
+  createNMPv3PlusFrameworkAdapter,
   createNMPv3PlusElementPlan,
   renderNMPv3PlusElement,
   toNMPv3PlusElementAttrs,
@@ -65,6 +66,28 @@ describe("NMPv3+ framework adapters", () => {
       skin: "vinyl",
       "plus-extensions": "visualizer",
       "page-linking": true,
+    });
+  });
+
+  it("creates framework adapters from a shared element-plan factory", () => {
+    const adapter = createNMPv3PlusFrameworkAdapter((plan) => ({
+      tagName: plan.tagName,
+      attrs: plan.attrs,
+      html: plan.html,
+    }));
+
+    expect(
+      adapter({
+        playlistId: "14273792576",
+        skin: "default",
+      }),
+    ).toEqual({
+      tagName: "nmp-player",
+      attrs: {
+        "playlist-id": "14273792576",
+        skin: "default",
+      },
+      html: '<nmp-player playlist-id="14273792576" skin="default"></nmp-player>',
     });
   });
 

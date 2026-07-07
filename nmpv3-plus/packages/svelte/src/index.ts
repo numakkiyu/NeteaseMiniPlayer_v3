@@ -1,8 +1,8 @@
 import {
+  createNMPv3PlusFrameworkAdapter,
   nmpv3PlusElementEvents,
-  toNMPv3PlusElementAttrs,
   type NMPv3PlusElementAttrs,
-  type NMPv3PlusElementConfig,
+  type NMPv3PlusNativeElementProps,
 } from "../../adapters/src/elementProps";
 
 export interface NMPv3PlusSvelteBinding {
@@ -12,16 +12,13 @@ export interface NMPv3PlusSvelteBinding {
   onMountImports: string[];
 }
 
-export function createNMPv3PlusSvelteBinding(
-  config: NMPv3PlusElementConfig,
-): NMPv3PlusSvelteBinding {
-  return {
+export type NMPv3PlusSvelteComponentProps = NMPv3PlusNativeElementProps;
+
+export const createNMPv3PlusSvelteBinding = createNMPv3PlusFrameworkAdapter(
+  (plan): NMPv3PlusSvelteBinding => ({
     tagName: "nmp-player",
-    props: toNMPv3PlusElementAttrs(config),
+    props: plan.attrs,
     events: { ...nmpv3PlusElementEvents },
-    onMountImports: [
-      "@netease-mini-player/v3/auto",
-      "@netease-mini-player/v3-plus",
-    ],
-  };
-}
+    onMountImports: plan.requiredImports,
+  }),
+);

@@ -1,5 +1,5 @@
 import {
-  createNMPv3PlusElementPlan,
+  createNMPv3PlusFrameworkAdapter,
   type NMPv3PlusElementConfig,
   type NMPv3PlusElementPlan,
 } from "../../adapters/src/elementProps";
@@ -16,11 +16,13 @@ export function createNMPv3PlusNextClientPlan(
   config: NMPv3PlusElementConfig,
   componentName = "NMPv3PlusPlayer",
 ): NMPv3PlusNextClientPlan {
-  return {
-    componentName,
-    dynamicOptions: {
-      ssr: false,
-    },
-    element: createNMPv3PlusElementPlan(config),
-  };
+  return createNMPv3PlusFrameworkAdapter(
+    (element): NMPv3PlusNextClientPlan => ({
+      componentName,
+      dynamicOptions: {
+        ssr: false,
+      },
+      element,
+    }),
+  )(config);
 }

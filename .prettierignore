@@ -1,10 +1,9 @@
 node_modules/
 **/dist/
+**/.vitepress/cache/
+docs/public/demo/assets/
 coverage/
-test_docs/
 pnpm-lock.yaml
-.agents/
-.codex/
 .playwright-mcp/
 LICENSE
 NOTICE

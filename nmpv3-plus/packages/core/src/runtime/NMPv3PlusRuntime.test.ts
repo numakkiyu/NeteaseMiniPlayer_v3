@@ -50,7 +50,7 @@ describe("NMPv3PlusRuntime", () => {
       expect.objectContaining({ id: "song-a" }),
     );
 
-    runtime.destroy();
+    await runtime.destroy();
     expect(runtime.plugins.list()).toHaveLength(0);
   });
 
@@ -91,10 +91,39 @@ describe("NMPv3PlusRuntime", () => {
       song: { id: "song-b", name: "Changed song" },
     });
 
-    runtime.destroy();
+    await runtime.destroy();
     eventTarget.dispatchEvent(createNMPv3DomEvent("nmpv3:play", {}));
 
     expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts configured plugins in dependency order", async () => {
+    const order: string[] = [];
+    const runtime = createNMPv3PlusRuntime({
+      plugins: [
+        {
+          name: "visualizer",
+          version: "1.0.0",
+          dependencies: {
+            "cover-color": ">=1.0.0",
+          },
+          setup() {
+            order.push("visualizer");
+          },
+        },
+        {
+          name: "cover-color",
+          version: "1.0.0",
+          setup() {
+            order.push("cover-color");
+          },
+        },
+      ],
+    });
+
+    await runtime.start();
+
+    expect(order).toEqual(["cover-color", "visualizer"]);
   });
 });
 

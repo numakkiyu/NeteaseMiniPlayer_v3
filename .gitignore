@@ -6,6 +6,8 @@ node_modules/
 **/dist/
 **/build/
 **/coverage/
+**/.vitepress/cache/
+docs/public/demo/assets/
 *.tsbuildinfo
 
 # Logs
@@ -26,10 +28,4 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Local automation/tooling state
-.agents/
-.codex/
 .playwright-mcp/
-
-# Local-only Codex/AI planning material
-test_docs/

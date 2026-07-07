@@ -1,7 +1,7 @@
 import type { NMPv3PlusLogger } from "../types";
 
 export class NMPv3PlusConsoleLogger implements NMPv3PlusLogger {
-  constructor(private readonly enabled = false) {}
+  constructor(private readonly enabled = true) {}
 
   info(message: string, ...args: unknown[]): void {
     this.write("info", message, args);

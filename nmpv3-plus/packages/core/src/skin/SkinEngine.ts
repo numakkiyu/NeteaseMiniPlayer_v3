@@ -8,9 +8,8 @@ interface AppliedSkin {
 }
 
 /**
- * 皮肤引擎：管理皮肤注册、应用和卸载
- * 应用时将 CSS token 注入目标元素、添加 className、插入 style 标签
- * 卸载时恢复原始 token 值，实现无副作用清理
+ * Skin engine for registration, apply, and cleanup. Applying a skin injects
+ * CSS tokens, classes, and optional CSS; clearing restores prior token values.
  */
 export class NMPv3PlusSkinEngine {
   private readonly skins = new Map<string, NMPv3PlusSkin>();
@@ -80,7 +79,7 @@ export class NMPv3PlusSkinEngine {
     const { skin, target, previousTokens, styleElement } = this.applied;
 
     for (const [token, previousValue] of previousTokens) {
-      if (previousValue) {
+      if (previousValue !== "") {
         target.style.setProperty(token, previousValue);
       } else {
         target.style.removeProperty(token);
@@ -128,5 +127,5 @@ export const glassNMPv3PlusSkin: NMPv3PlusSkin = {
     "--nmpv3-shadow": "0 18px 52px rgba(18, 24, 40, 0.18)",
   },
   cssText:
-    ".nmpv3-plus-skin-glass .nmpv3-player{backdrop-filter:blur(18px) saturate(1.12);}",
+    ".nmpv3-plus-skin-glass .nmpv3-player{border-color:rgba(255,255,255,.58);backdrop-filter:blur(18px) saturate(1.14);box-shadow:0 18px 46px rgba(18,24,40,.14),inset 0 1px 0 rgba(255,255,255,.55);}",
 };

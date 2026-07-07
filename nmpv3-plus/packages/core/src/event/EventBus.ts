@@ -1,8 +1,8 @@
 import type { NMPv3PlusEventHandler } from "../types";
 
 /**
- * 轻量级发布订阅事件总线
- * on/once 返回注销函数，支持泛型 payload 类型推断
+ * Lightweight pub-sub event bus. on/once return unregister callbacks and
+ * preserve generic payload typing.
  */
 export class NMPv3PlusEventBus {
   private readonly listeners = new Map<string, Set<NMPv3PlusEventHandler>>();
@@ -43,8 +43,28 @@ export class NMPv3PlusEventBus {
   }
 
   emit(event: string, payload?: unknown): void {
+    const errors: unknown[] = [];
+
     for (const handler of this.listeners.get(event) ?? []) {
-      handler(payload);
+      try {
+        handler(payload);
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+
+    if (errors.length === 1) {
+      throw errors[0];
+    }
+
+    if (errors.length > 1) {
+      const error = new Error(
+        `NMPv3+ event handlers failed: ${event}`,
+      ) as Error & {
+        errors?: unknown[];
+      };
+      error.errors = errors;
+      throw error;
     }
   }
 

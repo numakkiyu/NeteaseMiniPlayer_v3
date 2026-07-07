@@ -2,10 +2,39 @@
   "name": "@netease-mini-player/v3-plus",
   "version": "3.0.0-alpha.0",
   "type": "module",
-  "description": "Advanced NeteaseMiniPlayer framework with extensions, skins, adapters, and custom sources.",
+  "description": "Advanced NeteaseMiniPlayer v3 Plus framework with extensions, skins, adapters, and custom sources.",
   "license": "Apache-2.0",
+  "homepage": "https://github.com/BHCN-STUDIO/NeteaseMiniPlayer_v3#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BHCN-STUDIO/NeteaseMiniPlayer_v3.git",
+    "directory": "nmpv3-plus"
+  },
+  "bugs": {
+    "url": "https://github.com/BHCN-STUDIO/NeteaseMiniPlayer_v3/issues"
+  },
+  "keywords": [
+    "netease",
+    "music-player",
+    "plugins",
+    "skins",
+    "framework-adapter",
+    "wordpress"
+  ],
+  "dependencies": {
+    "gsap": "^3.15.0"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "unpkg": "./dist/browser.js",
+  "jsdelivr": "./dist/browser.js",
+  "files": [
+    "dist",
+    "packages/cli/bin",
+    "extensions/official/**/manifest.json",
+    "skins/official/**/skin.json",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "import": "./dist/index.js",

@@ -326,48 +326,75 @@ function renderPlaylist(
   elements: NMPv3RenderedElements,
   state: NMPv3ViewState,
 ): void {
-  elements.playlistList.textContent = "";
-  elements.playlistPanel.hidden =
-    !state.isPlaylistOpen || state.playlist.length <= 1;
+  const isOpen = state.isPlaylistOpen && state.playlist.length > 1;
+  const playlistSignature = state.playlist
+    .map((song) =>
+      [
+        song.id,
+        song.name,
+        song.artists ?? "",
+        song.picUrl ?? "",
+        song.duration ?? "",
+      ].join("\u001f"),
+    )
+    .join("\u001e");
 
-  state.playlist.forEach((song, index) => {
-    const item = element("button", c.playlistItem) as HTMLButtonElement;
-    item.type = "button";
-    item.dataset.index = String(index);
-    item.classList.toggle(sc.active, index === state.currentIndex);
-    item.setAttribute(
-      "aria-current",
-      index === state.currentIndex ? "true" : "false",
-    );
+  elements.playlistPanel.setAttribute("aria-hidden", String(!isOpen));
+  elements.playlistPanel.dataset.state = isOpen ? "open" : "closed";
 
-    const number = element("span", c.playlistIndex);
-    number.textContent = String(index + 1).padStart(2, "0");
-    const cover = document.createElement("img");
-    cover.className = c.playlistCover;
-    cover.alt = "";
-    cover.loading = "lazy";
-    cover.draggable = false;
-    if (song.picUrl) {
-      cover.src = song.picUrl;
-    } else {
-      cover.classList.add(c.noCover);
-    }
-    const info = element("span", c.playlistInfo);
-    const name = element("span", c.playlistName);
-    name.textContent = song.name;
-    const artist = element("span", c.playlistArtist);
-    artist.textContent = song.artists || "Unknown artist";
-    const duration = element("span", c.playlistDuration);
-    duration.textContent = formatTime(song.duration ? song.duration / 1000 : 0);
-    info.append(name, artist);
-    item.append(number, cover, info, duration);
-    elements.playlistList.append(item);
-  });
+  if (elements.playlistList.dataset.playlistSignature !== playlistSignature) {
+    elements.playlistList.textContent = "";
+    elements.playlistList.dataset.playlistSignature = playlistSignature;
+
+    state.playlist.forEach((song, index) => {
+      const item = element("button", c.playlistItem) as HTMLButtonElement;
+      item.type = "button";
+      item.dataset.index = String(index);
+      item.style.setProperty(
+        "--nmpv3-playlist-item-delay",
+        `${Math.min(index, 10) * 12}ms`,
+      );
+
+      const number = element("span", c.playlistIndex);
+      number.textContent = String(index + 1).padStart(2, "0");
+      const cover = document.createElement("img");
+      cover.className = c.playlistCover;
+      cover.alt = "";
+      cover.loading = "lazy";
+      cover.draggable = false;
+      if (song.picUrl) {
+        cover.src = song.picUrl;
+      } else {
+        cover.classList.add(c.noCover);
+      }
+      const info = element("span", c.playlistInfo);
+      const name = element("span", c.playlistName);
+      name.textContent = song.name;
+      const artist = element("span", c.playlistArtist);
+      artist.textContent = song.artists || "Unknown artist";
+      const duration = element("span", c.playlistDuration);
+      duration.textContent = formatTime(
+        song.duration ? song.duration / 1000 : 0,
+      );
+      info.append(name, artist);
+      item.append(number, cover, info, duration);
+      elements.playlistList.append(item);
+    });
+  }
+
+  elements.playlistList
+    .querySelectorAll<HTMLButtonElement>(`.${c.playlistItem}`)
+    .forEach((item) => {
+      const isActive = Number(item.dataset.index) === state.currentIndex;
+      item.classList.toggle(sc.active, isActive);
+      item.setAttribute("aria-current", isActive ? "true" : "false");
+      item.tabIndex = isOpen ? 0 : -1;
+    });
 
   const active = elements.playlistList.querySelector<HTMLElement>(
     `.${sc.active}`,
   );
-  if (active) {
+  if (active && isOpen) {
     const list = elements.playlistList;
     const activeTop = active.offsetTop;
     const activeBottom = activeTop + active.offsetHeight;

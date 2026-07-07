@@ -24,10 +24,28 @@ describe("NMPv3PlusSkinEngine", () => {
     expect(target.style.removeProperty).toHaveBeenCalledWith("--nmpv3-bg");
     expect(target.dataset.nmpv3PlusSkin).toBeUndefined();
   });
+
+  it("restores a previous token only when the previous value is not empty", () => {
+    const target = createElementStub([["--nmpv3-bg", "rgba(1, 2, 3, 0.4)"]]);
+    const engine = new NMPv3PlusSkinEngine();
+    engine.register(glassNMPv3PlusSkin);
+
+    engine.apply("glass", target);
+    engine.clear();
+
+    expect(target.style.setProperty).toHaveBeenCalledWith(
+      "--nmpv3-bg",
+      "rgba(1, 2, 3, 0.4)",
+    );
+    expect(target.style.removeProperty).toHaveBeenCalledWith("--nmpv3-border");
+    expect(target.style.removeProperty).toHaveBeenCalledWith("--nmpv3-shadow");
+  });
 });
 
-function createElementStub(): HTMLElement {
-  const values = new Map<string, string>();
+function createElementStub(
+  initialValues: Array<[string, string]> = [],
+): HTMLElement {
+  const values = new Map<string, string>(initialValues);
 
   return {
     dataset: {},
