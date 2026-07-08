@@ -184,7 +184,7 @@ export function getGlobalConfig(): NMPv3Config {
 }
 
 export const NMPv3: NMPv3Global = {
-  version: "3.0.0-alpha.0",
+  version: "3.0.0-alpha.1",
   init,
   create: createNMPv3Player,
   upgradeLegacy,

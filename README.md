@@ -102,7 +102,7 @@
 > 生产环境应固定版本号，避免 `latest` 带来不可预期的升级：
 >
 > ```html
-> <script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
+> <script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.1/dist/nmpv3.min.js"></script>
 > ```
 
 更多用法见 [CDN 引用指南](./docs/guide/cdn.md)。

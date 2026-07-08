@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   release:
@@ -54,6 +55,31 @@ jobs:
       - run: pnpm --filter netease-mini-player-v3 build
 
       - run: pnpm --filter netease-mini-player-v3-plus build
+
+      - name: Publish npm packages
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          if [ -n "${NPM_TOKEN:-}" ]; then
+            npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          fi
+
+          publish_package() {
+            local package_dir="$1"
+            local package_name="$2"
+
+            if npm view "$package_name@$VERSION" version >/dev/null 2>&1; then
+              echo "$package_name@$VERSION is already published; skipping npm publish."
+              return
+            fi
+
+            npm publish "$package_dir" --registry https://registry.npmjs.org --access public --provenance
+          }
+
+          publish_package ./nmpv3 netease-mini-player-v3
+          publish_package ./nmpv3-plus netease-mini-player-v3-plus
 
       - name: Prepare release assets
         shell: bash
