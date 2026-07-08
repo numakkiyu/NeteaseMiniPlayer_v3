@@ -69,13 +69,19 @@ jobs:
           publish_package() {
             local package_dir="$1"
             local package_name="$2"
+            local npm_tag="latest"
 
             if npm view "$package_name@$VERSION" version >/dev/null 2>&1; then
               echo "$package_name@$VERSION is already published; skipping npm publish."
               return
             fi
 
-            npm publish "$package_dir" --registry https://registry.npmjs.org --access public --provenance
+            if [[ "$VERSION" == *"-"* ]]; then
+              npm_tag="${VERSION#*-}"
+              npm_tag="${npm_tag%%.*}"
+            fi
+
+            npm publish "$package_dir" --registry https://registry.npmjs.org --access public --tag "$npm_tag" --provenance
           }
 
           publish_package ./nmpv3 netease-mini-player-v3
