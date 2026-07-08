@@ -327,6 +327,10 @@ function renderPlaylist(
   state: NMPv3ViewState,
 ): void {
   const isOpen = state.isPlaylistOpen && state.playlist.length > 1;
+  const previousPanelState = elements.playlistPanel.dataset.state;
+  const previousPlaylistSignature =
+    elements.playlistList.dataset.playlistSignature;
+  const previousActiveIndex = elements.playlistList.dataset.activeIndex;
   const playlistSignature = state.playlist
     .map((song) =>
       [
@@ -338,6 +342,14 @@ function renderPlaylist(
       ].join("\u001f"),
     )
     .join("\u001e");
+  const shouldSyncActiveScroll = shouldSyncPlaylistScroll({
+    isOpen,
+    previousPanelState,
+    previousPlaylistSignature,
+    previousActiveIndex,
+    playlistSignature,
+    currentIndex: state.currentIndex,
+  });
 
   elements.playlistPanel.setAttribute("aria-hidden", String(!isOpen));
   elements.playlistPanel.dataset.state = isOpen ? "open" : "closed";
@@ -390,11 +402,12 @@ function renderPlaylist(
       item.setAttribute("aria-current", isActive ? "true" : "false");
       item.tabIndex = isOpen ? 0 : -1;
     });
+  elements.playlistList.dataset.activeIndex = String(state.currentIndex);
 
   const active = elements.playlistList.querySelector<HTMLElement>(
     `.${sc.active}`,
   );
-  if (active && isOpen) {
+  if (active && shouldSyncActiveScroll) {
     const list = elements.playlistList;
     const activeTop = active.offsetTop;
     const activeBottom = activeTop + active.offsetHeight;
@@ -405,6 +418,32 @@ function renderPlaylist(
       list.scrollTop = activeBottom - list.clientHeight;
     }
   }
+}
+
+export function shouldSyncPlaylistScroll({
+  isOpen,
+  previousPanelState,
+  previousPlaylistSignature,
+  previousActiveIndex,
+  playlistSignature,
+  currentIndex,
+}: {
+  isOpen: boolean;
+  previousPanelState?: string;
+  previousPlaylistSignature?: string;
+  previousActiveIndex?: string;
+  playlistSignature: string;
+  currentIndex: number;
+}): boolean {
+  if (!isOpen) {
+    return false;
+  }
+
+  return (
+    previousPanelState !== "open" ||
+    previousPlaylistSignature !== playlistSignature ||
+    previousActiveIndex !== String(currentIndex)
+  );
 }
 
 function iconButton(
@@ -467,7 +506,7 @@ function lyricFallback(
     return "Lyrics unavailable";
   }
 
-  return "No lyric line";
+  return "Waiting for lyrics";
 }
 
 function playModeIcon(mode: NMPv3PlayMode): string {
