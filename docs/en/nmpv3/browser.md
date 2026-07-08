@@ -39,7 +39,7 @@ The script registers `<nmp-player>`, scans the page, and injects the base CSS.
 ## CDN HTML
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.1/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"

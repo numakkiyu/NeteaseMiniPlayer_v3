@@ -661,7 +661,7 @@ function serializeWordPressPackageManifest(input: {
 }): string {
   return `${JSON.stringify(
     {
-      version: "3.0.0-alpha.0",
+      version: "3.0.0-alpha.1",
       baseRuntime: input.enqueuePlan.baseRuntime.source,
       runtime: input.enqueuePlan.runtime.source,
       extensions: input.enqueuePlan.extensions.map((asset) => ({

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NeteaseMiniPlayer v3 Basic
  * Description: Minimal WordPress integration for the lightweight NMPv3 single-JS player.
- * Version: 3.0.0-alpha.0
+ * Version: 3.0.0-alpha.1
  * Author: BHCN STUDIO & contributors
  * License: Apache-2.0
  */
@@ -19,7 +19,7 @@ function nmpv3_basic_enqueue_assets(): void
         'nmpv3',
         plugins_url('assets/nmpv3.min.js', __FILE__),
         array(),
-        '3.0.0-alpha.0',
+        '3.0.0-alpha.1',
         array(
             'strategy' => 'defer',
             'in_footer' => true,

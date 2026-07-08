@@ -7,7 +7,7 @@ NMPv3 is the default single-file CDN entry. Load NMPv3+ only when you need plugi
 ## NMPv3 via jsDelivr
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.1/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"
@@ -19,13 +19,13 @@ NMPv3 is the default single-file CDN entry. Load NMPv3+ only when you need plugi
 Pinned version:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.1/dist/nmpv3.min.js"></script>
 ```
 
 ## NMPv3 via unpkg
 
 ```html
-<script src="https://unpkg.com/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
+<script src="https://unpkg.com/netease-mini-player-v3@3.0.0-alpha.1/dist/nmpv3.min.js"></script>
 
 <nmp-player song-id="1901371647" theme="auto" layout="mini"></nmp-player>
 ```
@@ -35,7 +35,7 @@ Pinned version:
 Load the base player first, then the Plus browser entry:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.1/dist/nmpv3.min.js"></script>
 <script>
   window.NMPv3PlusConfig = {
     apiBaseUrl: "https://api.hypcvgm.top/NeteaseMiniPlayer/nmp.php",
@@ -44,7 +44,7 @@ Load the base player first, then the Plus browser entry:
 </script>
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@3.0.0-alpha.0/dist/browser.js"
+  src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3-plus@3.0.0-alpha.1/dist/browser.js"
 ></script>
 
 <nmp-player playlist-id="14273792576" layout="compact"></nmp-player>
@@ -53,10 +53,10 @@ Load the base player first, then the Plus browser entry:
 ## NMPv3+ via unpkg
 
 ```html
-<script src="https://unpkg.com/netease-mini-player-v3@3.0.0-alpha.0/dist/nmpv3.min.js"></script>
+<script src="https://unpkg.com/netease-mini-player-v3@3.0.0-alpha.1/dist/nmpv3.min.js"></script>
 <script
   type="module"
-  src="https://unpkg.com/netease-mini-player-v3-plus@3.0.0-alpha.0/dist/browser.js"
+  src="https://unpkg.com/netease-mini-player-v3-plus@3.0.0-alpha.1/dist/browser.js"
 ></script>
 
 <nmp-player
