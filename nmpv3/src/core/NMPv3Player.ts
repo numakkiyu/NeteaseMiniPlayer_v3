@@ -1,6 +1,6 @@
 import { NeteaseApiClient } from "../api/NeteaseApiClient";
 import { normalizeConfig } from "../config/normalizeConfig";
-import { mergeLyrics } from "../lyric/parseLrc";
+import { normalizeLyrics } from "../lyric/normalizeLyrics";
 import { syncLyric as findActiveLyric } from "../lyric/syncLyric";
 import {
   renderPlayerShell,
@@ -646,14 +646,9 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
     try {
       const data = await this.api.getLyrics(songId);
-      this.lyrics = mergeLyrics(data.lrc?.lyric, data.tlyric?.lyric);
-      if (this.lyrics.length > 0) {
-        this.lyricStatus = "ready";
-      } else if (data.pureMusic || data.nolyric) {
-        this.lyricStatus = "instrumental";
-      } else {
-        this.lyricStatus = "empty";
-      }
+      const normalizedLyrics = normalizeLyrics(data);
+      this.lyrics = normalizedLyrics.lyrics;
+      this.lyricStatus = normalizedLyrics.status;
     } catch (error) {
       this.lyrics = [];
       this.lyricStatus = "error";

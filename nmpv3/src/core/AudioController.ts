@@ -4,6 +4,7 @@
  */
 export class AudioController {
   private readonly audio: HTMLAudioElement;
+  private currentSrc = "";
 
   constructor() {
     this.audio = new Audio();
@@ -11,7 +12,7 @@ export class AudioController {
 
   async play(url?: string): Promise<void> {
     if (url) {
-      this.audio.src = url;
+      this.setSrc(url);
     }
 
     if (!this.audio.src) {
@@ -26,8 +27,9 @@ export class AudioController {
   }
 
   setSrc(url: string): void {
-    if (this.audio.src !== url) {
+    if (this.currentSrc !== url || !this.audio.src) {
       this.audio.src = url;
+      this.currentSrc = url;
     }
   }
 
@@ -60,6 +62,7 @@ export class AudioController {
   destroy(): void {
     this.pause();
     this.audio.removeAttribute("src");
+    this.currentSrc = "";
     this.audio.load();
   }
 }
