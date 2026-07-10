@@ -30,8 +30,13 @@ export function createCrossTabSyncPlugin(
       const channel = new BroadcastChannel(
         options.channelName ?? "nmpv3-plus-sync",
       );
+      let applyingRemoteCommand = 0;
       const stops = events.map((event) =>
         ctx.on(event, (payload) => {
+          if (applyingRemoteCommand > 0) {
+            return;
+          }
+
           channel.postMessage({
             event,
             payload,
@@ -40,7 +45,7 @@ export function createCrossTabSyncPlugin(
         }),
       );
 
-      channel.onmessage = (message: MessageEvent<CrossTabMessage>) => {
+      channel.onmessage = async (message: MessageEvent<CrossTabMessage>) => {
         const data = message.data;
 
         // 忽略自己的消息，避免回声循环
@@ -48,13 +53,24 @@ export function createCrossTabSyncPlugin(
           return;
         }
 
-        ctx.emit(`remote:${data.event}`, data.payload);
+        if (data.event !== "pause" && data.event !== "play") {
+          ctx.emit(`remote:${data.event}`, data.payload);
+          return;
+        }
 
-        // 收到远程的 play/pause 指令时直接控制本地播放器
-        if (data.event === "pause") {
-          ctx.player?.pause?.();
-        } else if (data.event === "play") {
-          void ctx.player?.play?.();
+        applyingRemoteCommand += 1;
+
+        try {
+          ctx.emit(`remote:${data.event}`, data.payload);
+
+          // 收到远程的 play/pause 指令时直接控制本地播放器
+          if (data.event === "pause") {
+            ctx.player?.pause?.();
+          } else {
+            await ctx.player?.play?.();
+          }
+        } finally {
+          applyingRemoteCommand -= 1;
         }
       };
 

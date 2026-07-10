@@ -37,7 +37,7 @@ Use NMPv3 for normal embedding. Use NMPv3+ only when an integration needs advanc
 ## Recommended Entry
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.1/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.1/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"

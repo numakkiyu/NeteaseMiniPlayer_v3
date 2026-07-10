@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NeteaseMiniPlayer v3 Plus
  * Description: Advanced NMPv3+ integration with settings, skins, extensions, Gutenberg block, custom sources, custom lyrics, and host-page sync.
- * Version: 3.0.0-alpha.1
+ * Version: 3.0.1
  * Author: NeteaseMiniPlayer
  * License: Apache-2.0
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 
 final class NMPv3Plus_WordPress_Plugin
 {
-    public const VERSION = '3.0.0-alpha.1';
+    public const VERSION = '3.0.1';
     public const OPTION = 'nmpv3plus_settings';
     public const PAGE_SLUG = 'nmpv3plus';
     public const SHORTCODE = 'nmpv3plus';

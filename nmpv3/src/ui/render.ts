@@ -319,6 +319,7 @@ function applyRootConfig(root: HTMLElement, config: NMPv3Config): void {
   root.dataset.layout = config.layout;
   root.dataset.embedMode = config.embedMode;
   root.dataset.position = config.position;
+  root.dataset.draggable = String(config.draggable);
   root.style.setProperty("--nmpv3-idle-opacity", String(config.idleOpacity));
 }
 

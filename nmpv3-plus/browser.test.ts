@@ -36,19 +36,13 @@ describe("NMPv3+ browser API bridge", () => {
 
   it("keeps per-player frontend api-base-url from being overwritten by the Plus default", async () => {
     const setApiBaseUrl = vi.fn();
-    const player = {
-      config: { showLyrics: true },
-      audio: { setSrc: vi.fn() },
-      pause: vi.fn(),
-      updateView: vi.fn(),
-      updateMediaSession: vi.fn(),
-    };
+    const player = createBasePlayerStub();
     const playerElement = createElementStub({
       "api-base-url": "https://player-api.example.test/music",
       "source-type": "custom-api",
       "playlist-id": "front-end-list",
     });
-    playerElement.player = player;
+    playerElement.getPlayer = () => player;
     const root = {
       querySelectorAll: vi.fn(() => [playerElement]),
     } as unknown as ParentNode;
@@ -143,20 +137,14 @@ describe("NMPv3+ browser API bridge", () => {
   });
 
   it("loads declared local-json source and lyrics into the real base player bridge", async () => {
-    const player = {
-      config: { showLyrics: true },
-      audio: { setSrc: vi.fn() },
-      pause: vi.fn(),
-      updateView: vi.fn(),
-      updateMediaSession: vi.fn(),
-    };
+    const player = createBasePlayerStub();
     const playerElement = createElementStub({
       "source-type": "local-json",
       source: "/music/playlist.json",
       "lyrics-url": "/lyrics/local.lrc",
       "plus-extensions": "custom-source,local-lyrics",
     });
-    playerElement.player = player;
+    playerElement.getPlayer = () => player;
     const root = {
       querySelectorAll: vi.fn(() => [playerElement]),
     } as unknown as ParentNode;
@@ -208,19 +196,13 @@ describe("NMPv3+ browser API bridge", () => {
   });
 
   it("loads explicit NetEase sources and lyrics through Plus adapters", async () => {
-    const player = {
-      config: { showLyrics: true },
-      audio: { setSrc: vi.fn() },
-      pause: vi.fn(),
-      updateView: vi.fn(),
-      updateMediaSession: vi.fn(),
-    };
+    const player = createBasePlayerStub();
     const playerElement = createElementStub({
       "source-type": "netease",
       "song-id": "1901371647",
       "api-base-url": "https://api.example.test/NeteaseMiniPlayer/nmp.php",
     });
-    playerElement.player = player;
+    playerElement.getPlayer = () => player;
     const root = {
       querySelectorAll: vi.fn(() => [playerElement]),
     } as unknown as ParentNode;
@@ -299,18 +281,12 @@ describe("NMPv3+ browser API bridge", () => {
   });
 
   it("loads per-song lyric URLs from local-json playlists", async () => {
-    const player = {
-      config: { showLyrics: true },
-      audio: { setSrc: vi.fn() },
-      pause: vi.fn(),
-      updateView: vi.fn(),
-      updateMediaSession: vi.fn(),
-    };
+    const player = createBasePlayerStub();
     const playerElement = createElementStub({
       "source-type": "local-json",
       source: "/music/playlist-with-lyrics.json",
     });
-    playerElement.player = player;
+    playerElement.getPlayer = () => player;
     const root = {
       querySelectorAll: vi.fn(() => [playerElement]),
     } as unknown as ParentNode;
@@ -629,6 +605,91 @@ function createElementStub(attrs: Record<string, string> = {}): HTMLElement {
   });
 
   return target;
+}
+
+function createBasePlayerStub() {
+  const player = {
+    audio: { setSrc: vi.fn() },
+    currentSong: null as {
+      id: string;
+      name: string;
+      artists?: string;
+      url?: string;
+      source?: string;
+    } | null,
+    currentTime: 0,
+    currentLyric: null as {
+      time: number;
+      text: string;
+      translation?: string;
+    } | null,
+    lyrics: [] as Array<{
+      time: number;
+      text: string;
+      translation?: string;
+    }>,
+    lyricStatus: "empty",
+    status: "ready",
+    play: vi.fn(async () => {}),
+    pause: vi.fn(),
+    next: vi.fn(async () => {}),
+    previous: vi.fn(async () => {}),
+    seekTo: vi.fn(),
+    getCurrentSong: vi.fn(() => player.currentSong),
+    getState: vi.fn(() => ({ currentTime: player.currentTime })),
+    loadPlaylistData: vi.fn(
+      async (
+        playlist: {
+          songs: Array<{
+            id: string;
+            name: string;
+            artists?: string;
+            url?: string;
+            source?: string;
+          }>;
+        },
+        options?: { startIndex?: number; autoplay?: boolean },
+      ) => {
+        const index = Math.max(
+          0,
+          Math.min(playlist.songs.length - 1, options?.startIndex ?? 0),
+        );
+        player.currentSong = playlist.songs[index] ?? null;
+        player.status = "ready";
+        player.lyrics = [];
+        player.lyricStatus = "empty";
+        player.currentLyric = null;
+
+        if (player.currentSong?.url) {
+          player.audio.setSrc(player.currentSong.url);
+        }
+
+        if (options?.autoplay) {
+          await player.play();
+        }
+
+        return player.currentSong;
+      },
+    ),
+    setLyrics: vi.fn(
+      (
+        lyrics: ReadonlyArray<{
+          time: number;
+          text: string;
+          translation?: string;
+        }>,
+      ) => {
+        player.lyrics = lyrics.map((line) => ({ ...line }));
+        player.lyricStatus = player.lyrics.length > 0 ? "ready" : "empty";
+        player.currentLyric =
+          [...player.lyrics]
+            .reverse()
+            .find((line) => line.time <= player.currentTime) ?? null;
+      },
+    ),
+  };
+
+  return player;
 }
 
 function createHeadStub(): HTMLElement & {

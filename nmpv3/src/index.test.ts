@@ -8,6 +8,16 @@ describe("NMPv3 browser API configuration contract", () => {
     vi.resetModules();
   });
 
+  it("can be imported without browser DOM globals", async () => {
+    vi.stubGlobal("window", undefined);
+    vi.stubGlobal("document", undefined);
+    vi.stubGlobal("HTMLElement", undefined);
+
+    await expect(import("./index")).resolves.toMatchObject({
+      NMPv3: expect.objectContaining({ init: expect.any(Function) }),
+    });
+  });
+
   it("hardcodes the v2.5-compatible API proxy as the compiled default", async () => {
     const browserWindow = stubWindow({});
     const { NMPv3 } = await import("./index");
@@ -110,6 +120,9 @@ function createPlayerStub(): NMPv3Player {
     previous: vi.fn(async () => {}),
     loadSong: vi.fn(async () => {}),
     loadPlaylist: vi.fn(async () => {}),
+    loadPlaylistData: vi.fn(async () => null),
+    setLyrics: vi.fn(),
+    seekTo: vi.fn(),
     setVolume: vi.fn(),
     setTheme: vi.fn(),
     setLayout: vi.fn(),

@@ -1,6 +1,6 @@
 {
   "name": "netease-mini-player-v3-plus",
-  "version": "3.0.0-alpha.1",
+  "version": "3.0.1",
   "type": "module",
   "description": "Advanced NeteaseMiniPlayer v3 Plus framework with extensions, skins, adapters, and custom sources.",
   "license": "Apache-2.0",

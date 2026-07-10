@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version without the leading v, for example 3.0.0-alpha.0"
+        description: "Release version without the leading v, for example 3.0.1"
         required: true
 
 permissions:
@@ -78,7 +78,15 @@ jobs:
 
             if npm view "$package_name@$VERSION" version >/dev/null 2>&1; then
               echo "$package_name@$VERSION is already published; skipping npm publish."
-              npm dist-tag add "$package_name@$VERSION" latest
+              current_latest="$(npm view "$package_name" dist-tags.latest 2>/dev/null || true)"
+
+              if [ "$current_latest" = "$VERSION" ]; then
+                echo "$package_name latest already points to $VERSION."
+              elif [ -n "${NPM_TOKEN:-}" ]; then
+                npm dist-tag add "$package_name@$VERSION" latest
+              else
+                echo "::warning::$package_name@$VERSION exists but latest points to ${current_latest:-unknown}; configure NPM_TOKEN to update the dist-tag."
+              fi
               return
             fi
 

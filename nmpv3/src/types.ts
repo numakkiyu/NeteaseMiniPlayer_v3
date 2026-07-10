@@ -46,6 +46,11 @@ export interface NMPv3Playlist {
   songs: NMPv3Song[];
 }
 
+export interface NMPv3PlaylistLoadOptions {
+  startIndex?: number;
+  autoplay?: boolean;
+}
+
 export interface NMPv3LyricLine {
   time: number;
   text: string;
@@ -75,6 +80,12 @@ export interface NMPv3Player {
   previous(): Promise<void>;
   loadSong(songId: string): Promise<void>;
   loadPlaylist(playlistId: string): Promise<void>;
+  loadPlaylistData(
+    playlist: NMPv3Playlist,
+    options?: NMPv3PlaylistLoadOptions,
+  ): Promise<NMPv3Song | null>;
+  setLyrics(lyrics: readonly NMPv3LyricLine[]): void;
+  seekTo(time: number): void;
   setVolume(volume: number): void;
   setTheme(theme: NMPv3Theme): void;
   setLayout(layout: NMPv3Layout): void;
@@ -82,6 +93,21 @@ export interface NMPv3Player {
   getState(): NMPv3State;
   getCurrentSong(): NMPv3Song | null;
   destroy(): void;
+}
+
+export interface NMPv3PlayerElement extends HTMLElement {
+  getPlayer(): NMPv3Player | null;
+  play(): Promise<void>;
+  pause(): void;
+  toggle(): Promise<void>;
+  next(): Promise<void>;
+  previous(): Promise<void>;
+  loadSong(songId: string): Promise<void>;
+  loadPlaylist(playlistId: string): Promise<void>;
+  seekTo(time: number): void;
+  updateConfig(config: Partial<NMPv3Config>): Promise<void>;
+  getState(): NMPv3State | null;
+  getCurrentSong(): NMPv3Song | null;
 }
 
 export interface NMPv3Global {

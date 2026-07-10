@@ -14,12 +14,7 @@ describe("NMPv3PlayerBridge", () => {
     root.addEventListener("nmpv3:songchange", songChange);
 
     const player = {
-      target: root,
-      config: { showLyrics: true },
-      audio: { setSrc: vi.fn() },
-      pause: vi.fn(),
-      updateView: vi.fn(),
-      updateMediaSession: vi.fn(),
+      loadPlaylistData: vi.fn(async (playlist) => playlist.songs[0] ?? null),
     };
 
     const currentSong = await loadNMPv3PlusPlaylistIntoBasePlayer(
@@ -45,19 +40,15 @@ describe("NMPv3PlayerBridge", () => {
       id: "local-1",
       name: "Local Song",
     });
-    expect(player.pause).toHaveBeenCalledTimes(1);
-    expect(player.audio.setSrc).toHaveBeenCalledWith("/media/local-song.mp3");
-    expect(player).toMatchObject({
-      currentIndex: 0,
-      currentSong: { id: "local-1", name: "Local Song" },
-      duration: 185,
-      lyricStatus: "empty",
-      status: "ready",
-    });
-    expect(player.updateView).toHaveBeenCalled();
-    expect(player.updateMediaSession).toHaveBeenCalled();
-    expect(playlistChange).toHaveBeenCalledTimes(1);
-    expect(songChange).toHaveBeenCalledTimes(1);
+    expect(player.loadPlaylistData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "local-list",
+        songs: [expect.objectContaining({ id: "local-1" })],
+      }),
+      { startIndex: undefined, autoplay: undefined },
+    );
+    expect(playlistChange).not.toHaveBeenCalled();
+    expect(songChange).not.toHaveBeenCalled();
   });
 
   it("applies Plus lyrics to the base lyric view state", () => {
@@ -65,11 +56,7 @@ describe("NMPv3PlayerBridge", () => {
     const lyricsChange = vi.fn();
     root.addEventListener("nmpv3plus:lyricschange", lyricsChange);
     const player = {
-      target: root,
-      config: { showLyrics: true },
-      currentTime: 3,
-      getState: vi.fn(),
-      updateView: vi.fn(),
+      setLyrics: vi.fn(),
     };
 
     applyNMPv3PlusLyricsToBasePlayer(
@@ -85,22 +72,17 @@ describe("NMPv3PlayerBridge", () => {
       root,
     );
 
-    expect(player).toMatchObject({
-      lyricStatus: "ready",
-      currentLyric: {
-        time: 2,
-        text: "Active",
-        translation: "Translated",
-      },
-    });
-    expect(player.updateView).toHaveBeenCalledTimes(1);
+    expect(player.setLyrics).toHaveBeenCalledWith([
+      { time: 0, text: "Opening" },
+      { time: 2, text: "Active", translation: "Translated" },
+    ]);
     expect(lyricsChange).toHaveBeenCalledTimes(1);
   });
 
   it("resolves the base player attached to an nmp-player element", () => {
     const root = {} as HTMLElement;
     const player = { getState: vi.fn() };
-    root.player = player;
+    root.getPlayer = () => player;
 
     expect(resolveNMPv3PlayerFromElement(root)).toBe(player);
   });

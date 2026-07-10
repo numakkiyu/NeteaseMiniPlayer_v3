@@ -48,7 +48,7 @@ wp_enqueue_script(
     'nmpv3',
     plugins_url('assets/nmpv3.min.js', __FILE__),
     array(),
-    '3.0.0-alpha.1',
+    '3.0.1',
     array(
         'strategy' => 'defer',
         'in_footer' => true,

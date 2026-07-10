@@ -1,5 +1,4 @@
 import type {
-  NMPv3PlusLyricLine,
   NMPv3PlusLyricsResult,
   NMPv3PlusPlayerLike,
   NMPv3PlusPlaylist,
@@ -10,29 +9,6 @@ export interface NMPv3PlusBasePlayerBridgeOptions {
   root?: HTMLElement | null;
   startIndex?: number;
   autoplay?: boolean;
-}
-
-interface NMPv3InternalPlayer extends NMPv3PlusPlayerLike {
-  target?: HTMLElement;
-  config?: {
-    autoplay?: boolean;
-    showLyrics?: boolean;
-  };
-  audio?: {
-    setSrc?(url: string): void;
-  };
-  playlist?: NMPv3PlusSong[];
-  lyrics?: NMPv3PlusLyricLine[];
-  currentSong?: NMPv3PlusSong | null;
-  currentIndex?: number;
-  currentLyric?: NMPv3PlusLyricLine | null;
-  currentTime?: number;
-  duration?: number;
-  status?: string;
-  lyricStatus?: string;
-  errorMessage?: string;
-  updateView?(): void;
-  updateMediaSession?(): void;
 }
 
 declare global {
@@ -46,7 +22,7 @@ declare global {
   }
 
   interface HTMLElement {
-    player?: NMPv3PlusPlayerLike;
+    getPlayer?(): NMPv3PlusPlayerLike | null;
   }
 }
 
@@ -57,18 +33,12 @@ export function resolveNMPv3PlayerFromElement(
     return null;
   }
 
-  if (root.player) {
-    return root.player;
+  const attachedPlayer = root.getPlayer?.();
+  if (attachedPlayer) {
+    return attachedPlayer;
   }
 
-  const players = globalThis.window?.NMPv3?.getPlayers?.() ?? [];
-
-  return (
-    players.find((player) => {
-      const candidate = player as NMPv3InternalPlayer;
-      return candidate.target === root;
-    }) ?? null
-  );
+  return null;
 }
 
 export async function loadNMPv3PlusPlaylistIntoBasePlayer(
@@ -76,9 +46,7 @@ export async function loadNMPv3PlusPlaylistIntoBasePlayer(
   playlist: NMPv3PlusPlaylist,
   options: NMPv3PlusBasePlayerBridgeOptions = {},
 ): Promise<NMPv3PlusSong> {
-  const targetPlayer = asInternalPlayer(player);
-
-  if (!targetPlayer) {
+  if (!player?.loadPlaylistData) {
     throw new Error("NMPv3+ custom source requires a live NMPv3 player");
   }
 
@@ -86,41 +54,19 @@ export async function loadNMPv3PlusPlaylistIntoBasePlayer(
     throw new Error("NMPv3+ custom source playlist is empty");
   }
 
-  targetPlayer.pause?.();
+  const currentSong = await player.loadPlaylistData(
+    {
+      ...playlist,
+      songs: playlist.songs.map(normalizeSongForBasePlayer),
+    },
+    {
+      startIndex: options.startIndex,
+      autoplay: options.autoplay,
+    },
+  );
 
-  const normalizedSongs = playlist.songs.map(normalizeSongForBasePlayer);
-  const currentIndex = clampIndex(options.startIndex ?? 0, normalizedSongs);
-  const currentSong = normalizedSongs[currentIndex];
-  const showLyrics = targetPlayer.config?.showLyrics !== false;
-
-  targetPlayer.playlist = normalizedSongs;
-  targetPlayer.currentIndex = currentIndex;
-  targetPlayer.currentSong = currentSong;
-  targetPlayer.currentTime = 0;
-  targetPlayer.duration = durationSeconds(currentSong);
-  targetPlayer.currentLyric = null;
-  targetPlayer.lyrics = [];
-  targetPlayer.lyricStatus = showLyrics ? "empty" : "hidden";
-  targetPlayer.status = "ready";
-  targetPlayer.errorMessage = "";
-
-  if (currentSong.url) {
-    targetPlayer.audio?.setSrc?.(currentSong.url);
-  }
-
-  targetPlayer.updateView?.();
-  targetPlayer.updateMediaSession?.();
-  dispatchBasePlayerEvent(targetPlayer, options.root, "nmpv3:playlistchange", {
-    player: targetPlayer,
-    playlist,
-  });
-  dispatchBasePlayerEvent(targetPlayer, options.root, "nmpv3:songchange", {
-    player: targetPlayer,
-    song: currentSong,
-  });
-
-  if (options.autoplay ?? targetPlayer.config?.autoplay) {
-    await targetPlayer.play?.();
+  if (!currentSong) {
+    throw new Error("NMPv3+ custom source playlist could not be loaded");
   }
 
   return currentSong;
@@ -131,34 +77,15 @@ export function applyNMPv3PlusLyricsToBasePlayer(
   lyrics: NMPv3PlusLyricsResult,
   root?: HTMLElement | null,
 ): void {
-  const targetPlayer = asInternalPlayer(player);
-
-  if (!targetPlayer) {
+  if (!player?.setLyrics) {
     throw new Error("NMPv3+ custom lyrics requires a live NMPv3 player");
   }
 
-  const showLyrics = targetPlayer.config?.showLyrics !== false;
-  targetPlayer.lyrics = lyrics.lines.map((line) => ({ ...line }));
-  targetPlayer.lyricStatus = showLyrics
-    ? targetPlayer.lyrics.length > 0
-      ? "ready"
-      : "empty"
-    : "hidden";
-  targetPlayer.currentLyric = activeLyric(
-    targetPlayer.lyrics,
-    targetPlayer.currentTime ?? 0,
-  );
-  targetPlayer.updateView?.();
-  dispatchBasePlayerEvent(targetPlayer, root, "nmpv3plus:lyricschange", {
-    player: targetPlayer,
+  player.setLyrics(lyrics.lines);
+  dispatchBasePlayerEvent(player, root, "nmpv3plus:lyricschange", {
+    player,
     lyrics,
   });
-}
-
-function asInternalPlayer(
-  player: NMPv3PlusPlayerLike | null | undefined,
-): NMPv3InternalPlayer | null {
-  return player ? (player as NMPv3InternalPlayer) : null;
 }
 
 function normalizeSongForBasePlayer(song: NMPv3PlusSong): NMPv3PlusSong {
@@ -169,47 +96,13 @@ function normalizeSongForBasePlayer(song: NMPv3PlusSong): NMPv3PlusSong {
   };
 }
 
-function clampIndex(index: number, songs: NMPv3PlusSong[]): number {
-  if (!Number.isFinite(index)) {
-    return 0;
-  }
-
-  return Math.max(0, Math.min(songs.length - 1, Math.trunc(index)));
-}
-
-function durationSeconds(song: NMPv3PlusSong): number {
-  if (!song.duration || !Number.isFinite(song.duration)) {
-    return 0;
-  }
-
-  // > 600 视为毫秒（超过 10 分钟），否则视为秒
-  return song.duration > 600 ? song.duration / 1000 : song.duration;
-}
-
-function activeLyric(
-  lyrics: NMPv3PlusLyricLine[],
-  currentTime: number,
-): NMPv3PlusLyricLine | null {
-  let active: NMPv3PlusLyricLine | null = null;
-
-  for (const line of lyrics) {
-    if (currentTime >= line.time) {
-      active = line;
-    } else {
-      break;
-    }
-  }
-
-  return active;
-}
-
 function dispatchBasePlayerEvent(
-  player: NMPv3InternalPlayer,
+  player: NMPv3PlusPlayerLike,
   root: HTMLElement | null | undefined,
   type: string,
   detail: unknown,
 ): void {
-  const target = root ?? player.target;
+  const target = root;
 
   if (!target || typeof target.dispatchEvent !== "function") {
     return;

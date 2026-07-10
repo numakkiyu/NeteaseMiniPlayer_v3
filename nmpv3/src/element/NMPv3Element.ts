@@ -2,13 +2,17 @@ import { configFromElement } from "../config/normalizeConfig";
 import { resolveConfigWithGlobal } from "../config/globalConfig";
 import { globalAudioManager } from "../core/GlobalAudioManager";
 import { NMPv3PlayerInstance } from "../core/NMPv3Player";
-import type { NMPv3Config, NMPv3Player } from "../types";
+import type { NMPv3Config, NMPv3Player, NMPv3Song, NMPv3State } from "../types";
+
+const HTMLElementBase = (
+  typeof HTMLElement === "undefined" ? class {} : HTMLElement
+) as typeof HTMLElement;
 
 /**
  * Web Component: <nmp-player>
  * 属性变化时自动同步到播放器实例，支持声明式配置
  */
-export class NMPv3Element extends HTMLElement {
+export class NMPv3Element extends HTMLElementBase {
   static observedAttributes = [
     "song-id",
     "playlist-id",
@@ -33,6 +37,54 @@ export class NMPv3Element extends HTMLElement {
   ];
 
   private player: NMPv3Player | null = null;
+
+  getPlayer(): NMPv3Player | null {
+    return this.player;
+  }
+
+  play(): Promise<void> {
+    return this.player?.play() ?? Promise.resolve();
+  }
+
+  pause(): void {
+    this.player?.pause();
+  }
+
+  toggle(): Promise<void> {
+    return this.player?.toggle() ?? Promise.resolve();
+  }
+
+  next(): Promise<void> {
+    return this.player?.next() ?? Promise.resolve();
+  }
+
+  previous(): Promise<void> {
+    return this.player?.previous() ?? Promise.resolve();
+  }
+
+  loadSong(songId: string): Promise<void> {
+    return this.player?.loadSong(songId) ?? Promise.resolve();
+  }
+
+  loadPlaylist(playlistId: string): Promise<void> {
+    return this.player?.loadPlaylist(playlistId) ?? Promise.resolve();
+  }
+
+  seekTo(time: number): void {
+    this.player?.seekTo(time);
+  }
+
+  updateConfig(config: Partial<NMPv3Config>): Promise<void> {
+    return this.player?.updateConfig(config) ?? Promise.resolve();
+  }
+
+  getState(): NMPv3State | null {
+    return this.player?.getState() ?? null;
+  }
+
+  getCurrentSong(): NMPv3Song | null {
+    return this.player?.getCurrentSong() ?? null;
+  }
 
   connectedCallback(): void {
     if (!this.player) {
