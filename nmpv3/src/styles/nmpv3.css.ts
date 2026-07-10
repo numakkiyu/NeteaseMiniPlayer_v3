@@ -118,6 +118,10 @@ nmp-player,
   z-index: 1;
 }
 
+.${c.player}[data-draggable="true"]:not([data-position="static"]):not([data-embed-mode="article"]) .${c.main} {
+  touch-action: none;
+}
+
 .${c.player}.${sc.dragging} {
   cursor: grabbing;
   user-select: none;
@@ -1016,6 +1020,26 @@ nmp-player,
     width: min(100%, 360px);
     min-height: 116px;
     padding: 10px;
+  }
+
+  .nmpv3-player[data-position="top-left"] {
+    top: 8px;
+    left: 8px;
+  }
+
+  .nmpv3-player[data-position="top-right"] {
+    top: 8px;
+    right: 8px;
+  }
+
+  .nmpv3-player[data-position="bottom-left"] {
+    bottom: 8px;
+    left: 8px;
+  }
+
+  .nmpv3-player[data-position="bottom-right"] {
+    right: 8px;
+    bottom: 8px;
   }
 
   .nmpv3-player[data-position="static"].nmpv3-playlist-open {

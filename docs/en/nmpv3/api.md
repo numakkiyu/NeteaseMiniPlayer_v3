@@ -42,6 +42,27 @@ await player.updateConfig({ apiBaseUrl: "/api/netease" });
 player.destroy();
 ```
 
+## Custom element controls
+
+`<nmp-player>` exposes supported player controls directly without private-field access or global instance lookup:
+
+```ts
+const element = document.querySelector("nmp-player");
+
+await element?.play();
+element?.pause();
+await element?.next();
+await element?.previous();
+element?.seekTo(60);
+await element?.updateConfig({ theme: "dark" });
+
+const player = element?.getPlayer();
+const state = element?.getState();
+const song = element?.getCurrentSong();
+```
+
+TypeScript projects can use the exported `NMPv3PlayerElement` type for refs and query results.
+
 ## Configuration
 
 JavaScript uses camelCase:

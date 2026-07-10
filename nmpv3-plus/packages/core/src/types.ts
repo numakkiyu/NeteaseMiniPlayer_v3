@@ -25,6 +25,14 @@ export type NMPv3PlusPluginCleanup = () => void | Promise<void>;
 export interface NMPv3PlusPlayerLike {
   play?(): Promise<void>;
   pause?(): void;
+  next?(): Promise<void>;
+  previous?(): Promise<void>;
+  seekTo?(time: number): void;
+  loadPlaylistData?(
+    playlist: NMPv3PlusPlaylist,
+    options?: { startIndex?: number; autoplay?: boolean },
+  ): Promise<NMPv3PlusSong | null>;
+  setLyrics?(lyrics: readonly NMPv3PlusLyricLine[]): void;
   updateConfig?(config: Record<string, unknown>): Promise<void>;
   getState?(): unknown;
   getCurrentSong?(): unknown;

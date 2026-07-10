@@ -24,13 +24,16 @@ export function NMPv3PlusPlayer() {
         lyricsUrl: "/lyrics/song.lrc",
         translationLyricsUrl: "/lyrics/song.zh.lrc",
         hostSync: true,
+        onNMPv3SongChange: (event) => {
+          console.log("歌曲已切换", event);
+        },
       })}
     />
   );
 }
 ```
 
-React 适配器提供 JSX 类型和属性映射，适合在组件中统一管理 Plus 配置。
+React 适配器提供 JSX 类型、属性映射和 ref 事件绑定。`onNMPv3Ready`、`onNMPv3Play`、`onNMPv3Pause`、`onNMPv3SongChange`、`onNMPv3Error` 会绑定到真实自定义事件，并在 ref 卸载时清理。
 
 ## Vue 3
 

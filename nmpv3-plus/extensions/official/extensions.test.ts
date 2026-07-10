@@ -249,11 +249,19 @@ describe("official NMPv3+ extensions", () => {
   });
 
   it("synchronizes selected events through BroadcastChannel", async () => {
+    const runtimeRef: {
+      current: ReturnType<typeof createNMPv3PlusRuntime> | null;
+    } = { current: null };
     const player = {
-      play: vi.fn(async () => undefined),
-      pause: vi.fn(),
+      play: vi.fn(async () => {
+        runtimeRef.current?.emit("play", { id: "remote-song" });
+      }),
+      pause: vi.fn(() => {
+        runtimeRef.current?.emit("pause", { id: "remote-song" });
+      }),
     };
     const runtime = createNMPv3PlusRuntime({ player });
+    runtimeRef.current = runtime;
     const remotePause = vi.fn();
     runtime.on("remote:pause", remotePause);
     vi.stubGlobal("BroadcastChannel", FakeBroadcastChannel);
@@ -272,12 +280,19 @@ describe("official NMPv3+ extensions", () => {
       source: "local",
     });
 
-    FakeBroadcastChannel.instances[0]?.onmessage?.({
+    await FakeBroadcastChannel.instances[0]?.onmessage?.({
       data: { event: "pause", source: "remote" },
     } as MessageEvent);
 
     expect(remotePause).toHaveBeenCalledTimes(1);
     expect(player.pause).toHaveBeenCalledTimes(1);
+    expect(FakeBroadcastChannel.instances[0]?.messages).toHaveLength(1);
+
+    await FakeBroadcastChannel.instances[0]?.onmessage?.({
+      data: { event: "play", source: "remote" },
+    } as MessageEvent);
+    expect(player.play).toHaveBeenCalledTimes(1);
+    expect(FakeBroadcastChannel.instances[0]?.messages).toHaveLength(1);
   });
 
   it("updates Media Session metadata and handlers when supported", async () => {

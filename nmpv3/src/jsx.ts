@@ -2,6 +2,7 @@
 import type {
   NMPv3EmbedMode,
   NMPv3Layout,
+  NMPv3PlayerElement,
   NMPv3Position,
   NMPv3Theme,
 } from "./types";
@@ -43,13 +44,13 @@ export interface NMPv3ElementAttributes {
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    "nmp-player": HTMLElement;
-  }
-
   namespace JSX {
     interface IntrinsicElements {
       "nmp-player": NMPv3ElementAttributes;
     }
+  }
+
+  interface HTMLElementTagNameMap {
+    "nmp-player": NMPv3PlayerElement;
   }
 }

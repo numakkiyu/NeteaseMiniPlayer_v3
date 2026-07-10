@@ -14,7 +14,7 @@ NMPv3 是 NeteaseMiniPlayer v3 的轻量播放器包。它面向 GitHub Pages、
 ## CDN 示例
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.0-alpha.1/dist/nmpv3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/netease-mini-player-v3@3.0.1/dist/nmpv3.min.js"></script>
 
 <nmp-player
   playlist-id="14273792576"

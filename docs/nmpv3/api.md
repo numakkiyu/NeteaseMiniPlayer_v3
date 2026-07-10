@@ -61,6 +61,27 @@ const state = player.getState();
 const song = player.getCurrentSong();
 ```
 
+## 自定义元素控制 API
+
+`<nmp-player>` 会代理正式的播放器控制方法，无需读取内部字段或通过全局实例数组反查：
+
+```ts
+const element = document.querySelector("nmp-player");
+
+await element?.play();
+element?.pause();
+await element?.next();
+await element?.previous();
+element?.seekTo(60);
+await element?.updateConfig({ theme: "dark" });
+
+const player = element?.getPlayer();
+const state = element?.getState();
+const song = element?.getCurrentSong();
+```
+
+TypeScript 项目可以使用导出的 `NMPv3PlayerElement` 类型声明 ref 或查询结果。
+
 ## 配置对象
 
 `createNMPv3Player()` 和 `updateConfig()` 使用 camelCase 配置：

@@ -24,11 +24,16 @@ export function NMPv3PlusPlayer() {
         lyricsUrl: "/lyrics/song.lrc",
         translationLyricsUrl: "/lyrics/song.zh.lrc",
         hostSync: true,
+        onNMPv3SongChange: (event) => {
+          console.log("Song changed", event);
+        },
       })}
     />
   );
 }
 ```
+
+The React adapter binds `onNMPv3Ready`, `onNMPv3Play`, `onNMPv3Pause`, `onNMPv3SongChange`, and `onNMPv3Error` to real custom events and removes them when the ref unmounts.
 
 ## Vue
 

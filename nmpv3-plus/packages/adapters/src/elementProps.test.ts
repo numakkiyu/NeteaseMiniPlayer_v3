@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createNMPv3PlusAstroIslandPlan } from "../../astro/src/index";
 import { createNMPv3PlusNextClientPlan } from "../../next/src/index";
 import { createNMPv3PlusNuxtClientPlan } from "../../nuxt/src/index";
@@ -67,6 +67,23 @@ describe("NMPv3+ framework adapters", () => {
       "plus-extensions": "visualizer",
       "page-linking": true,
     });
+  });
+
+  it("binds and releases React custom-event callbacks through the ref", () => {
+    const onSongChange = vi.fn();
+    const props = createNMPv3PlusReactProps({
+      songId: "1901371647",
+      onNMPv3SongChange: onSongChange,
+    });
+    const element = new EventTarget() as HTMLElement;
+
+    props.ref?.(element);
+    element.dispatchEvent(new Event("nmpv3:songchange"));
+    expect(onSongChange).toHaveBeenCalledTimes(1);
+
+    props.ref?.(null);
+    element.dispatchEvent(new Event("nmpv3:songchange"));
+    expect(onSongChange).toHaveBeenCalledTimes(1);
   });
 
   it("creates framework adapters from a shared element-plan factory", () => {

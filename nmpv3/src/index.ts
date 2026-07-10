@@ -22,6 +22,7 @@ export * from "./jsx";
 export { DEFAULT_API_BASE_URL };
 export { parseLrc } from "./lyric/parseLrc";
 export { syncLyric } from "./lyric/syncLyric";
+export { NMPv3Element } from "./element/NMPv3Element";
 
 let autoInitScheduled = false;
 
@@ -184,7 +185,7 @@ export function getGlobalConfig(): NMPv3Config {
 }
 
 export const NMPv3: NMPv3Global = {
-  version: "3.0.0-alpha.1",
+  version: "3.0.1",
   init,
   create: createNMPv3Player,
   upgradeLegacy,

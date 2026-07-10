@@ -8,11 +8,12 @@ import {
   type NMPv3RenderedElements,
 } from "../ui/render";
 import { classNames as c, stateClassNames as sc } from "../ui/classNames";
-import { getDocument, getNavigator, getWindow } from "../utils/env";
+import { getDocument, getWindow } from "../utils/env";
 import { emit } from "../utils/event";
 import { logger } from "../utils/logger";
 import { AudioController } from "./AudioController";
 import { globalAudioManager } from "./GlobalAudioManager";
+import { mediaSessionManager } from "./MediaSessionManager";
 import { StateStore } from "./StateStore";
 import type {
   NMPv3Config,
@@ -22,6 +23,8 @@ import type {
   NMPv3Layout,
   NMPv3PlayMode,
   NMPv3Player,
+  NMPv3Playlist,
+  NMPv3PlaylistLoadOptions,
   NMPv3Song,
   NMPv3State,
   NMPv3Theme,
@@ -47,7 +50,8 @@ interface DragState {
   moved: boolean;
   /** 是否已满足拖拽阈值，可开始跟随移动 */
   ready: boolean;
-  frameRequested: boolean;
+  frameId: number | null;
+  pointerId: number | null;
   startX: number;
   startY: number;
   originLeft: number;
@@ -60,7 +64,10 @@ interface DragState {
   /** 最小化状态下需按住一段时间才能拖拽，避免与点击展开冲突 */
   holdDelayMs: number;
   side: "left" | "right" | null;
+  suppressClickUntil: number;
 }
+
+const PROGRESS_PERSIST_INTERVAL_MS = 3000;
 
 /**
  * NMPv3 播放器核心实例
@@ -93,6 +100,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   private idleAnimationFallback: number | null = null;
   private idleAnimationCleanup: (() => void) | null = null;
   private viewportSnapFrame: number | null = null;
+  private loadGeneration = 0;
+  private lyricGeneration = 0;
+  private lastProgressPersistedAt = 0;
+  private destroyed = false;
   private isIdle = false;
   private isHovering = false;
   private isFocusedWithin = false;
@@ -101,7 +112,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     active: false,
     moved: false,
     ready: false,
-    frameRequested: false,
+    frameId: null,
+    pointerId: null,
     startX: 0,
     startY: 0,
     originLeft: 0,
@@ -113,6 +125,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     pressStartedAt: 0,
     holdDelayMs: 0,
     side: null,
+    suppressClickUntil: 0,
   };
 
   constructor(
@@ -140,7 +153,6 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.bindAudioEvents();
     this.setupHotkeys();
     this.setupDragAndDrop();
-    this.setupMediaSession();
     this.applyRestoredPosition();
     this.updateView();
     emit(this.target, "nmpv3:ready", { player: this });
@@ -148,23 +160,37 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   }
 
   async play(): Promise<void> {
+    const generation = this.loadGeneration;
+
     if (!this.currentSong?.url && this.currentSong) {
-      await this.ensureSongUrl(this.currentSong);
+      if (!(await this.ensureSongUrl(this.currentSong, generation))) {
+        return;
+      }
+    }
+
+    if (!this.currentSong?.url) {
+      return;
     }
 
     globalAudioManager.pauseAll(this);
     await this.audio.play(this.currentSong?.url);
+
+    if (!this.isCurrentLoad(generation)) {
+      return;
+    }
+
     this.isPlaying = Boolean(this.currentSong?.url);
     this.updateView();
-    this.updateMediaSession();
+    mediaSessionManager.activate(this);
     emit(this.target, "nmpv3:play", { player: this, song: this.currentSong });
   }
 
   pause(): void {
     this.audio.pause();
     this.isPlaying = false;
+    this.persistProgress(true);
     this.updateView();
-    this.updateMediaSession();
+    mediaSessionManager.update(this);
     emit(this.target, "nmpv3:pause", { player: this, song: this.currentSong });
   }
 
@@ -190,6 +216,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       return;
     }
 
+    const generation = this.beginSourceLoad();
+    const shouldResume = this.isPlaying;
+    this.persistProgress(true);
+
     if (this.playMode === "shuffle" && this.playlist.length > 1) {
       // 随机模式：排除当前歌曲，避免重复播放同一首
       let nextIndex = this.currentIndex;
@@ -201,7 +231,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.currentIndex = (this.currentIndex + 1) % this.playlist.length;
     }
 
-    await this.loadCurrentSong(this.isPlaying);
+    await this.loadCurrentSong(shouldResume, generation);
   }
 
   async previous(): Promise<void> {
@@ -209,39 +239,79 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       return;
     }
 
+    const generation = this.beginSourceLoad();
+    const shouldResume = this.isPlaying;
+    this.persistProgress(true);
     this.currentIndex =
       this.currentIndex > 0 ? this.currentIndex - 1 : this.playlist.length - 1;
-    await this.loadCurrentSong(this.isPlaying);
+    await this.loadCurrentSong(shouldResume, generation);
   }
 
   async loadSong(songId: string): Promise<void> {
-    this.setStatus("loading");
-
-    try {
-      const song = await this.api.getSong(songId);
-      this.playlist = [song];
-      this.currentIndex = 0;
-      await this.loadCurrentSong(false);
-    } catch (error) {
-      this.handleError(error, "Failed to load song");
-    }
+    const generation = this.beginSourceLoad();
+    this.persistProgress(true);
+    this.audio.pause();
+    this.isPlaying = false;
+    await this.loadSongForGeneration(songId, generation, false);
   }
 
   async loadPlaylist(playlistId: string): Promise<void> {
-    this.setStatus("loading");
+    const generation = this.beginSourceLoad();
+    this.persistProgress(true);
+    this.audio.pause();
+    this.isPlaying = false;
+    await this.loadPlaylistForGeneration(playlistId, generation, false);
+  }
 
-    try {
-      const playlist = await this.api.getPlaylist(playlistId);
-      this.playlist = playlist.songs;
-      this.currentIndex = 0;
-      await this.loadCurrentSong(false);
-      emit(this.target, "nmpv3:playlistchange", {
-        player: this,
-        playlist,
-      });
-    } catch (error) {
-      this.handleError(error, "Failed to load playlist");
+  async loadPlaylistData(
+    playlist: NMPv3Playlist,
+    options: NMPv3PlaylistLoadOptions = {},
+  ): Promise<NMPv3Song | null> {
+    const generation = this.beginSourceLoad();
+    this.persistProgress(true);
+    this.audio.pause();
+    this.isPlaying = false;
+    this.playlist = playlist.songs.map((song) => ({ ...song }));
+    this.currentIndex = clampIndex(options.startIndex ?? 0, this.playlist);
+    const song = await this.loadCurrentSong(
+      options.autoplay ?? this.config.autoplay,
+      generation,
+    );
+
+    if (!this.isCurrentLoad(generation)) {
+      return null;
     }
+
+    emit(this.target, "nmpv3:playlistchange", {
+      player: this,
+      playlist,
+    });
+    return song;
+  }
+
+  setLyrics(lyrics: readonly NMPv3LyricLine[]): void {
+    this.lyricGeneration += 1;
+    this.lyrics = lyrics.map((line) => ({ ...line }));
+    this.lyricStatus = this.config.showLyrics
+      ? this.lyrics.length > 0
+        ? "ready"
+        : "empty"
+      : "hidden";
+    this.syncLyric();
+    this.updateView();
+  }
+
+  seekTo(time: number): void {
+    if (!Number.isFinite(time) || this.duration <= 0) {
+      return;
+    }
+
+    const nextTime = Math.max(0, Math.min(this.duration, time));
+    this.audio.seek(nextTime);
+    this.currentTime = nextTime;
+    this.persistProgress(true);
+    this.syncLyric();
+    this.updateView();
   }
 
   setVolume(volume: number): void {
@@ -317,12 +387,22 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
     if (sourceChanged) {
       const shouldResume = this.isPlaying;
+      const generation = this.beginSourceLoad();
+      this.persistProgress(true);
       this.pause();
 
       if (this.config.playlistId) {
-        await this.loadPlaylist(this.config.playlistId);
+        await this.loadPlaylistForGeneration(
+          this.config.playlistId,
+          generation,
+          shouldResume,
+        );
       } else if (this.config.songId) {
-        await this.loadSong(this.config.songId);
+        await this.loadSongForGeneration(
+          this.config.songId,
+          generation,
+          shouldResume,
+        );
       } else {
         this.playlist = [];
         this.currentSong = null;
@@ -334,20 +414,14 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         this.lyricStatus = this.config.showLyrics ? "empty" : "hidden";
         this.setStatus("ready");
       }
-
-      if (shouldResume && this.currentSong) {
-        await this.play().catch(() => {
-          this.isPlaying = false;
-          this.updateView();
-        });
-      }
     } else if (lyricsChanged) {
       if (!this.config.showLyrics) {
+        this.lyricGeneration += 1;
         this.lyrics = [];
         this.currentLyric = null;
         this.lyricStatus = "hidden";
       } else if (this.currentSong) {
-        await this.loadLyrics(this.currentSong.id);
+        await this.loadLyrics(this.currentSong.id, this.loadGeneration);
         this.syncLyric();
       }
     }
@@ -379,11 +453,17 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   }
 
   destroy(): void {
+    this.destroyed = true;
+    this.loadGeneration += 1;
+    this.lyricGeneration += 1;
+    this.persistProgress(true);
+    this.persistSettings();
     this.clearIdleTimer();
     this.clearIdleAnimationWait();
     this.clearViewportSnapFrame();
     this.cleanup.forEach((dispose) => dispose());
     this.cleanup.length = 0;
+    mediaSessionManager.release(this);
     this.audio.destroy();
     this.target.innerHTML = "";
   }
@@ -445,10 +525,12 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.updateView();
 
       if (showLyrics && this.currentSong) {
-        void this.loadLyrics(this.currentSong.id).then(() => {
-          this.syncLyric();
-          this.updateView();
-        });
+        void this.loadLyrics(this.currentSong.id, this.loadGeneration).then(
+          () => {
+            this.syncLyric();
+            this.updateView();
+          },
+        );
       }
     });
     this.listen(this.elements.modeButton, "click", () => {
@@ -480,7 +562,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.startIdleTimer();
     });
     this.listen(this.elements.cover.parentElement, "click", () => {
-      if (this.dragState.moved) {
+      if (
+        this.dragState.moved ||
+        Date.now() < this.dragState.suppressClickUntil
+      ) {
         return;
       }
 
@@ -509,8 +594,11 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         return;
       }
 
+      const generation = this.beginSourceLoad();
+      const shouldResume = this.isPlaying;
+      this.persistProgress(true);
       this.currentIndex = Number(item.dataset.index);
-      void this.loadCurrentSong(this.isPlaying);
+      void this.loadCurrentSong(shouldResume, generation);
       this.isPlaylistOpen = false;
       this.updateView();
     });
@@ -555,6 +643,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.listen(browserWindow, "resize", () =>
         this.snapPositionIntoViewport(),
       );
+      this.listen(browserWindow, "pagehide", () => {
+        this.persistProgress(true);
+        this.persistSettings();
+      });
     }
   }
 
@@ -569,7 +661,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         const audioState = this.audio.getState();
         this.currentTime = audioState.currentTime;
         this.duration = audioState.duration;
-        this.persistProgress();
+        this.persistProgress(false);
         this.syncLyric();
         this.updateView();
       }),
@@ -578,19 +670,113 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         void this.next();
       }),
       this.audio.on("error", () => {
+        const shouldResume = this.isPlaying;
+        const failedIndex = this.currentIndex;
         this.handleError(new Error("Audio playback failed"), "Playback failed");
-        getWindow()?.setTimeout(() => void this.next(), 900);
+        getWindow()?.setTimeout(
+          () => void this.advanceAfterPlaybackError(shouldResume, failedIndex),
+          900,
+        );
       }),
     );
   }
 
-  private async loadCurrentSong(shouldResume: boolean): Promise<void> {
+  private async loadSongForGeneration(
+    songId: string,
+    generation: number,
+    shouldResume: boolean,
+  ): Promise<void> {
+    this.setStatus("loading");
+
+    try {
+      const song = await this.api.getSong(songId);
+
+      if (!this.isCurrentLoad(generation)) {
+        return;
+      }
+
+      this.playlist = [song];
+      this.currentIndex = 0;
+      await this.loadCurrentSong(shouldResume, generation);
+    } catch (error) {
+      if (this.isCurrentLoad(generation)) {
+        this.handleError(error, "Failed to load song");
+      }
+    }
+  }
+
+  private async loadPlaylistForGeneration(
+    playlistId: string,
+    generation: number,
+    shouldResume: boolean,
+  ): Promise<void> {
+    this.setStatus("loading");
+
+    try {
+      const playlist = await this.api.getPlaylist(playlistId);
+
+      if (!this.isCurrentLoad(generation)) {
+        return;
+      }
+
+      this.playlist = playlist.songs;
+      this.currentIndex = 0;
+      await this.loadCurrentSong(shouldResume, generation);
+
+      if (!this.isCurrentLoad(generation)) {
+        return;
+      }
+
+      emit(this.target, "nmpv3:playlistchange", {
+        player: this,
+        playlist,
+      });
+    } catch (error) {
+      if (this.isCurrentLoad(generation)) {
+        this.handleError(error, "Failed to load playlist");
+      }
+    }
+  }
+
+  private async advanceAfterPlaybackError(
+    shouldResume: boolean,
+    failedIndex: number,
+  ): Promise<void> {
+    if (
+      this.destroyed ||
+      this.playlist.length <= 1 ||
+      this.currentIndex !== failedIndex
+    ) {
+      return;
+    }
+
+    const generation = this.beginSourceLoad();
+    this.currentIndex = (failedIndex + 1) % this.playlist.length;
+    await this.loadCurrentSong(shouldResume, generation);
+  }
+
+  private beginSourceLoad(): number {
+    return ++this.loadGeneration;
+  }
+
+  private isCurrentLoad(generation: number): boolean {
+    return !this.destroyed && generation === this.loadGeneration;
+  }
+
+  private async loadCurrentSong(
+    shouldResume: boolean,
+    generation: number,
+  ): Promise<NMPv3Song | null> {
+    if (!this.isCurrentLoad(generation)) {
+      return null;
+    }
+
     const song = this.playlist[this.currentIndex] ?? null;
 
     if (!song) {
       this.currentSong = null;
       this.setStatus("ready");
-      return;
+      return null;
     }
 
     this.currentSong = song;
@@ -602,9 +788,21 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.setStatus("loading");
 
     try {
-      await this.ensureSongUrl(song);
+      if (!(await this.ensureSongUrl(song, generation))) {
+        return null;
+      }
+
+      if (!this.isCurrentLoad(generation)) {
+        return null;
+      }
+
       this.restoreProgress(song);
-      await this.loadLyrics(song.id);
+      await this.loadLyrics(song.id, generation);
+
+      if (!this.isCurrentLoad(generation)) {
+        return null;
+      }
+
       this.syncLyric();
       this.setStatus("ready");
       emit(this.target, "nmpv3:songchange", {
@@ -616,26 +814,48 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         await this.play();
       }
 
-      this.updateMediaSession();
+      mediaSessionManager.update(this);
+      return this.currentSong;
     } catch (error) {
-      this.handleError(error, "Failed to load playback data");
+      if (this.isCurrentLoad(generation)) {
+        this.handleError(error, "Failed to load playback data");
+      }
+
+      return null;
     }
   }
 
-  private async ensureSongUrl(song: NMPv3Song): Promise<void> {
+  private async ensureSongUrl(
+    song: NMPv3Song,
+    generation: number,
+  ): Promise<boolean> {
     if (!song.url) {
       try {
         song.url = await this.api.getSongUrl(song.id);
       } catch {
+        if (!this.isCurrentLoad(generation)) {
+          return false;
+        }
+
         // 高品质地址失败时降级到标准音质
         song.url = await this.api.getSongUrl(song.id, "standard");
       }
     }
 
+    if (!this.isCurrentLoad(generation) || !song.url) {
+      return false;
+    }
+
     this.audio.setSrc(song.url);
+    return true;
   }
 
-  private async loadLyrics(songId: string): Promise<void> {
+  private async loadLyrics(
+    songId: string,
+    sourceGeneration: number,
+  ): Promise<void> {
+    const lyricGeneration = ++this.lyricGeneration;
+
     if (!this.config.showLyrics) {
       this.lyrics = [];
       this.lyricStatus = "hidden";
@@ -646,10 +866,25 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
     try {
       const data = await this.api.getLyrics(songId);
+
+      if (
+        !this.isCurrentLoad(sourceGeneration) ||
+        lyricGeneration !== this.lyricGeneration
+      ) {
+        return;
+      }
+
       const normalizedLyrics = normalizeLyrics(data);
       this.lyrics = normalizedLyrics.lyrics;
       this.lyricStatus = normalizedLyrics.status;
     } catch (error) {
+      if (
+        !this.isCurrentLoad(sourceGeneration) ||
+        lyricGeneration !== this.lyricGeneration
+      ) {
+        return;
+      }
+
       this.lyrics = [];
       this.lyricStatus = "error";
       logger.warn("Failed to load lyrics", error);
@@ -670,11 +905,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       0,
       Math.min(1, (event.clientX - rect.left) / rect.width),
     );
-    this.audio.seek(percent * this.duration);
-    this.currentTime = percent * this.duration;
-    this.persistProgress();
-    this.syncLyric();
-    this.updateView();
+    this.seekTo(percent * this.duration);
   }
 
   private volumeFromPointer(event: MouseEvent, track: HTMLElement): void {
@@ -748,12 +979,21 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.store.set<StoredState>("state", state);
   }
 
-  private persistProgress(): void {
+  private persistProgress(force = false): void {
     if (!this.config.remember || !this.currentSong || this.currentTime <= 0) {
       return;
     }
 
+    const now = Date.now();
+    if (
+      !force &&
+      now - this.lastProgressPersistedAt < PROGRESS_PERSIST_INTERVAL_MS
+    ) {
+      return;
+    }
+
     this.store.set<number>(`progress:${this.currentSong.id}`, this.currentTime);
+    this.lastProgressPersistedAt = now;
   }
 
   private restoreProgress(song: NMPv3Song): void {
@@ -780,6 +1020,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     if (this.config.remember && this.currentSong) {
       this.store.set<number>(`progress:${this.currentSong.id}`, 0);
     }
+
+    this.lastProgressPersistedAt = 0;
   }
 
   private startIdleTimer(): void {
@@ -1055,19 +1297,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   }
 
   private seekBy(deltaSeconds: number): void {
-    if (!Number.isFinite(this.duration) || this.duration <= 0) {
-      return;
-    }
-
-    const nextTime = Math.max(
-      0,
-      Math.min(this.duration, this.currentTime + deltaSeconds),
-    );
-    this.audio.seek(nextTime);
-    this.currentTime = nextTime;
-    this.persistProgress();
-    this.syncLyric();
-    this.updateView();
+    this.seekTo(this.currentTime + deltaSeconds);
   }
 
   private stepVolume(delta: number): void {
@@ -1084,60 +1314,6 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.setVolume(this.lastVolumeBeforeMute || 0.8);
   }
 
-  private setupMediaSession(): void {
-    const mediaSession = getNavigator()?.mediaSession;
-
-    if (!mediaSession) {
-      return;
-    }
-
-    try {
-      mediaSession.setActionHandler("play", () => void this.play());
-      mediaSession.setActionHandler("pause", () => this.pause());
-      mediaSession.setActionHandler(
-        "previoustrack",
-        () => void this.previous(),
-      );
-      mediaSession.setActionHandler("nexttrack", () => void this.next());
-      mediaSession.setActionHandler("seekbackward", () => this.seekBy(-5));
-      mediaSession.setActionHandler("seekforward", () => this.seekBy(5));
-    } catch {
-      // Browsers may expose mediaSession but reject individual handlers.
-    }
-  }
-
-  private updateMediaSession(): void {
-    const mediaSession = getNavigator()?.mediaSession;
-
-    if (
-      typeof MediaMetadata === "undefined" ||
-      !mediaSession ||
-      !this.currentSong
-    ) {
-      return;
-    }
-
-    try {
-      mediaSession.metadata = new MediaMetadata({
-        title: this.currentSong.name || "Unknown song",
-        artist: this.currentSong.artists || "Unknown artist",
-        album: this.currentSong.album || "",
-        artwork: this.currentSong.picUrl
-          ? [
-              {
-                src: this.currentSong.picUrl,
-                sizes: "512x512",
-                type: "image/jpeg",
-              },
-            ]
-          : [],
-      });
-      mediaSession.playbackState = this.isPlaying ? "playing" : "paused";
-    } catch {
-      // Metadata updates should not affect playback.
-    }
-  }
-
   private setupDragAndDrop(): void {
     const browserWindow = getWindow();
 
@@ -1149,7 +1325,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     const interactiveSelector = `input, textarea, select, a, .${c.controls}, .${c.tools}, .${c.progressTrack}, .${c.volumeTrack}, .${c.playlistPanel}`;
 
     const flushPosition = () => {
-      this.dragState.frameRequested = false;
+      this.dragState.frameId = null;
       this.applyFloatingPosition(
         this.dragState.pendingLeft,
         this.dragState.pendingTop,
@@ -1179,6 +1355,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       }
 
       this.dragState.moved = distance > threshold;
+      event.preventDefault();
       const maxLeft = Math.max(
         8,
         browserWindow.innerWidth - this.dragState.width - 8,
@@ -1196,39 +1373,54 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         Math.max(8, this.dragState.originTop + deltaY),
       );
 
-      if (!this.dragState.frameRequested) {
-        this.dragState.frameRequested = true;
-        browserWindow.requestAnimationFrame(flushPosition);
+      if (this.dragState.frameId === null) {
+        this.dragState.frameId =
+          browserWindow.requestAnimationFrame(flushPosition);
       }
 
       this.elements.root.classList.add(sc.dragging);
     };
 
-    const onPointerUp = () => {
+    const onPointerUp = (event: PointerEvent, cancelled = false) => {
       if (!this.dragState.active) {
         return;
       }
 
       this.dragState.active = false;
 
-      if (this.dragState.frameRequested) {
-        flushPosition();
+      if (this.dragState.frameId !== null) {
+        browserWindow.cancelAnimationFrame(this.dragState.frameId);
+        this.dragState.frameId = null;
+
+        if (!cancelled && this.dragState.moved) {
+          flushPosition();
+        }
       }
+
+      const pointerId = this.dragState.pointerId ?? event.pointerId;
+      if (this.elements.root.hasPointerCapture?.(pointerId)) {
+        this.elements.root.releasePointerCapture?.(pointerId);
+      }
+      this.dragState.pointerId = null;
 
       this.elements.root.classList.remove(sc.dragging);
       this.elements.root.style.transition = "";
 
-      if (this.dragState.moved) {
+      if (!cancelled && this.dragState.moved) {
         this.snapToViewportEdge();
         this.persistSettings();
-      } else if (this.isMinimized) {
+      } else if (!cancelled && this.isMinimized) {
         this.isMinimized = false;
+        this.dragState.suppressClickUntil = Date.now() + 350;
         this.clearIdleStateClasses();
         this.persistSettings();
         this.updateView();
       }
 
       this.dragState.ready = false;
+      if (cancelled) {
+        this.dragState.moved = false;
+      }
       this.startIdleTimer();
     };
 
@@ -1258,6 +1450,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.dragState.pendingTop = rect.top;
       this.dragState.pressStartedAt = Date.now();
       this.dragState.holdDelayMs = this.isMinimized ? 160 : 0;
+      this.dragState.pointerId = event.pointerId;
       this.clearIdleTimer();
       this.clearIdleStateClasses();
       this.elements.root.style.transition = "none";
@@ -1270,8 +1463,12 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.listen(browserWindow, "pointermove", (event) =>
       onPointerMove(event as PointerEvent),
     );
-    this.listen(browserWindow, "pointerup", onPointerUp);
-    this.listen(browserWindow, "pointercancel", onPointerUp);
+    this.listen(browserWindow, "pointerup", (event) =>
+      onPointerUp(event as PointerEvent),
+    );
+    this.listen(browserWindow, "pointercancel", (event) =>
+      onPointerUp(event as PointerEvent, true),
+    );
   }
 
   private canDrag(): boolean {
@@ -1292,6 +1489,19 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   }
 
   private resetFloatingPosition(): void {
+    const browserWindow = getWindow();
+    if (browserWindow && this.dragState.frameId !== null) {
+      browserWindow.cancelAnimationFrame(this.dragState.frameId);
+      this.dragState.frameId = null;
+    }
+
+    if (
+      this.dragState.pointerId !== null &&
+      this.elements.root.hasPointerCapture?.(this.dragState.pointerId)
+    ) {
+      this.elements.root.releasePointerCapture?.(this.dragState.pointerId);
+    }
+
     this.elements.root.style.left = "";
     this.elements.root.style.top = "";
     this.elements.root.style.right = "";
@@ -1303,6 +1513,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.dragState.active = false;
     this.dragState.moved = false;
     this.dragState.ready = false;
+    this.dragState.pointerId = null;
   }
 
   private snapToViewportEdge(): void {
@@ -1314,14 +1525,18 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
     const rect = this.elements.root.getBoundingClientRect();
     const width = rect.width || 420;
+    const horizontalMargin = Math.max(
+      0,
+      Math.min(20, (browserWindow.innerWidth - width) / 2),
+    );
     const side =
       rect.left + rect.width / 2 < browserWindow.innerWidth / 2
         ? "left"
         : "right";
     const left =
       side === "left"
-        ? 20
-        : Math.max(20, browserWindow.innerWidth - width - 20);
+        ? horizontalMargin
+        : browserWindow.innerWidth - width - horizontalMargin;
     this.dragState.side = side;
     this.applyFloatingPosition(left, rect.top);
   }
@@ -1508,6 +1723,14 @@ function nextPlayMode(mode: NMPv3PlayMode): NMPv3PlayMode {
   }
 
   return "list";
+}
+
+function clampIndex(index: number, songs: readonly NMPv3Song[]): number {
+  if (!Number.isFinite(index) || songs.length === 0) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(songs.length - 1, Math.trunc(index)));
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {

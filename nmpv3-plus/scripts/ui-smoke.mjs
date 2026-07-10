@@ -78,6 +78,7 @@ const html = `<!doctype html>
       <nmp-player
         id="plus-player"
         layout="compact"
+        position="bottom-right"
         theme="auto"
         lyric="true"
         playlist="false"
@@ -194,6 +195,7 @@ try {
     });
     await page.waitForFunction(() => window.__nmpv3PlusSmoke?.ready === true);
     await page.waitForTimeout(120);
+    const dragMetrics = await dragPlayer(page, viewport);
 
     const metrics = await page.evaluate(() => {
       const player = document.querySelector("#plus-player");
@@ -315,6 +317,7 @@ try {
         );
       }
     });
+    metrics.drag = dragMetrics;
 
     const screenshotPath = join(screenshotDir, `${viewport.name}.png`);
     await page.screenshot({ path: screenshotPath, fullPage: false });
@@ -440,6 +443,16 @@ function assertSmokeMetrics(viewport, metrics, messages) {
     failures.push("single-song previous/next controls are visible");
   }
 
+  if (!metrics.drag?.moved) {
+    failures.push("player did not move during drag smoke test");
+  }
+
+  if (!metrics.drag?.insideViewport) {
+    failures.push(
+      `dragged player escaped viewport: ${JSON.stringify(metrics.drag)}`,
+    );
+  }
+
   const playerRect = metrics.rects.find(
     (rect) => rect.selector === ".nmpv3-player",
   );
@@ -484,6 +497,43 @@ function assertSmokeMetrics(viewport, metrics, messages) {
       `${viewport.name} UI smoke failed:\n${failures.join("\n")}`,
     );
   }
+}
+
+async function dragPlayer(page, viewport) {
+  const title = page.locator(".nmpv3-title");
+  const shell = page.locator(".nmpv3-player");
+  const titleBox = await title.boundingBox();
+  const before = await shell.boundingBox();
+
+  if (!titleBox || !before) {
+    return { moved: false, insideViewport: false, before, after: null };
+  }
+
+  const startX = titleBox.x + titleBox.width / 2;
+  const startY = titleBox.y + titleBox.height / 2;
+  const deltaX = viewport.width >= 700 ? -viewport.width * 0.45 : -80;
+  const deltaY = -Math.min(90, viewport.height * 0.12);
+
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX + deltaX, startY + deltaY, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(80);
+
+  const after = await shell.boundingBox();
+  const moved = Boolean(
+    after &&
+    (Math.abs(after.x - before.x) > 2 || Math.abs(after.y - before.y) > 2),
+  );
+  const insideViewport = Boolean(
+    after &&
+    after.x >= 7 &&
+    after.y >= 7 &&
+    after.x + after.width <= viewport.width - 7 &&
+    after.y + after.height <= viewport.height - 7,
+  );
+
+  return { moved, insideViewport, before, after };
 }
 
 function createStaticServer(rootDir, tmpDir) {

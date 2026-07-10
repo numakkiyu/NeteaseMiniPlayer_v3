@@ -5,6 +5,8 @@ import { getLocalStorage } from "../utils/env";
  * 用于持久化用户设置和播放进度
  */
 export class StateStore {
+  private writable = true;
+
   constructor(private readonly prefix = "nmpv3") {}
 
   get<T>(key: string, fallback: T): T {
@@ -14,7 +16,13 @@ export class StateStore {
       return fallback;
     }
 
-    const raw = storage.getItem(this.key(key));
+    let raw: string | null;
+
+    try {
+      raw = storage.getItem(this.key(key));
+    } catch {
+      return fallback;
+    }
 
     if (!raw) {
       return fallback;
@@ -28,13 +36,21 @@ export class StateStore {
   }
 
   set<T>(key: string, value: T): void {
+    if (!this.writable) {
+      return;
+    }
+
     const storage = getLocalStorage();
 
     if (!storage) {
       return;
     }
 
-    storage.setItem(this.key(key), JSON.stringify(value));
+    try {
+      storage.setItem(this.key(key), JSON.stringify(value));
+    } catch {
+      this.writable = false;
+    }
   }
 
   private key(key: string): string {
