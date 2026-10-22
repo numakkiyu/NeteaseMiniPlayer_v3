@@ -8,6 +8,16 @@ import {
 import { parseShortcode } from "./parseShortcode";
 import { readLegacyV2Config } from "./legacyV2";
 
+describe("parseShortcode scale", () => {
+  it("parses numeric scale", () => {
+    expect(parseShortcode("{nmpv3:song=1, scale=7}")?.scale).toBe(7);
+  });
+
+  it("parses auto scale", () => {
+    expect(parseShortcode("{nmpv3:song=1, scale=auto}")?.scale).toBe("auto");
+  });
+});
+
 describe("parseShortcode", () => {
   it("parses NMPv3 playlist shortcodes", () => {
     expect(

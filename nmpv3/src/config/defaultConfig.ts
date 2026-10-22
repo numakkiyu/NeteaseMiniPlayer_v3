@@ -17,5 +17,6 @@ export const defaultConfig: NMPv3Config = {
   draggable: true,
   hotkeys: true,
   idleOpacity: 0.72,
+  scale: 5,
   apiBaseUrl: DEFAULT_API_BASE_URL,
 };

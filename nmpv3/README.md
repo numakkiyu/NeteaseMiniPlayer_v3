@@ -110,6 +110,52 @@ dist/
 | `embed-mode`   | `article` 或 `page`                                              |
 | `position`     | `static`、`top-left`、`top-right`、`bottom-left`、`bottom-right` |
 | `api-base-url` | 自定义 NeteaseCloudMusicApi 兼容代理                             |
+| `scale`        | 等比例缩放档位，`1`-`10`（默认 `5`）或 `auto`                 |
+
+## 缩放档位
+
+播放器整体按档位等比例缩放（宽度、高度、字号、封面、图标、圆角同步变化），不会拉伸变形。
+
+| 档位    | 缩放比例 | 宽度（compact 布局） |
+| ------- | -------- | -------------------- |
+| `1`     | 0.6×     | 252px                |
+| `5`     | 1.0×     | 420px（默认）        |
+| `10`    | 1.5×     | 630px                |
+| `auto`  | 自动     | 按视口宽高计算       |
+
+按播放器设置：
+
+```html
+<nmp-player playlist-id="14273792576" scale="7"></nmp-player>
+<nmp-player song-id="1901371647" scale="auto"></nmp-player>
+```
+
+按全局配置设置：
+
+```html
+<script>
+  window.NMPv3Config = {
+    scale: 6,
+  };
+</script>
+```
+
+运行时调整：
+
+```js
+player.updateConfig({ scale: 8 });
+NMPv3.setGlobalConfig({ scale: "auto" });
+```
+
+短代码：
+
+```
+{nmpv3:song=1901371647, scale=7}
+```
+
+`auto` 会同时参考视口宽度与高度：宽度目标为视口宽度的 32%（钳在 260-560px），
+高度目标为视口高度的 45%，取两者较小值并限制在 0.6-1.5 倍之间，
+因此在手机、iPad 与桌面上都不会溢出。窗口尺寸变化时自动重算。
 
 ## API 代理
 

@@ -79,6 +79,8 @@ const EXPANDED_WIDTH = 420;
 const EXPANDED_HEIGHT = 132;
 /** 尺寸过渡保护窗口：这段时间内禁止视口夹取回写，避免打断贴边动画 */
 const RESIZE_GUARD_MS = 340;
+/** 视口/档位变化后等待尺寸过渡结束再贴边的延迟 */
+const SIDE_SNAP_DELAY_MS = 320;
 
 /**
  * NMPv3 播放器核心实例
@@ -120,6 +122,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   private scrubbing = false;
   /** 尺寸过渡保护定时器 */
   private resizeGuardTimer: number | null = null;
+  /** 视口或档位变化后的贴边防抖定时器 */
+  private sideSnapTimer: number | null = null;
   /** 本次按下时命中的元素，用于在 pointerup 判定"点击"落点 */
   private pressTarget: HTMLElement | null = null;
   private loadGeneration = 0;
@@ -396,6 +400,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       previous.songId !== next.songId ||
       previous.playlistId !== next.playlistId;
     const lyricsChanged = previous.showLyrics !== next.showLyrics;
+    const scaleChanged = previous.scale !== next.scale;
     const storageChanged =
       previous.storageKey !== next.storageKey ||
       previous.remember !== next.remember;
@@ -490,6 +495,11 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.persistSettings();
     this.updateView();
     this.startIdleTimer();
+
+    if (scaleChanged) {
+      // 尺寸变了要重新贴回原来那一侧，否则缩小后会浮在中间
+      this.scheduleSnapToSide();
+    }
   }
 
   getState(): NMPv3State {
@@ -524,6 +534,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.clearViewportSnapFrame();
     this.cancelProgressWrite();
     this.clearResizeGuard();
+    this.clearSideSnapTimer();
 
     this.cleanup.forEach((dispose) => dispose());
     this.cleanup.length = 0;
@@ -731,9 +742,14 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
     const browserWindow = getWindow();
     if (browserWindow) {
-      this.listen(browserWindow, "resize", () =>
-        this.snapPositionIntoViewport(),
-      );
+      this.listen(browserWindow, "resize", () => {
+        // auto 缩放需要跟随视口重新计算
+        if (this.config.scale === "auto") {
+          this.updateView();
+        }
+        // 尺寸变化带 300ms 过渡，等落定后再贴回原来那一侧
+        this.scheduleSnapToSide();
+      });
       // 页面滚动后浮动播放器可能落到视口外，滚动结束再拉回可视区域
       this.listen(
         browserWindow,
@@ -1856,6 +1872,78 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   /** 统一的最小化态变化后处理：展开时重新贴边 */
   private scheduleReposeIfNeeded(): void {
     this.reposeForSizeChange(this.isMinimized);
+  }
+
+  /**
+   * 视口尺寸或缩放档位变化后，把播放器贴回原来那一侧
+   * 尺寸过渡需要 300ms，过早读取 rect 会拿到中间值，夹出的位置在过渡结束后就偏了
+   */
+  private scheduleSnapToSide(): void {
+    const browserWindow = getWindow();
+
+    if (!browserWindow) {
+      return;
+    }
+
+    this.clearSideSnapTimer();
+    this.sideSnapTimer = browserWindow.setTimeout(() => {
+      this.sideSnapTimer = null;
+      this.snapFloatingToSide();
+    }, SIDE_SNAP_DELAY_MS);
+  }
+
+  private clearSideSnapTimer(): void {
+    if (this.sideSnapTimer != null) {
+      getWindow()?.clearTimeout(this.sideSnapTimer);
+      this.sideSnapTimer = null;
+    }
+  }
+
+  /** 按当前实际尺寸与记录的方向，贴回最近的一侧并夹进视口 */
+  private snapFloatingToSide(): void {
+    const browserWindow = getWindow();
+
+    if (
+      !browserWindow ||
+      this.destroyed ||
+      this.config.position === "static" ||
+      this.config.embedMode === "article" ||
+      !this.elements.root.classList.contains(sc.userPositioned) ||
+      // 空闲停靠由 dock 动画控制 transform，不能在这里改 left
+      this.hasIdleStateClasses()
+    ) {
+      return;
+    }
+
+    const root = this.elements.root;
+    const rect = root.getBoundingClientRect();
+    const width = rect.width || EXPANDED_WIDTH;
+    const height = rect.height || EXPANDED_HEIGHT;
+    const margin = 8;
+    const side =
+      this.dragState.side ??
+      (this.config.position.endsWith("left") ? "left" : "right");
+    const left =
+      side === "left"
+        ? margin
+        : Math.max(margin, browserWindow.innerWidth - width - margin);
+    const top = Math.max(
+      margin,
+      Math.min(
+        Math.max(margin, browserWindow.innerHeight - height - margin),
+        rect.top,
+      ),
+    );
+
+    if (!Number.isFinite(left) || !Number.isFinite(top)) {
+      return;
+    }
+
+    this.dragState.side = side;
+    root.dataset.side = side;
+    this.applyFloatingPosition(left, top);
+    // 这次定位由我们负责，短时间内不要被视口夹取回写覆盖
+    this.holdViewportSnap();
   }
 
   private canDrag(): boolean {

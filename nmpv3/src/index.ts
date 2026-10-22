@@ -113,7 +113,11 @@ export function processShortcodes(root?: ParentNode): void {
 
     const parent = text.parentElement;
 
-    if (parent && ["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName)) {
+    // 文档里的代码示例（code / pre）不应当被渲染成播放器
+    if (
+      parent &&
+      ["SCRIPT", "STYLE", "TEXTAREA", "CODE", "PRE"].includes(parent.tagName)
+    ) {
       continue;
     }
 
@@ -240,6 +244,10 @@ function applyAttributes(
 
   if (typeof config.volume === "number") {
     element.setAttribute("volume", String(config.volume));
+  }
+
+  if (config.scale != null) {
+    element.setAttribute("scale", String(config.scale));
   }
 
   if (config.apiBaseUrl) {

@@ -4,6 +4,8 @@ export type NMPv3EmbedMode = "page" | "article";
 export type NMPv3Position =
   "static" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 export type NMPv3PlayMode = "list" | "single" | "shuffle";
+/** 播放器尺寸档位：1-10（5 为默认 1.0 倍），auto 表示按视口自动选择 */
+export type NMPv3Scale = number | "auto";
 export type NMPv3LoadStatus = "idle" | "loading" | "ready" | "error";
 export type NMPv3LyricStatus =
   "idle" | "loading" | "ready" | "empty" | "instrumental" | "error" | "hidden";
@@ -27,6 +29,8 @@ export interface NMPv3Config {
   draggable: boolean;
   hotkeys: boolean;
   idleOpacity: number;
+  /** 等比例缩放档位 1-10（5 为默认），或 "auto" 按视口自适应 */
+  scale: NMPv3Scale;
   apiBaseUrl?: string;
 }
 

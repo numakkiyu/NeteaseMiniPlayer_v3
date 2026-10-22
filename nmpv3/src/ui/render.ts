@@ -345,7 +345,39 @@ export function updatePlayerView(
   renderPlaylist(elements, state);
 }
 
+/** 档位 1-10 映射到缩放因子：5 为 1.0 倍，每档 ±0.1（1→0.6，10→1.5） */
+export function scaleFromLevel(level: number): number {
+  const clamped = Math.min(10, Math.max(1, level));
+  return Math.round((0.6 + (clamped - 1) * 0.1) * 100) / 100;
+}
+
+/**
+ * 解析最终缩放因子
+ * auto 时按视口宽高共同约束，保证在手机 / 平板 / 桌面上都不溢出
+ */
+export function resolveScaleFactor(scale: NMPv3Config["scale"]): number {
+  if (scale !== "auto") {
+    return scaleFromLevel(scale);
+  }
+
+  const browserWindow = getWindow();
+
+  if (!browserWindow) {
+    return 1;
+  }
+
+  // 宽度目标：视口宽度的 32%，钳在 260-560px
+  const widthFit =
+    Math.min(560, Math.max(260, browserWindow.innerWidth * 0.32)) / 420;
+  // 高度目标：视口高度的 45%，钳在 110-300px（对应 132px 基准）
+  const heightFit =
+    Math.min(300, Math.max(110, browserWindow.innerHeight * 0.45)) / 132;
+
+  return Math.round(Math.min(widthFit, heightFit, 1.5) * 100) / 100;
+}
+
 function applyRootConfig(root: HTMLElement, config: NMPv3Config): void {
+  root.style.setProperty("--nmpv3-s", String(resolveScaleFactor(config.scale)));
   root.dataset.theme = config.theme;
   root.dataset.layout = config.layout;
   root.dataset.embedMode = config.embedMode;

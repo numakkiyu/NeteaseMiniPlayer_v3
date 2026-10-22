@@ -34,6 +34,7 @@ export class NMPv3Element extends HTMLElementBase {
     "draggable",
     "hotkeys",
     "idle-opacity",
+    "scale",
   ];
 
   private player: NMPv3Player | null = null;
@@ -154,4 +155,5 @@ const attributeConfigKeys: Record<string, Array<keyof NMPv3Config>> = {
   draggable: ["draggable"],
   hotkeys: ["hotkeys"],
   "idle-opacity": ["idleOpacity"],
+  scale: ["scale"],
 };

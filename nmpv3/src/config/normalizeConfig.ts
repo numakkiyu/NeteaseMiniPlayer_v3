@@ -4,6 +4,7 @@ import type {
   NMPv3EmbedMode,
   NMPv3Layout,
   NMPv3Position,
+  NMPv3Scale,
   NMPv3Theme,
 } from "../types";
 
@@ -76,6 +77,7 @@ export function normalizeConfig(
       : normalizeBoolean(config.draggable, defaultConfig.draggable),
     hotkeys: normalizeBoolean(config.hotkeys, defaultConfig.hotkeys),
     idleOpacity: normalizeOpacity(config.idleOpacity),
+    scale: normalizeScale(config.scale),
     apiBaseUrl: config.apiBaseUrl ?? defaultConfig.apiBaseUrl,
   };
 }
@@ -137,6 +139,7 @@ export function configFromElement(element: HTMLElement): Partial<NMPv3Config> {
     draggable: booleanAttribute(element, "draggable"),
     hotkeys: booleanAttribute(element, "hotkeys"),
     idleOpacity: numberAttribute(element, "idle-opacity"),
+    scale: scaleAttribute(element),
   };
 }
 
@@ -184,6 +187,37 @@ function normalizeVolume(volume: number | undefined): number {
   }
 
   return Math.min(1, Math.max(0, volume));
+}
+
+/** 缩放档位：1-10 取整钳制，其余视为 auto */
+function normalizeScale(scale: NMPv3Scale | undefined): NMPv3Scale {
+  if (scale === "auto") {
+    return "auto";
+  }
+
+  if (typeof scale !== "number" || Number.isNaN(scale)) {
+    return defaultConfig.scale;
+  }
+
+  return Math.min(10, Math.max(1, Math.round(scale)));
+}
+
+/** 从 HTML 属性解析缩放档位，接受 1-10 或 auto */
+function scaleAttribute(element: HTMLElement): NMPv3Scale | undefined {
+  const raw = element.getAttribute("scale") ?? element.dataset.scale;
+
+  if (raw == null || raw.trim() === "") {
+    return undefined;
+  }
+
+  const normalized = raw.trim().toLowerCase();
+
+  if (normalized === "auto") {
+    return "auto";
+  }
+
+  const value = Number(normalized);
+  return Number.isFinite(value) ? value : undefined;
 }
 
 function normalizeOpacity(opacity: number | undefined): number {

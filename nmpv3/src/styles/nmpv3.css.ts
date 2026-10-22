@@ -33,10 +33,13 @@ nmp-player,
   --nmpv3-flow-4: rgba(255, 209, 102, 0.16);
   --nmpv3-flow-opacity: 0.36;
   --nmpv3-flow-speed: 11s;
-  --nmpv3-radius: 16px;
-  --nmpv3-control-size: 32px;
-  --nmpv3-tool-size: 28px;
-  --nmpv3-playlist-row-height: 56px;
+  /* 等比例缩放因子：1.0 = 档位 5，由配置 scale 写入 */
+  --nmpv3-s: 1;
+  --nmpv3-radius: calc(16px * var(--nmpv3-s));
+  --nmpv3-control-size: calc(32px * var(--nmpv3-s));
+  --nmpv3-tool-size: calc(28px * var(--nmpv3-s));
+  --nmpv3-playlist-row-height: calc(56px * var(--nmpv3-s));
+  --nmpv3-cover-size: calc(60px * var(--nmpv3-s));
   --nmpv3-idle-opacity: 0.72;
   --nmpv3-dock-gap: 20px;
   /* 停靠时露在视口内的宽度：保证玩家永远看得见、抓得住 */
@@ -62,10 +65,12 @@ nmp-player,
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: min(420px, 100%);
-  min-height: 132px;
-  padding: 12px;
+  gap: calc(8px * var(--nmpv3-s));
+  /* 用 width + max-width 代替 min(calc())：部分引擎对 min() 内嵌 calc(var()) 解析不稳 */
+  width: calc(420px * var(--nmpv3-s));
+  max-width: 100%;
+  min-height: calc(132px * var(--nmpv3-s));
+  padding: calc(12px * var(--nmpv3-s));
   overflow: visible;
   isolation: isolate;
   touch-action: manipulation;
@@ -77,7 +82,7 @@ nmp-player,
     var(--nmpv3-surface);
   color: var(--nmpv3-text);
   box-shadow: var(--nmpv3-shadow-outset);
-  font: 13px/1.35 var(--nmpv3-font);
+  font: calc(13px * var(--nmpv3-s))/1.35 var(--nmpv3-font);
   letter-spacing: 0;
   text-wrap: pretty;
   transition:
@@ -255,10 +260,10 @@ nmp-player,
 
 .nmpv3-cover-button {
   position: relative;
-  flex: 0 0 60px;
-  width: 60px;
-  height: 60px;
-  min-width: 60px;
+  flex: 0 0 var(--nmpv3-cover-size);
+  width: var(--nmpv3-cover-size);
+  height: var(--nmpv3-cover-size);
+  min-width: var(--nmpv3-cover-size);
   padding: 0;
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.2);
@@ -271,6 +276,7 @@ nmp-player,
     width var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
     height var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
     flex-basis var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance);
+  transform-origin: 50% 50%;
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.08),
     inset 0 0 18px rgba(0, 0, 0, 0.45),
@@ -420,24 +426,24 @@ nmp-player,
 }
 
 .nmpv3-title {
-  font-size: 13px;
+  font-size: calc(13px * var(--nmpv3-s));
   font-weight: 700;
   line-height: 1.2;
 }
 
 .nmpv3-artist {
   color: var(--nmpv3-muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--nmpv3-s));
   line-height: 1.2;
 }
 
 .nmpv3-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(6px * var(--nmpv3-s));
   min-width: 0;
   color: var(--nmpv3-faint);
-  font-size: 10px;
+  font-size: calc(10px * var(--nmpv3-s));
   line-height: 1.2;
 }
 
@@ -509,14 +515,14 @@ nmp-player,
 
 .nmpv3-lyric-original {
   color: color-mix(in srgb, var(--nmpv3-accent) 76%, #d30024);
-  font-size: 11px;
+  font-size: calc(11px * var(--nmpv3-s));
   font-weight: 650;
   line-height: 1.35;
 }
 
 .nmpv3-lyric-translation {
   color: var(--nmpv3-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--nmpv3-s));
   line-height: 1.3;
 }
 
@@ -562,8 +568,8 @@ nmp-player,
 
 .nmpv3-icon-button svg {
   display: block;
-  width: 17px;
-  height: 17px;
+  width: calc(17px * var(--nmpv3-s));
+  height: calc(17px * var(--nmpv3-s));
   fill: currentColor;
 }
 
@@ -599,8 +605,8 @@ nmp-player,
 }
 
 .nmpv3-play svg {
-  width: 19px;
-  height: 19px;
+  width: calc(19px * var(--nmpv3-s));
+  height: calc(19px * var(--nmpv3-s));
 }
 
 .nmpv3-bottom {
@@ -639,7 +645,7 @@ nmp-player,
   display: block;
   width: 100%;
   min-width: 0;
-  height: 16px;
+  height: calc(16px * var(--nmpv3-s));
   padding: 0;
   border: 0;
   border-radius: 999px;
@@ -679,7 +685,7 @@ nmp-player,
   top: 50%;
   right: 0;
   left: 0;
-  height: 4px;
+  height: calc(4px * var(--nmpv3-s));
   border-radius: 999px;
   background: var(--nmpv3-secondary-bg);
   box-shadow: var(--nmpv3-shadow-inset);
@@ -693,7 +699,7 @@ nmp-player,
   top: 50%;
   left: 0;
   max-width: 100%;
-  height: 4px;
+  height: calc(4px * var(--nmpv3-s));
   border-radius: 999px;
   background: linear-gradient(90deg, var(--nmpv3-accent), var(--nmpv3-accent-3));
   transform: translateY(-50%);
@@ -743,8 +749,8 @@ nmp-player,
 }
 
 .nmpv3-tools .nmpv3-icon-button svg {
-  width: 15px;
-  height: 15px;
+  width: calc(15px * var(--nmpv3-s));
+  height: calc(15px * var(--nmpv3-s));
 }
 
 .nmpv3-volume {
@@ -759,8 +765,8 @@ nmp-player,
 
 .nmpv3-volume svg {
   display: block;
-  width: 14px;
-  height: 14px;
+  width: calc(14px * var(--nmpv3-s));
+  height: calc(14px * var(--nmpv3-s));
   fill: currentColor;
 }
 
@@ -920,8 +926,9 @@ nmp-player,
 }
 
 .nmpv3-player[data-layout="mini"] {
-  width: min(320px, 100%);
-  min-height: 92px;
+  width: calc(320px * var(--nmpv3-s));
+  max-width: 100%;
+  min-height: calc(92px * var(--nmpv3-s));
 }
 
 .nmpv3-player[data-layout="mini"] .nmpv3-main {
@@ -929,10 +936,10 @@ nmp-player,
 }
 
 .nmpv3-player[data-layout="mini"] .nmpv3-cover-button {
-  flex-basis: 46px;
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
+  flex-basis: calc(46px * var(--nmpv3-s));
+  width: calc(46px * var(--nmpv3-s));
+  height: calc(46px * var(--nmpv3-s));
+  min-width: calc(46px * var(--nmpv3-s));
 }
 
 .nmpv3-player[data-layout="mini"] .nmpv3-lyrics,
@@ -952,12 +959,14 @@ nmp-player,
 }
 
 .nmpv3-player[data-layout="dock"] {
-  width: min(420px, calc(100vw - 32px));
+  width: calc(420px * var(--nmpv3-s));
+  max-width: calc(100vw - 32px);
 }
 
 .nmpv3-player[data-embed-mode="article"] {
-  width: min(360px, 100%);
-  min-height: 98px;
+  width: calc(360px * var(--nmpv3-s));
+  max-width: 100%;
+  min-height: calc(98px * var(--nmpv3-s));
 }
 
 .nmpv3-player[data-embed-mode="article"] .nmpv3-main {
@@ -965,10 +974,10 @@ nmp-player,
 }
 
 .nmpv3-player[data-embed-mode="article"] .nmpv3-cover-button {
-  flex-basis: 50px;
-  width: 50px;
-  height: 50px;
-  min-width: 50px;
+  flex-basis: calc(50px * var(--nmpv3-s));
+  width: calc(50px * var(--nmpv3-s));
+  height: calc(50px * var(--nmpv3-s));
+  min-width: calc(50px * var(--nmpv3-s));
 }
 
 .nmpv3-player[data-embed-mode="article"] .nmpv3-meta,
@@ -985,10 +994,10 @@ nmp-player,
 }
 
 .nmpv3-player.nmpv3-is-minimized {
-  width: 80px;
-  min-width: 80px;
-  min-height: 80px;
-  height: 80px;
+  width: calc(80px * var(--nmpv3-s));
+  min-width: calc(80px * var(--nmpv3-s));
+  min-height: calc(80px * var(--nmpv3-s));
+  height: calc(80px * var(--nmpv3-s));
   padding: 0;
   border-radius: 50%;
   overflow: visible;
@@ -1033,8 +1042,8 @@ nmp-player,
   left: calc(100% + 10px);
   z-index: 15;
   display: grid;
-  width: 172px;
-  max-width: min(172px, calc(100vw - 112px));
+  width: calc(172px * var(--nmpv3-s));
+  max-width: calc(100vw - 112px);
   gap: 2px;
   padding: 10px 12px;
   border: 1px solid var(--nmpv3-border);
@@ -1141,9 +1150,10 @@ nmp-player,
 
 @media (max-width: 520px), (hover: none) and (pointer: coarse) {
   .nmpv3-player {
-    width: min(100%, 360px);
-    min-height: 116px;
-    padding: 10px;
+    width: calc(360px * var(--nmpv3-s));
+    max-width: 100%;
+    min-height: calc(116px * var(--nmpv3-s));
+    padding: calc(10px * var(--nmpv3-s));
   }
 
   .nmpv3-player[data-position="top-left"] {

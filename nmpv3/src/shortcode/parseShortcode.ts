@@ -63,6 +63,12 @@ export function parseShortcode(input: string): Partial<NMPv3Config> | null {
       return;
     }
 
+    if (key === "scale") {
+      const raw = (rawValue ?? "").trim().toLowerCase();
+      config.scale = raw === "auto" ? "auto" : Number(raw);
+      return;
+    }
+
     if (key === "idleOpacity" || key === "volume") {
       config[key] = Number(value);
       return;
