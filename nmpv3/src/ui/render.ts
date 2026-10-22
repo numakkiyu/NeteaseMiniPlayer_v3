@@ -1,4 +1,5 @@
 import { icons } from "./icons";
+import { getWindow } from "../utils/env";
 import {
   classNames as c,
   cx,
@@ -37,12 +38,16 @@ export interface NMPv3RenderedElements {
   cover: HTMLImageElement;
   fallbackCover: HTMLElement;
   title: HTMLElement;
+  titleText: HTMLElement;
   artist: HTMLElement;
+  artistText: HTMLElement;
   album: HTMLElement;
   order: HTMLElement;
   modeBadge: HTMLElement;
   lyricOriginal: HTMLElement;
+  lyricOriginalText: HTMLElement;
   lyricTranslation: HTMLElement;
+  lyricTranslationText: HTMLElement;
   playButton: HTMLButtonElement;
   playIcon: HTMLElement;
   previousButton: HTMLButtonElement;
@@ -110,7 +115,11 @@ export function renderPlayerShell(
 
   const body = element("div", c.body);
   const title = element("div", c.title);
+  const titleText = element("span", c.titleText);
+  title.append(titleText);
   const artist = element("div", c.artist);
+  const artistText = element("span", c.artistText);
+  artist.append(artistText);
   const meta = element("div", c.meta);
   const album = element("span", c.album);
   const order = element("span", c.order);
@@ -118,7 +127,11 @@ export function renderPlayerShell(
   meta.append(album, order, modeBadge);
   const lyrics = element("div", c.lyrics);
   const lyricOriginal = element("div", c.lyricOriginal);
+  const lyricOriginalText = element("span", c.lyricOriginalText);
+  lyricOriginal.append(lyricOriginalText);
   const lyricTranslation = element("div", c.lyricTranslation);
+  const lyricTranslationText = element("span", c.lyricTranslationText);
+  lyricTranslation.append(lyricTranslationText);
   lyrics.append(lyricOriginal, lyricTranslation);
   body.append(title, artist, meta, lyrics);
 
@@ -193,12 +206,16 @@ export function renderPlayerShell(
     cover,
     fallbackCover,
     title,
+    titleText,
     artist,
+    artistText,
     album,
     order,
     modeBadge,
     lyricOriginal,
+    lyricOriginalText,
     lyricTranslation,
+    lyricTranslationText,
     playButton,
     playIcon,
     previousButton,
@@ -241,12 +258,14 @@ export function updatePlayerView(
 
   const song = state.song;
   const isSingleSong = state.playlist.length <= 1;
-  elements.title.textContent =
+  elements.titleText.textContent =
     state.errorMessage || song?.name || "NeteaseMiniPlayer";
-  elements.artist.textContent =
+  elements.artistText.textContent =
     state.status === "loading"
       ? "Loading NetEase Cloud Music"
       : song?.artists || "Ready";
+  syncMarquee(elements.title, elements.titleText, "x");
+  syncMarquee(elements.artist, elements.artistText, "x");
   elements.album.textContent = song?.album ? `Album: ${song.album}` : "";
   elements.album.hidden = !song?.album;
   elements.order.textContent =
@@ -267,12 +286,15 @@ export function updatePlayerView(
   }
 
   const lyric = state.lyric;
-  elements.lyricOriginal.textContent = state.showLyrics
+  elements.lyricOriginalText.textContent = state.showLyrics
     ? lyric?.text || lyricFallback(state.status, state.lyricStatus)
     : "";
-  elements.lyricTranslation.textContent =
+  elements.lyricTranslationText.textContent =
     state.showLyrics && lyric?.translation ? lyric.translation : "";
   elements.lyricTranslation.hidden = !state.showLyrics || !lyric?.translation;
+  // 原文与译文各占一行，每行都不折行，超长时各自横向滚动
+  syncMarquee(elements.lyricOriginal, elements.lyricOriginalText, "x");
+  syncMarquee(elements.lyricTranslation, elements.lyricTranslationText, "x");
   elements.lyricsButton.classList.toggle(sc.active, state.showLyrics);
 
   setIconHtml(
@@ -536,6 +558,63 @@ function setIconHtml(target: HTMLElement, html: string): void {
   target.innerHTML = html;
 }
 
+/** 记录每个容器上次的文本，避免每帧都做一次强制布局测量 */
+const marqueeTextCache = new WeakMap<HTMLElement, string>();
+
+/**
+ * 文本溢出时启用往复滚动，把因宽度/高度被截断的内容完整展示出来
+ * 只在文本真正变化时才测量，避免 timeupdate 高频调用引发布局抖动
+ */
+function syncMarquee(
+  container: HTMLElement,
+  textEl: HTMLElement,
+  axis: "x" | "y",
+): void {
+  const text = textEl.textContent ?? "";
+
+  if (marqueeTextCache.get(container) === text) {
+    return;
+  }
+
+  marqueeTextCache.set(container, text);
+
+  if (!text) {
+    container.removeAttribute("data-overflow");
+    container.style.removeProperty("--nmpv3-marquee-shift");
+    return;
+  }
+
+  const measure = () => {
+    const overflow =
+      axis === "x"
+        ? textEl.scrollWidth - container.clientWidth
+        : textEl.scrollHeight - container.clientHeight;
+
+    if (overflow > 2) {
+      container.style.setProperty(
+        "--nmpv3-marquee-shift",
+        `-${Math.round(overflow) + 1}px`,
+      );
+      // 内容越长滚动越慢，避免长文本闪动过快
+      container.style.setProperty(
+        "--nmpv3-marquee-duration",
+        `${Math.min(16, Math.max(6, 5 + overflow / 12)).toFixed(1)}s`,
+      );
+      container.dataset.overflow = "true";
+      return;
+    }
+
+    container.removeAttribute("data-overflow");
+    container.style.removeProperty("--nmpv3-marquee-shift");
+  };
+
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(measure);
+  } else {
+    getWindow()?.setTimeout(measure, 0);
+  }
+}
+
 function progressPercent(currentTime: number, duration: number): number {
   if (!Number.isFinite(duration) || duration <= 0) {
     return 0;
@@ -544,8 +623,7 @@ function progressPercent(currentTime: number, duration: number): number {
   return Math.max(0, Math.min(100, (currentTime / duration) * 100));
 }
 
-export function formatTime(time: number): string {
-  if (!Number.isFinite(time) || time <= 0) {
+export function formatTime(time: number): string {  if (!Number.isFinite(time) || time <= 0) {
     return "0:00";
   }
 

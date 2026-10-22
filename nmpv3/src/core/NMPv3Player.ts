@@ -72,6 +72,13 @@ interface DragState {
 }
 
 const PROGRESS_PERSIST_INTERVAL_MS = 3000;
+/** 最小化后的唱片尺寸，与 CSS .nmpv3-is-minimized 保持一致 */
+const MINIMIZED_SIZE = 80;
+/** 展开态尺寸，与 CSS 中 width / min-height 保持一致 */
+const EXPANDED_WIDTH = 420;
+const EXPANDED_HEIGHT = 132;
+/** 尺寸过渡保护窗口：这段时间内禁止视口夹取回写，避免打断贴边动画 */
+const RESIZE_GUARD_MS = 340;
 
 /**
  * NMPv3 播放器核心实例
@@ -108,6 +115,13 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   private playbackErrorTimer: number | null = null;
   /** 空闲时段进度写入的句柄（requestIdleCallback 或 setTimeout 兜底） */
   private progressWriteHandle: { id: number; cancel: () => void } | null = null;
+
+  /** 是否正在拖动进度条（拖动期间不被 timeupdate 回拉） */
+  private scrubbing = false;
+  /** 尺寸过渡保护定时器 */
+  private resizeGuardTimer: number | null = null;
+  /** 本次按下时命中的元素，用于在 pointerup 判定"点击"落点 */
+  private pressTarget: HTMLElement | null = null;
   private loadGeneration = 0;
   private lyricGeneration = 0;
   private lastProgressPersistedAt = 0;
@@ -425,6 +439,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       if (!this.isMinimized) {
         this.clearIdleStateClasses();
       }
+      this.reposeForSizeChange(this.isMinimized);
     }
 
     if (!this.config.showPlaylist) {
@@ -508,6 +523,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.clearIdleAnimationWait();
     this.clearViewportSnapFrame();
     this.cancelProgressWrite();
+    this.clearResizeGuard();
+
     this.cleanup.forEach((dispose) => dispose());
     this.cleanup.length = 0;
     mediaSessionManager.release(this);
@@ -589,11 +606,15 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       () => void this.previous(),
     );
     this.listen(this.elements.nextButton, "click", () => void this.next());
-    this.listen(this.elements.progressTrack, "click", (event) =>
-      this.seekFromPointer(event as MouseEvent, this.elements.progressTrack),
+    this.bindTrackScrub(
+      this.elements.progressTrack,
+      (ratio) => this.previewSeek(ratio),
+      (ratio) => this.commitSeek(ratio),
     );
-    this.listen(this.elements.volumeTrack, "click", (event) =>
-      this.volumeFromPointer(event as MouseEvent, this.elements.volumeTrack),
+    this.bindTrackScrub(
+      this.elements.volumeTrack,
+      (ratio) => this.setVolume(ratio),
+      (ratio) => this.setVolume(ratio),
     );
     this.listen(this.elements.lyricsButton, "click", () => {
       const showLyrics = !this.config.showLyrics;
@@ -644,31 +665,16 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       }
       this.persistSettings();
       this.updateView();
+      this.reposeForSizeChange(this.isMinimized);
       this.startIdleTimer();
     });
-    this.listen(this.elements.cover.parentElement, "click", () => {
-      if (
-        this.dragState.moved ||
-        Date.now() < this.dragState.suppressClickUntil
-      ) {
+    // 键盘激活封面（Enter/Space）：指针点击走 pointerup 路径，这里只兜键盘
+    this.listen(this.elements.cover.parentElement, "click", (event) => {
+      if ((event as MouseEvent).detail !== 0) {
         return;
       }
 
-      if (this.isMinimized) {
-        this.isMinimized = false;
-        this.clearIdleStateClasses();
-        this.persistSettings();
-        this.updateView();
-        return;
-      }
-
-      if (this.currentSong?.id) {
-        getWindow()?.open(
-          `https://music.163.com/song?id=${encodeURIComponent(this.currentSong.id)}`,
-          "_blank",
-          "noopener,noreferrer",
-        );
-      }
+      this.activateCover();
     });
     this.listen(this.elements.playlistList, "click", (event) => {
       const item = (event.target as HTMLElement).closest<HTMLElement>(
@@ -728,6 +734,13 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.listen(browserWindow, "resize", () =>
         this.snapPositionIntoViewport(),
       );
+      // 页面滚动后浮动播放器可能落到视口外，滚动结束再拉回可视区域
+      this.listen(
+        browserWindow,
+        "scroll",
+        () => this.snapPositionIntoViewport(),
+        { passive: true },
+      );
       this.listen(browserWindow, "pagehide", () => {
         this.persistProgress(true);
         this.persistSettings();
@@ -744,7 +757,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       }),
       this.audio.on("timeupdate", () => {
         const audioState = this.audio.getState();
-        this.currentTime = audioState.currentTime;
+        // 拖动进度条期间以手指位置为准，不被 timeupdate 回拉
+        if (!this.scrubbing) {
+          this.currentTime = audioState.currentTime;
+        }
         this.duration = audioState.duration;
         this.persistProgress(false);
         this.syncLyric();
@@ -1012,26 +1028,134 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.currentLyric = findActiveLyric(this.lyrics, this.currentTime);
   }
 
-  private seekFromPointer(event: MouseEvent, track: HTMLElement): void {
-    if (!this.duration) {
+  /**
+   * 绑定轨道的指针拖动
+   * pointerdown + setPointerCapture 保证手指移出轨道后仍持续接收事件；
+   * 移动阶段用 rAF 节流只做预览，松手才提交，避免拖动过程中反复 seek 造成卡顿
+   */
+  private bindTrackScrub(
+    track: HTMLElement,
+    onPreview: (ratio: number) => void,
+    onCommit: (ratio: number) => void,
+  ): void {
+    const browserWindow = getWindow();
+    let ratio = 0;
+    let frame: number | null = null;
+    let activePointer: number | null = null;
+
+    const ratioFromPointer = (event: PointerEvent): number => {
+      const rect = track.getBoundingClientRect();
+
+      if (rect.width <= 0) {
+        return 0;
+      }
+
+      return Math.max(
+        0,
+        Math.min(1, (event.clientX - rect.left) / rect.width),
+      );
+    };
+
+    const schedulePreview = () => {
+      if (!browserWindow || frame !== null) {
+        return;
+      }
+
+      frame = browserWindow.requestAnimationFrame(() => {
+        frame = null;
+        onPreview(ratio);
+      });
+    };
+
+    const finish = (event: PointerEvent, commit: boolean) => {
+      if (activePointer === null || event.pointerId !== activePointer) {
+        return;
+      }
+
+      if (browserWindow && frame !== null) {
+        browserWindow.cancelAnimationFrame(frame);
+        frame = null;
+      }
+
+      if (track.hasPointerCapture?.(event.pointerId)) {
+        track.releasePointerCapture?.(event.pointerId);
+      }
+
+      activePointer = null;
+      delete track.dataset.scrubbing;
+      this.scrubbing = false;
+
+      if (commit) {
+        onCommit(ratio);
+      } else {
+        onPreview(ratio);
+      }
+    };
+
+    this.listen(track, "pointerdown", (event) => {
+      const pointerEvent = event as PointerEvent;
+
+      if (pointerEvent.button !== 0) {
+        return;
+      }
+
+      activePointer = pointerEvent.pointerId;
+      ratio = ratioFromPointer(pointerEvent);
+      track.dataset.scrubbing = "true";
+      this.scrubbing = true;
+      try {
+        track.setPointerCapture?.(pointerEvent.pointerId);
+      } catch {
+        // 同上
+      }
+      pointerEvent.preventDefault();
+      onPreview(ratio);
+    });
+
+    this.listen(track, "pointermove", (event) => {
+      const pointerEvent = event as PointerEvent;
+
+      if (activePointer === null || pointerEvent.pointerId !== activePointer) {
+        return;
+      }
+
+      ratio = ratioFromPointer(pointerEvent);
+      schedulePreview();
+    });
+
+    this.listen(track, "pointerup", (event) =>
+      finish(event as PointerEvent, true),
+    );
+    this.listen(track, "pointercancel", (event) =>
+      finish(event as PointerEvent, false),
+    );
+
+    // 键盘激活（Enter/Space）时 detail 为 0，交给热键处理，避免跳到 0 秒
+    this.listen(track, "click", (event) => {
+      if ((event as MouseEvent).detail === 0) {
+        return;
+      }
+    });
+  }
+
+  /** 拖动中的进度预览：只更新界面与歌词，不触碰 audio */
+  private previewSeek(ratio: number): void {
+    if (this.duration <= 0) {
       return;
     }
 
-    const rect = track.getBoundingClientRect();
-    const percent = Math.max(
-      0,
-      Math.min(1, (event.clientX - rect.left) / rect.width),
-    );
-    this.seekTo(percent * this.duration);
+    this.currentTime = ratio * this.duration;
+    this.syncLyric();
+    this.updateView();
   }
 
-  private volumeFromPointer(event: MouseEvent, track: HTMLElement): void {
-    const rect = track.getBoundingClientRect();
-    const percent = Math.max(
-      0,
-      Math.min(1, (event.clientX - rect.left) / rect.width),
-    );
-    this.setVolume(percent);
+  /** 松手提交 seek */
+  private commitSeek(ratio: number): void {
+    if (this.duration <= 0) {
+      return;
+    }
+
+    this.seekTo(ratio * this.duration);
   }
 
   private setStatus(status: NMPv3LoadStatus): void {
@@ -1574,15 +1698,12 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         this.dragState.frameId =
           browserWindow.requestAnimationFrame(flushPosition);
       }
-
-      this.elements.root.classList.add(sc.dragging);
     };
 
     const onPointerUp = (event: PointerEvent, cancelled = false) => {
       if (!this.dragState.active) {
         return;
       }
-
       // 其它手指抬起不应结束本次拖拽
       if (
         !cancelled &&
@@ -1610,17 +1731,27 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.dragState.pointerId = null;
 
       this.elements.root.classList.remove(sc.dragging);
-      this.elements.root.style.transition = "";
+      delete this.elements.root.dataset.dragging;
 
       if (!cancelled && this.dragState.moved) {
         this.snapToViewportEdge();
         this.persistSettings();
-      } else if (!cancelled && this.isMinimized) {
-        this.isMinimized = false;
-        this.dragState.suppressClickUntil = Date.now() + 350;
-        this.clearIdleStateClasses();
-        this.persistSettings();
-        this.updateView();
+      } else if (
+        !cancelled &&
+        Date.now() >= this.dragState.suppressClickUntil
+      ) {
+        if (this.isMinimized) {
+          this.isMinimized = false;
+          this.dragState.suppressClickUntil = Date.now() + 350;
+          this.clearIdleStateClasses();
+          this.persistSettings();
+          this.updateView();
+          this.reposeForSizeChange(this.isMinimized);
+        } else {
+          // 点击（非拖拽）由这里分发，不依赖 click 事件：
+          // root 上的 setPointerCapture 会把 click 重定向，子元素的 click 监听收不到
+          this.handlePressTarget();
+        }
       }
 
       this.dragState.ready = false;
@@ -1631,6 +1762,9 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     };
 
     const onPointerDown = (event: PointerEvent) => {
+      // 每次按下都重置，避免上一次的落点泄漏到本次判定
+      this.pressTarget = null;
+
       if (event.button !== 0 || !this.canDrag()) {
         return;
       }
@@ -1639,6 +1773,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       if (target.closest(interactiveSelector) || this.isPlaylistOpen) {
         return;
       }
+
+      this.pressTarget = target;
 
       const rect = this.elements.root.getBoundingClientRect();
       this.dragState.active = true;
@@ -1659,8 +1795,14 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.dragState.pointerId = event.pointerId;
       this.clearIdleTimer();
       this.clearIdleStateClasses();
-      this.elements.root.style.transition = "none";
-      this.elements.root.setPointerCapture?.(event.pointerId);
+      // 用数据属性驱动 CSS 关闭过渡，避免逐帧读写 style 触发额外样式重算
+      this.elements.root.dataset.dragging = "true";
+      this.elements.root.classList.add(sc.dragging);
+      try {
+        this.elements.root.setPointerCapture?.(event.pointerId);
+      } catch {
+        // 合成事件或已释放的指针不支持捕获，忽略即可
+      }
     };
 
     this.listen(this.elements.root, "pointerdown", (event) =>
@@ -1677,6 +1819,45 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     );
   }
 
+  /**
+   * 分发"点击"（非拖拽的按下-抬起）行为
+   * 目前只有封面：最小化时展开，展开时跳转网易云音乐单曲页
+   */
+  private handlePressTarget(): void {
+    const target = this.pressTarget;
+
+    if (!target || !target.closest(`.${c.coverButton}`)) {
+      return;
+    }
+
+    this.activateCover();
+  }
+
+  /** 封面激活：最小化时展开，展开态跳转网易云单曲页 */
+  private activateCover(): void {
+    if (this.isMinimized) {
+      this.isMinimized = false;
+      this.clearIdleStateClasses();
+      this.persistSettings();
+      this.updateView();
+      this.scheduleReposeIfNeeded();
+      return;
+    }
+
+    if (this.currentSong?.id) {
+      getWindow()?.open(
+        `https://music.163.com/song?id=${encodeURIComponent(this.currentSong.id)}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+    }
+  }
+
+  /** 统一的最小化态变化后处理：展开时重新贴边 */
+  private scheduleReposeIfNeeded(): void {
+    this.reposeForSizeChange(this.isMinimized);
+  }
+
   private canDrag(): boolean {
     return (
       this.config.draggable &&
@@ -1686,12 +1867,115 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   }
 
   private applyFloatingPosition(left: number, top: number): void {
-    this.elements.root.style.left = `${left}px`;
-    this.elements.root.style.top = `${top}px`;
-    this.elements.root.style.right = "auto";
-    this.elements.root.style.bottom = "auto";
+    const style = this.elements.root.style;
+    const leftValue = `${left}px`;
+    const topValue = `${top}px`;
+
+    // 只在值真正变化时写内联样式，减少拖拽期间每帧的样式失效
+    if (style.left !== leftValue) {
+      style.left = leftValue;
+    }
+    if (style.top !== topValue) {
+      style.top = topValue;
+    }
+    if (style.right !== "auto") {
+      style.right = "auto";
+    }
+    if (style.bottom !== "auto") {
+      style.bottom = "auto";
+    }
+
     this.elements.root.classList.add(sc.userPositioned);
     this.syncFloatingSideAttribute();
+  }
+
+  /**
+   * 位置落定
+   * left/top 已纳入 root 的默认 transition（与尺寸同参数），
+   * 因此这里直接写入即可获得"边缩边靠 / 边放大边外移"的同步动画
+   */
+  private settleToPosition(left: number, top: number): void {
+    this.applyFloatingPosition(left, top);
+  }
+
+  /**
+   * 最小化 / 展开时同步贴边
+   * 位置与尺寸共用同一组 transition 参数，两种变化同时开始、同时结束，
+   * 视觉上就是"边缩小边靠边"/"边向外靠边放大"。
+   * 必须用**目标尺寸**计算落点：此刻 DOM 仍是旧尺寸，读 offsetWidth 会算错。
+   */
+  private reposeForSizeChange(minimized: boolean): void {
+    const browserWindow = getWindow();
+
+    if (
+      !browserWindow ||
+      this.destroyed ||
+      this.config.position === "static" ||
+      this.config.embedMode === "article" ||
+      !this.elements.root.classList.contains(sc.userPositioned)
+    ) {
+      return;
+    }
+
+    const root = this.elements.root;
+    const margin = 8;
+    const hostWidth = this.target.clientWidth || EXPANDED_WIDTH;
+    const targetWidth = minimized
+      ? MINIMIZED_SIZE
+      : Math.min(EXPANDED_WIDTH, hostWidth);
+    const targetHeight = minimized ? MINIMIZED_SIZE : EXPANDED_HEIGHT;
+    const side =
+      this.dragState.side ??
+      (this.config.position.endsWith("left") ? "left" : "right");
+    const left =
+      side === "left"
+        ? margin
+        : Math.max(margin, browserWindow.innerWidth - targetWidth - margin);
+    const inlineTop = Number.parseFloat(root.style.top);
+    const top = Math.max(
+      margin,
+      Math.min(
+        browserWindow.innerHeight - targetHeight - margin,
+        Number.isFinite(inlineTop) ? inlineTop : margin,
+      ),
+    );
+
+    if (!Number.isFinite(left) || !Number.isFinite(top)) {
+      return;
+    }
+
+    this.dragState.side = side;
+    root.dataset.side = side;
+    this.applyFloatingPosition(left, top);
+
+    // 尺寸过渡期间禁止视口夹取回写，否则会把正在进行的贴边动画覆盖掉
+    this.holdViewportSnap();
+  }
+
+  /** 尺寸过渡期间挂起视口夹取，过渡结束后恢复 */
+  private holdViewportSnap(): void {
+    const browserWindow = getWindow();
+
+    if (!browserWindow) {
+      return;
+    }
+
+    // 顺序很关键：先清理上一次的守卫（内部会 delete data-resizing），再设新标记
+    this.clearResizeGuard();
+    this.elements.root.dataset.resizing = "true";
+    this.resizeGuardTimer = browserWindow.setTimeout(() => {
+      this.resizeGuardTimer = null;
+      delete this.elements.root.dataset.resizing;
+    }, RESIZE_GUARD_MS);
+  }
+
+  private clearResizeGuard(): void {
+    if (this.resizeGuardTimer != null) {
+      getWindow()?.clearTimeout(this.resizeGuardTimer);
+      this.resizeGuardTimer = null;
+    }
+
+    delete this.elements.root.dataset.resizing;
   }
 
   private resetFloatingPosition(): void {
@@ -1712,8 +1996,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.elements.root.style.top = "";
     this.elements.root.style.right = "";
     this.elements.root.style.bottom = "";
-    this.elements.root.style.transition = "";
     this.elements.root.classList.remove(sc.userPositioned, sc.dragging);
+    delete this.elements.root.dataset.dragging;
     delete this.elements.root.dataset.side;
     this.dragState.side = null;
     this.dragState.active = false;
@@ -1731,6 +2015,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
     const rect = this.elements.root.getBoundingClientRect();
     const width = rect.width || 420;
+    const height = rect.height || 120;
     const horizontalMargin = Math.max(
       0,
       Math.min(20, (browserWindow.innerWidth - width) / 2),
@@ -1743,8 +2028,13 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       side === "left"
         ? horizontalMargin
         : browserWindow.innerWidth - width - horizontalMargin;
+    // 吸附后仍需保证完整落在视口内，避免贴边后被裁掉
+    const top = Math.max(
+      8,
+      Math.min(browserWindow.innerHeight - height - 8, rect.top),
+    );
     this.dragState.side = side;
-    this.applyFloatingPosition(left, rect.top);
+    this.settleToPosition(left, top);
   }
 
   private snapPositionIntoViewport(): void {
@@ -1753,6 +2043,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     if (
       this.config.position === "static" ||
       !browserWindow ||
+      this.elements.root.dataset.resizing === "true" ||
       this.hasIdleStateClasses()
     ) {
       return;
@@ -1782,6 +2073,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.config.position === "static" ||
       this.config.embedMode === "article" ||
       this.hasIdleStateClasses() ||
+      // 尺寸过渡期间不夹取：此时 rect 是动画中间值，回写会把贴边动画覆盖掉
+      this.elements.root.dataset.resizing === "true" ||
       !this.elements.root.classList.contains(sc.userPositioned) ||
       this.viewportSnapFrame !== null
     ) {
@@ -1895,6 +2188,17 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     const root = this.elements.root;
 
     if (root.classList.contains(sc.userPositioned) && browserWindow) {
+      // 优先用刚写入内联样式的 left 做算术判定：
+      // 拖动时每帧都会走到这里，getBoundingClientRect 会强制同步布局造成掉帧
+      const inlineLeft = Number.parseFloat(root.style.left);
+      const width = this.dragState.width || root.offsetWidth || 420;
+
+      if (Number.isFinite(inlineLeft)) {
+        return inlineLeft + width / 2 < browserWindow.innerWidth / 2
+          ? "left"
+          : "right";
+      }
+
       const rect = root.getBoundingClientRect();
       if (Number.isFinite(rect.left) && Number.isFinite(rect.width)) {
         return rect.left + rect.width / 2 < browserWindow.innerWidth / 2

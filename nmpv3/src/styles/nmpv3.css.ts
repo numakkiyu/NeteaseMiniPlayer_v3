@@ -39,6 +39,8 @@ nmp-player,
   --nmpv3-playlist-row-height: 56px;
   --nmpv3-idle-opacity: 0.72;
   --nmpv3-dock-gap: 20px;
+  /* 停靠时露在视口内的宽度：保证玩家永远看得见、抓得住 */
+  --nmpv3-dock-peek: 14px;
   --nmpv3-opacity-duration-down: 600ms;
   --nmpv3-opacity-duration-up: 250ms;
   --nmpv3-dock-duration: 450ms;
@@ -47,6 +49,14 @@ nmp-player,
   --nmpv3-opacity-ease-in: cubic-bezier(0.4, 0, 0.2, 1);
   --nmpv3-dock-ease-out: cubic-bezier(0.18, 0.9, 0.2, 1);
   --nmpv3-popout-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  /* 统一动效令牌：入场用 decelerate、退场用 accelerate、位移落定用 settle */
+  --nmpv3-motion-fast: 140ms;
+  --nmpv3-motion-base: 220ms;
+  --nmpv3-motion-slow: 300ms;
+  --nmpv3-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --nmpv3-ease-entrance: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --nmpv3-ease-exit: cubic-bezier(0.3, 0, 1, 1);
+  --nmpv3-ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
   --nmpv3-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   box-sizing: border-box;
   position: relative;
@@ -71,15 +81,31 @@ nmp-player,
   letter-spacing: 0;
   text-wrap: pretty;
   transition:
-    width 260ms cubic-bezier(0.4, 0, 0.2, 1),
-    min-height 260ms cubic-bezier(0.4, 0, 0.2, 1),
-    border-radius 260ms cubic-bezier(0.4, 0, 0.2, 1),
-    margin-bottom 220ms ease,
-    opacity 220ms ease,
-    transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    background-color 220ms ease,
-    color 220ms ease,
-    box-shadow 220ms ease;
+    transform var(--nmpv3-motion-base) var(--nmpv3-ease-standard),
+    opacity var(--nmpv3-motion-base) ease,
+    box-shadow var(--nmpv3-motion-base) ease,
+    background-color var(--nmpv3-motion-base) ease,
+    color var(--nmpv3-motion-base) ease,
+    border-radius var(--nmpv3-motion-base) var(--nmpv3-ease-standard),
+    /* 位置与尺寸使用同一时长与缓动：最小化时"边缩边靠边"，展开时"边向外靠边放大" */
+    left var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
+    top var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
+    width var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
+    height var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
+    min-height var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
+    padding var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance);
+  /* 把重排范围限制在组件内部，尺寸变化不再引起宿主页面 reflow */
+  contain: layout style;
+}
+
+/* 拖拽期间关闭所有过渡，让位置严格跟手；松手后由 CSS 过渡接管落定 */
+.${c.player}[data-dragging="true"] {
+  transition: none;
+  will-change: transform;
+}
+
+.${c.player}[data-dragging="true"] .${c.main} {
+  cursor: grabbing;
 }
 
 .${c.player}::before {
@@ -94,14 +120,14 @@ nmp-player,
     radial-gradient(circle at 82% 24%, var(--nmpv3-flow-2) 0%, transparent 56%),
     radial-gradient(circle at 22% 86%, var(--nmpv3-flow-3) 0%, transparent 58%),
     radial-gradient(circle at 86% 78%, var(--nmpv3-flow-4) 0%, transparent 55%);
-  background-size: 220% 220%;
-  background-position: 0% 0%, 100% 0%, 0% 100%, 100% 100%;
   clip-path: inset(0 round calc(var(--nmpv3-radius) - 1px));
   opacity: var(--nmpv3-flow-opacity);
   filter: saturate(1.04) brightness(1.02);
   transform: scale(1);
+  /* 只动 transform + opacity：两者都在合成层完成，不触发布局与重绘 */
   animation: nmpv3-flow-breathe var(--nmpv3-flow-speed) ease-in-out infinite;
   animation-play-state: paused;
+  will-change: transform, opacity;
 }
 
 .${c.player}:hover::before,
@@ -240,6 +266,11 @@ nmp-player,
   background: radial-gradient(circle at 50% 50%, #2d2f35 0%, #17191f 55%, #090a0d 100%);
   color: rgba(255, 255, 255, 0.94);
   cursor: pointer;
+  /* 封面随容器同步形变，避免尺寸过渡时两者不同步造成的抖动 */
+  transition:
+    width var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
+    height var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
+    flex-basis var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.08),
     inset 0 0 18px rgba(0, 0, 0, 0.45),
@@ -316,9 +347,17 @@ nmp-player,
   transform-origin: 50% 50%;
 }
 
+/* 旋转动画常驻，仅用 play-state 启停：
+   暂停时停在当前角度，恢复播放从原角度继续，而不是跳回 0 度 */
+.nmpv3-cover,
+.nmpv3-vinyl-ring {
+  animation: nmpv3-spin 6s linear infinite;
+  animation-play-state: paused;
+}
+
 .nmpv3-is-playing .nmpv3-cover,
 .nmpv3-is-playing .nmpv3-vinyl-ring {
-  animation: nmpv3-spin 6s linear infinite;
+  animation-play-state: running;
 }
 
 .nmpv3-body {
@@ -342,8 +381,45 @@ nmp-player,
   white-space: nowrap;
 }
 
-.nmpv3-title {
+.nmpv3-title,
+.nmpv3-artist {
   color: var(--nmpv3-text);
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* 内层承载文本：溢出时由 JS 设 --nmpv3-marquee-shift 做往复滚动 */
+.nmpv3-title-text,
+.nmpv3-artist-text {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.nmpv3-title[data-overflow="true"] .nmpv3-title-text,
+.nmpv3-artist[data-overflow="true"] .nmpv3-artist-text {
+  animation: nmpv3-marquee-h var(--nmpv3-marquee-duration, 7s) ease-in-out infinite alternate;
+}
+
+/* 横向滚动时右侧淡出，避免文字被硬边裁断 */
+.nmpv3-title[data-overflow="true"],
+.nmpv3-artist[data-overflow="true"] {
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 86%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0, #000 86%, transparent 100%);
+}
+
+/* 未溢出时保留省略号语义 */
+.nmpv3-title:not([data-overflow="true"]) .nmpv3-title-text,
+.nmpv3-artist:not([data-overflow="true"]) .nmpv3-artist-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.nmpv3-title {
   font-size: 13px;
   font-weight: 700;
   line-height: 1.2;
@@ -401,14 +477,34 @@ nmp-player,
 
 .nmpv3-lyric-original,
 .nmpv3-lyric-translation {
-  display: -webkit-box;
+  position: relative;
   min-width: 0;
   max-width: 100%;
+  /* 每行都不折行：超出宽度时由内层横向滚动展示，行数固定不变 */
   overflow: hidden;
-  overflow-wrap: anywhere;
-  white-space: normal;
-  -webkit-box-orient: vertical;
-  word-break: break-word;
+  white-space: nowrap;
+}
+
+.nmpv3-lyric-original-text,
+.nmpv3-lyric-translation-text {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+/* 溢出滚动时右侧淡出，避免文字被硬边裁断 */
+.nmpv3-lyric-original[data-overflow="true"],
+.nmpv3-lyric-translation[data-overflow="true"] {
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 84%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0, #000 84%, transparent 100%);
+}
+
+.nmpv3-lyric-original[data-overflow="true"] .nmpv3-lyric-original-text {
+  animation: nmpv3-marquee-h var(--nmpv3-marquee-duration, 9s) ease-in-out infinite alternate;
+}
+
+.nmpv3-lyric-translation[data-overflow="true"] .nmpv3-lyric-translation-text {
+  animation: nmpv3-marquee-h var(--nmpv3-marquee-duration, 9s) ease-in-out infinite alternate;
 }
 
 .nmpv3-lyric-original {
@@ -416,16 +512,12 @@ nmp-player,
   font-size: 11px;
   font-weight: 650;
   line-height: 1.35;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
 }
 
 .nmpv3-lyric-translation {
   color: var(--nmpv3-muted);
   font-size: 10px;
   line-height: 1.3;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
 }
 
 .nmpv3-controls {
@@ -553,6 +645,31 @@ nmp-player,
   border-radius: 999px;
   background: transparent;
   cursor: pointer;
+  /* 拖动时禁止浏览器接管手势，保证 pointermove 连续触发 */
+  touch-action: none;
+}
+
+/* 拖拽中的视觉反馈：轨道变粗、手柄放大，给出"抓住了"的即时感 */
+.nmpv3-progress-track[data-scrubbing="true"],
+.nmpv3-volume-track[data-scrubbing="true"] {
+  cursor: grabbing;
+}
+
+.nmpv3-progress-track[data-scrubbing="true"]::before,
+.nmpv3-volume-track[data-scrubbing="true"]::before {
+  height: 6px;
+}
+
+.nmpv3-progress-track[data-scrubbing="true"] .nmpv3-progress-bar,
+.nmpv3-volume-track[data-scrubbing="true"] .nmpv3-volume-bar {
+  height: 6px;
+}
+
+.nmpv3-progress-track[data-scrubbing="true"] .nmpv3-progress-bar::after {
+  width: 12px;
+  height: 12px;
+  right: -5px;
+  box-shadow: 0 0 12px rgba(0, 169, 214, 0.72);
 }
 
 .nmpv3-progress-track::before,
@@ -567,6 +684,7 @@ nmp-player,
   background: var(--nmpv3-secondary-bg);
   box-shadow: var(--nmpv3-shadow-inset);
   transform: translateY(-50%);
+  transition: height var(--nmpv3-motion-fast) var(--nmpv3-ease-standard);
 }
 
 .nmpv3-progress-bar,
@@ -579,6 +697,7 @@ nmp-player,
   border-radius: 999px;
   background: linear-gradient(90deg, var(--nmpv3-accent), var(--nmpv3-accent-3));
   transform: translateY(-50%);
+  transition: height var(--nmpv3-motion-fast) var(--nmpv3-ease-standard);
 }
 
 .nmpv3-progress-bar::after {
@@ -592,6 +711,11 @@ nmp-player,
   background: var(--nmpv3-accent-3);
   box-shadow: 0 0 8px rgba(0, 169, 214, 0.45);
   transform: translateY(-50%);
+  transition:
+    width var(--nmpv3-motion-fast) var(--nmpv3-ease-standard),
+    height var(--nmpv3-motion-fast) var(--nmpv3-ease-standard),
+    right var(--nmpv3-motion-fast) var(--nmpv3-ease-standard),
+    box-shadow var(--nmpv3-motion-fast) var(--nmpv3-ease-standard);
 }
 
 .nmpv3-tools {
@@ -986,12 +1110,12 @@ nmp-player,
 }
 
 .nmpv3-player.nmpv3-is-minimized.nmpv3-docked-right {
-  transform: translateX(calc(50% + var(--nmpv3-dock-gap)));
+  transform: translateX(calc(50% - var(--nmpv3-dock-peek)));
   opacity: var(--nmpv3-idle-opacity);
 }
 
 .nmpv3-player.nmpv3-is-minimized.nmpv3-docked-left {
-  transform: translateX(calc(-50% - var(--nmpv3-dock-gap)));
+  transform: translateX(calc(-50% + var(--nmpv3-dock-peek)));
   opacity: var(--nmpv3-idle-opacity);
 }
 
@@ -1146,16 +1270,32 @@ nmp-player,
   }
 }
 
+@keyframes nmpv3-marquee-h {
+  0%, 10% {
+    transform: translateX(0);
+  }
+  90%, 100% {
+    transform: translateX(var(--nmpv3-marquee-shift, 0px));
+  }
+}
+
+@keyframes nmpv3-marquee-v {
+  0%, 10% {
+    transform: translateY(0);
+  }
+  90%, 100% {
+    transform: translateY(var(--nmpv3-marquee-shift, 0px));
+  }
+}
+
 @keyframes nmpv3-flow-breathe {
   0%, 100% {
     opacity: calc(var(--nmpv3-flow-opacity) * 0.68);
-    background-position: 0% 0%, 100% 0%, 0% 100%, 100% 100%;
     transform: scale(1);
   }
   50% {
     opacity: var(--nmpv3-flow-opacity);
-    background-position: 58% 18%, 42% 30%, 22% 72%, 78% 64%;
-    transform: scale(1.018);
+    transform: scale(1.03);
   }
 }
 
@@ -1175,18 +1315,18 @@ nmp-player,
 
 @keyframes nmpv3-player-dock-right {
   from { transform: translateX(0); }
-  to { transform: translateX(calc(50% + var(--nmpv3-dock-gap))); }
+  to { transform: translateX(calc(50% - var(--nmpv3-dock-peek))); }
 }
 
 @keyframes nmpv3-player-dock-left {
   from { transform: translateX(0); }
-  to { transform: translateX(calc(-50% - var(--nmpv3-dock-gap))); }
+  to { transform: translateX(calc(-50% + var(--nmpv3-dock-peek))); }
 }
 
 @keyframes nmpv3-player-popout-right {
   from {
     opacity: var(--nmpv3-idle-opacity);
-    transform: translateX(calc(50% + var(--nmpv3-dock-gap)));
+    transform: translateX(calc(50% - var(--nmpv3-dock-peek)));
   }
   to {
     opacity: 1;
@@ -1197,7 +1337,7 @@ nmp-player,
 @keyframes nmpv3-player-popout-left {
   from {
     opacity: var(--nmpv3-idle-opacity);
-    transform: translateX(calc(-50% - var(--nmpv3-dock-gap)));
+    transform: translateX(calc(-50% + var(--nmpv3-dock-peek)));
   }
   to {
     opacity: 1;
