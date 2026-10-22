@@ -63,6 +63,17 @@ export function parseShortcode(input: string): Partial<NMPv3Config> | null {
       return;
     }
 
+    if (key === "palette") {
+      const raw = (rawValue ?? "").trim().toLowerCase();
+      config.palette = raw;
+      return;
+    }
+
+    if (key === "paletteFollowHost" || key === "palette-follow-host") {
+      config.paletteFollowHost = value === true;
+      return;
+    }
+
     if (key === "scale") {
       const raw = (rawValue ?? "").trim().toLowerCase();
       config.scale = raw === "auto" ? "auto" : Number(raw);
@@ -126,6 +137,10 @@ function normalizeKey(key: string): string {
 
   if (key === "idle-opacity") {
     return "idleOpacity";
+  }
+
+  if (key === "palette-follow-host" || key === "follow-host") {
+    return "paletteFollowHost";
   }
 
   return key;

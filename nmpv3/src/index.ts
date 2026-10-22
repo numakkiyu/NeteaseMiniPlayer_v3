@@ -250,6 +250,14 @@ function applyAttributes(
     element.setAttribute("scale", String(config.scale));
   }
 
+  if (config.palette) {
+    element.setAttribute("palette", String(config.palette));
+  }
+
+  if (typeof config.paletteFollowHost === "boolean") {
+    element.setAttribute("palette-follow-host", String(config.paletteFollowHost));
+  }
+
   if (config.apiBaseUrl) {
     element.setAttribute("api-base-url", config.apiBaseUrl);
   }

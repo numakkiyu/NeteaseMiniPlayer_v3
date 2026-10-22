@@ -35,6 +35,8 @@ export class NMPv3Element extends HTMLElementBase {
     "hotkeys",
     "idle-opacity",
     "scale",
+    "palette",
+    "palette-follow-host",
   ];
 
   private player: NMPv3Player | null = null;
@@ -156,4 +158,6 @@ const attributeConfigKeys: Record<string, Array<keyof NMPv3Config>> = {
   hotkeys: ["hotkeys"],
   "idle-opacity": ["idleOpacity"],
   scale: ["scale"],
+  palette: ["palette"],
+  "palette-follow-host": ["paletteFollowHost"],
 };

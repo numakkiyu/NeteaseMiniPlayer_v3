@@ -11,6 +11,8 @@ import { classNames as c, stateClassNames as sc } from "../ui/classNames";
 import { getDocument, getWindow } from "../utils/env";
 import { emit } from "../utils/event";
 import { logger } from "../utils/logger";
+import { watchSystemTheme } from "../utils/theme";
+import { resolvePalette, type PaletteResolved } from "../theme/resolve";
 import { AudioController } from "./AudioController";
 import { globalAudioManager } from "./GlobalAudioManager";
 import { mediaSessionManager } from "./MediaSessionManager";
@@ -124,6 +126,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   private resizeGuardTimer: number | null = null;
   /** 视口或档位变化后的贴边防抖定时器 */
   private sideSnapTimer: number | null = null;
+  /** 宿主主题变化观察器（仅 auto 主题需要） */
+  private hostThemeObserver: MutationObserver | null = null;
+  /** 最近一次解析出的配色，供诊断读取 */
+  private palette: PaletteResolved | null = null;
   /** 本次按下时命中的元素，用于在 pointerup 判定"点击"落点 */
   private pressTarget: HTMLElement | null = null;
   private loadGeneration = 0;
@@ -180,6 +186,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.setupHotkeys();
     this.setupDragAndDrop();
     this.applyRestoredPosition();
+    this.applyResolvedTheme();
     this.updateView();
     emit(this.target, "nmpv3:ready", { player: this });
     void this.bootstrap();
@@ -401,6 +408,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       previous.playlistId !== next.playlistId;
     const lyricsChanged = previous.showLyrics !== next.showLyrics;
     const scaleChanged = previous.scale !== next.scale;
+    const themeChanged = previous.theme !== next.theme;
+    const paletteChanged =
+      previous.palette !== next.palette ||
+      previous.paletteFollowHost !== next.paletteFollowHost;
     const storageChanged =
       previous.storageKey !== next.storageKey ||
       previous.remember !== next.remember;
@@ -495,6 +506,11 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.persistSettings();
     this.updateView();
     this.startIdleTimer();
+
+    if (themeChanged || paletteChanged) {
+      this.applyPalette();
+      this.observeHostTheme();
+    }
 
     if (scaleChanged) {
       // 尺寸变了要重新贴回原来那一侧，否则缩小后会浮在中间
@@ -704,6 +720,16 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.isPlaylistOpen = false;
       this.updateView();
     });
+    // 系统明暗切换时重新解析（仅 auto 需要）
+    this.cleanup.push(
+      watchSystemTheme(() => {
+        if (this.config.theme === "auto") {
+          this.applyResolvedTheme();
+        }
+      }),
+    );
+    this.observeHostTheme();
+
     this.listen(this.elements.root, "mouseenter", () => {
       this.isHovering = true;
       this.restoreIdleDock();
@@ -1867,6 +1893,101 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         "noopener,noreferrer",
       );
     }
+  }
+
+  /**
+   * 解析并写入最终明暗
+   * auto 会采样宿主实际背景亮度：宿主是浅色就用浅色皮肤，
+   * 不再盲从系统偏好，避免「系统深色 + 浅色网页」时配色割裂
+   */
+  private applyResolvedTheme(): void {
+    this.applyPalette();
+  }
+
+  /**
+   * 解析并注入整套配色变量
+   * 仲裁规则（两个开关独立）：
+   *   paletteFollowHost = true  → 色相与明暗都跟随宿主
+   *   paletteFollowHost = false → 色相用色板，明暗优先 theme 显式值，否则用色板自带倾向
+   */
+  private applyPalette(): void {
+    const resolved = resolvePalette({
+      paletteId: this.config.palette,
+      paletteFollowHost: this.config.paletteFollowHost,
+      theme: this.config.theme,
+      hostElement: this.target,
+    });
+
+    const root = this.elements.root;
+
+    for (const [key, value] of Object.entries(resolved.palette.variables)) {
+      // 保留宿主用 --nmpv3-bg 覆盖底色的既有约定
+      const cssValue =
+        key === "primary-bg" || key === "surface"
+          ? `var(--nmpv3-bg, ${value})`
+          : value;
+      root.style.setProperty(`--nmpv3-${key}`, cssValue);
+    }
+
+    root.dataset.resolvedTheme = resolved.palette.scheme;
+    root.dataset.palette = this.config.palette;
+    this.palette = resolved;
+  }
+
+  /** 当前配色解析结果（诊断 / 测试用） */
+  getPaletteInfo(): PaletteResolved | null {
+    return this.palette;
+  }
+
+  /** 宿主切换主题（改 class / style / data-theme）时跟随重算 */
+  private observeHostTheme(): void {
+    const doc = getDocument();
+
+    if (
+      !doc ||
+      typeof MutationObserver === "undefined" ||
+      this.config.theme !== "auto" ||
+      this.hostThemeObserver
+    ) {
+      return;
+    }
+
+    const browserWindow = getWindow();
+    let frame: number | null = null;
+    const schedule = () => {
+      if (frame !== null) {
+        return;
+      }
+
+      if (browserWindow) {
+        frame = browserWindow.requestAnimationFrame(() => {
+          frame = null;
+          this.applyResolvedTheme();
+        });
+        return;
+      }
+
+      this.applyResolvedTheme();
+    };
+
+    const observer = new MutationObserver(schedule);
+    // 不限制 attributeFilter：宿主可能用任意属性切换主题
+    // （class / style / data-theme / data-page-theme / data-mode ...），
+    // 这里只观察根节点与 body，且回调经 requestAnimationFrame 去抖，
+    // applyResolvedTheme 内部还会比对结果，不会造成重复写入
+    const options: MutationObserverInit = { attributes: true };
+
+    observer.observe(doc.documentElement, options);
+
+    if (doc.body) {
+      observer.observe(doc.body, options);
+    }
+
+    this.hostThemeObserver = observer;
+    this.cleanup.push(() => {
+      observer.disconnect();
+      this.hostThemeObserver = null;
+    });
   }
 
   /** 统一的最小化态变化后处理：展开时重新贴边 */

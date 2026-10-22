@@ -157,6 +157,94 @@ NMPv3.setGlobalConfig({ scale: "auto" });
 高度目标为视口高度的 45%，取两者较小值并限制在 0.6-1.5 倍之间，
 因此在手机、iPad 与桌面上都不会溢出。窗口尺寸变化时自动重算。
 
+## 配色色板
+
+内置 6 套色板，每套内含**明亮系与暗色系两份种子**——页面明亮时自动用浅色版本、暗色时用深色版本，不需要再单独选「深色版」或「浅色版」。
+
+| 中文名 | 后台简称 | 主色 | 气质 |
+| ------ | -------- | ---- | ---- |
+| 晨曦   | `dawn`   | 橙红 | 温暖有活力，**默认** |
+| 青竹   | `jade`   | 绿   | 明亮清透或沉稳内敛 |
+| 苍穹   | `azure`  | 蓝   | 轻快干净或冷静深邃 |
+| 流金   | `amber`  | 黄   | 柔和温润或暖金厚重 |
+| 紫藤   | `iris`   | 紫   | 轻柔梦幻或浓郁高贵 |
+| 素境   | `mono`   | 近无彩 | 拟态，靠明暗双影做质感 |
+
+按播放器设置：
+
+```html
+<nmp-player song-id="1901371647" palette="jade"></nmp-player>
+<nmp-player song-id="1901371647" palette="iris" theme="dark"></nmp-player>
+```
+
+按全局配置设置：
+
+```html
+<script>
+  window.NMPv3Config = {
+    palette: "azure",
+  };
+</script>
+```
+
+运行时调整：
+
+```js
+player.updateConfig({ palette: "amber" });
+const info = player.getPaletteInfo();
+// { palette, hueSource, schemeSource, contrast }
+```
+
+短代码：
+
+```
+{nmpv3:song=1901371647, palette=jade}
+```
+
+### 宿主取色
+
+`paletteFollowHost`（默认 `true`）控制色相是否借用宿主页面：
+
+- **开启**：采样播放器最近的背景祖先，若有明显色相（彩度 ≥ 0.03），按 85% 宿主 + 15% 色板的比例拉拢色相；明暗也跟随宿主亮度。
+- **关闭**：色相完全用色板；明暗优先 `theme` 显式值，`theme="auto"` 时跟随系统偏好。
+
+```html
+<nmp-player song-id="1901371647" palette="jade" palette-follow-host="false"></nmp-player>
+```
+
+### 配色实现
+
+- 计算用 OKLCH（感知均匀：调明度不跑色相），输出 hex/rgba，不依赖浏览器 `oklch()` 支持
+- 主色、相似色（±28°/32°）、分裂互补色（+150°/+210°）全部由种子派生
+- 对比度自动兜底：正文 ≥ 7:1、次要 ≥ 4.5:1、强调 ≥ 3:1，不足时只压明度不动色相
+- 呼吸动画的 4 个色分别取主色、相似色、两个分裂互补色，全国 alpha 0.12–0.26
+
+旧版成对色板 id（`mint`/`forest`/`ocean`/`sky`/`butter`/`plum`/`lilac`/`pearl`/`graphite`/`ember`）会自动映射到新的融合色板，已写的配置不会失效。
+## 宿主隔离
+
+播放器以「不干扰宿主」为前提设计：
+
+- 所有 CSS 选择器都带 `nmpv3-` / `nmp-player` 前缀，不写全局标签选择器
+- 样式只注入一个 `<style id="nmpv3-style">`，多次调用不会重复插入
+- 只清空自己的挂载点，不触碰其它 DOM
+- `localStorage` 键统一带 `nmpv3:` 前缀
+- 全局事件（键盘、滚动、可见性）全部在 `destroy()` 时解绑
+- 键盘热键仅在鼠标悬停或焦点在播放器内时响应，输入框内完全让行
+
+浮动模式的层级默认是 `999999`，如与宿主弹窗冲突，可在宿主 CSS 中覆盖：
+
+```css
+.nmpv3-player {
+  --nmpv3-z-index: 2000;
+}
+```
+
+## 浏览器兼容
+
+- 布局与缩放只用 CSS 自定义属性 + `calc()` + `width/max-width` + 媒体查询，均为各内核长期支持的基线特性
+- `color-mix()`、`inset`、`mask-image` 等较新特性都写了回退或前缀，不支持时降级为近似样式而非破版
+- 未使用 `zoom` 与 `transform: scale` 做缩放，避免 Firefox 旧版不支持与 fixed 定位留白
+
 ## API 代理
 
 NMPv3 默认使用项目内置的 NeteaseCloudMusicApi 兼容代理。部署到生产环境时，建议使用自己的代理地址。

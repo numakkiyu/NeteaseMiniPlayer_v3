@@ -1,6 +1,8 @@
 import { defaultConfig } from "./defaultConfig";
+import { normalizePaletteAlias } from "../theme/presets";
 import type {
   NMPv3Config,
+  NMPv3PaletteId,
   NMPv3EmbedMode,
   NMPv3Layout,
   NMPv3Position,
@@ -78,6 +80,8 @@ export function normalizeConfig(
     hotkeys: normalizeBoolean(config.hotkeys, defaultConfig.hotkeys),
     idleOpacity: normalizeOpacity(config.idleOpacity),
     scale: normalizeScale(config.scale),
+    palette: normalizePaletteId(config.palette),
+    paletteFollowHost: normalizePaletteFollowHost(config.paletteFollowHost),
     apiBaseUrl: config.apiBaseUrl ?? defaultConfig.apiBaseUrl,
   };
 }
@@ -140,6 +144,8 @@ export function configFromElement(element: HTMLElement): Partial<NMPv3Config> {
     hotkeys: booleanAttribute(element, "hotkeys"),
     idleOpacity: numberAttribute(element, "idle-opacity"),
     scale: scaleAttribute(element),
+    palette: paletteAttribute(element),
+    paletteFollowHost: paletteFollowHostAttribute(element),
   };
 }
 
@@ -187,6 +193,44 @@ function normalizeVolume(volume: number | undefined): number {
   }
 
   return Math.min(1, Math.max(0, volume));
+}
+
+/** 色板 id：非法值回退默认 */
+function normalizePaletteId(value: unknown): NMPv3PaletteId {
+  return normalizePaletteAlias(value) ?? defaultConfig.palette;
+}
+
+/** 跟随宿主开关：只有显式 false 才关闭 */
+function normalizePaletteFollowHost(value: unknown): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "false") return false;
+    if (normalized === "true") return true;
+  }
+  return defaultConfig.paletteFollowHost;
+}
+
+/** 从 HTML 属性读取色板 id */
+function paletteAttribute(element: HTMLElement): NMPv3PaletteId | undefined {
+  const raw = element.getAttribute("palette") ?? element.dataset.palette;
+  return raw ? normalizePaletteAlias(raw) ?? undefined : undefined;
+}
+
+/** 从 HTML 属性读取「是否跟随宿主」 */
+function paletteFollowHostAttribute(element: HTMLElement): boolean | undefined {
+  const raw =
+    element.getAttribute("palette-follow-host") ??
+    element.dataset.paletteFollowHost;
+  if (raw == null || raw.trim() === "") {
+    return undefined;
+  }
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === "false" || normalized === "0") return false;
+  if (normalized === "true" || normalized === "1") return true;
+  return undefined;
 }
 
 /** 缩放档位：1-10 取整钳制，其余视为 auto */

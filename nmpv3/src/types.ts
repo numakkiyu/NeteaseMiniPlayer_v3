@@ -6,6 +6,18 @@ export type NMPv3Position =
 export type NMPv3PlayMode = "list" | "single" | "shuffle";
 /** 播放器尺寸档位：1-10（5 为默认 1.0 倍），auto 表示按视口自动选择 */
 export type NMPv3Scale = number | "auto";
+/**
+ * 预设色板 id（后台配置用的简称）
+ * 每套色板内部自带明亮系与暗色系两份种子，
+ * 明暗由 theme 解析结果决定，不需要用户再选深还是选浅。
+ */
+export type NMPv3PaletteId =
+  | "dawn" // 晨曦 · 橙红（默认）
+  | "jade" // 青竹 · 绿
+  | "azure" // 苍穹 · 蓝
+  | "amber" // 流金 · 黄
+  | "iris" // 紫藤 · 紫
+  | "mono"; // 素境 · 拟态无色
 export type NMPv3LoadStatus = "idle" | "loading" | "ready" | "error";
 export type NMPv3LyricStatus =
   "idle" | "loading" | "ready" | "empty" | "instrumental" | "error" | "hidden";
@@ -31,6 +43,10 @@ export interface NMPv3Config {
   idleOpacity: number;
   /** 等比例缩放档位 1-10（5 为默认），或 "auto" 按视口自适应 */
   scale: NMPv3Scale;
+  /** 预设色板 id */
+  palette: NMPv3PaletteId;
+  /** true = 色相与明暗都跟随宿主；false = 色相用色板，明暗用色板自带倾向 */
+  paletteFollowHost: boolean;
   apiBaseUrl?: string;
 }
 

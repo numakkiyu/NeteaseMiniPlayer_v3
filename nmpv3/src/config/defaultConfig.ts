@@ -18,5 +18,7 @@ export const defaultConfig: NMPv3Config = {
   hotkeys: true,
   idleOpacity: 0.72,
   scale: 5,
+  palette: "dawn",
+  paletteFollowHost: true,
   apiBaseUrl: DEFAULT_API_BASE_URL,
 };

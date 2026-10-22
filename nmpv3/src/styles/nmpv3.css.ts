@@ -77,8 +77,8 @@ nmp-player,
   border: 1px solid var(--nmpv3-border);
   border-radius: var(--nmpv3-radius);
   background:
-    radial-gradient(circle at 18% 18%, rgba(255, 107, 53, 0.1), transparent 34%),
-    radial-gradient(circle at 82% 24%, rgba(0, 169, 214, 0.08), transparent 34%),
+    radial-gradient(circle at 18% 18%, var(--nmpv3-sheen-1, rgba(255, 107, 53, 0.1)), transparent 34%),
+    radial-gradient(circle at 82% 24%, var(--nmpv3-sheen-2, rgba(0, 169, 214, 0.08)), transparent 34%),
     var(--nmpv3-surface);
   color: var(--nmpv3-text);
   box-shadow: var(--nmpv3-shadow-outset);
@@ -174,8 +174,10 @@ nmp-player,
   display: none !important;
 }
 
+/* 深色：显式指定 dark，或 auto 由 JS 采样宿主背景后解析为 dark。
+   显式 light 的优先级更高 */
 .${c.player}[data-theme="dark"],
-.${c.player}[data-theme="auto"].${sc.themeDark} {
+.${c.player}[data-resolved-theme="dark"]:not([data-theme="light"]) {
   --nmpv3-primary-bg: var(--nmpv3-bg, #202228);
   --nmpv3-secondary-bg: #2a2d34;
   --nmpv3-surface: var(--nmpv3-bg, #202228);
@@ -201,40 +203,18 @@ nmp-player,
   --nmpv3-flow-speed: 12s;
 }
 
-@media (prefers-color-scheme: dark) {
-  .${c.player}[data-theme="auto"] {
-    --nmpv3-primary-bg: var(--nmpv3-bg, #202228);
-    --nmpv3-secondary-bg: #2a2d34;
-    --nmpv3-surface: var(--nmpv3-bg, #202228);
-    --nmpv3-surface-strong: #272a31;
-    --nmpv3-accent: #ff8558;
-    --nmpv3-accent-2: #8d82ff;
-    --nmpv3-accent-3: #28c7ed;
-    --nmpv3-accent-soft: rgba(255, 133, 88, 0.16);
-    --nmpv3-track: rgba(255, 255, 255, 0.16);
-    --nmpv3-text: #eff2f6;
-    --nmpv3-muted: #b6beca;
-    --nmpv3-faint: #858e9d;
-    --nmpv3-border: rgba(255, 255, 255, 0.08);
-    --nmpv3-shadow-light: rgba(255, 255, 255, 0.04);
-    --nmpv3-shadow-dark: rgba(0, 0, 0, 0.44);
-    --nmpv3-shadow-outset: 6px 8px 18px rgba(0, 0, 0, 0.38), -4px -4px 12px rgba(255, 255, 255, 0.04);
-    --nmpv3-shadow-inset: inset 2px 2px 5px rgba(0, 0, 0, 0.34), inset -2px -2px 5px rgba(255, 255, 255, 0.04);
-    --nmpv3-flow-1: rgba(255, 133, 88, 0.22);
-    --nmpv3-flow-2: rgba(40, 199, 237, 0.16);
-    --nmpv3-flow-3: rgba(141, 130, 255, 0.18);
-    --nmpv3-flow-4: rgba(255, 209, 102, 0.12);
-    --nmpv3-flow-opacity: 0.3;
-    --nmpv3-flow-speed: 12s;
-  }
-}
+/* 说明：auto 的深色不再由 @media (prefers-color-scheme: dark) 直接决定，
+   改由 JS 采样宿主实际背景亮度后写入 data-resolved-theme，
+   避免「系统深色但宿主页面是浅色」时配色割裂。 */
 
 .nmpv3-player[data-position="top-left"],
 .nmpv3-player[data-position="top-right"],
 .nmpv3-player[data-position="bottom-left"],
 .nmpv3-player[data-position="bottom-right"] {
   position: fixed;
-  z-index: 2147483000;
+  /* 默认值刻意避开 2147483647 上限，宿主可在自己的 CSS 里用
+     --nmpv3-z-index 覆盖，避免播放器盖住宿主的弹窗 / 遮罩 */
+  z-index: var(--nmpv3-z-index, 999999);
 }
 
 .nmpv3-player[data-position="top-left"] { top: 20px; left: 20px; }
@@ -294,13 +274,18 @@ nmp-player,
   background:
     radial-gradient(circle at center, transparent 73%, rgba(255, 255, 255, 0.13) 78%, transparent 84%),
     radial-gradient(ellipse 42% 34% at 30% 22%, rgba(255, 255, 255, 0.19), transparent 72%),
-    radial-gradient(ellipse 38% 46% at 74% 76%, rgba(0, 169, 214, 0.11), transparent 74%);
+    radial-gradient(ellipse 38% 46% at 74% 76%, var(--nmpv3-sheen-2, rgba(0, 169, 214, 0.11)), transparent 74%);
   mix-blend-mode: screen;
   opacity: 0.7;
 }
 
 .nmpv3-cover {
   position: absolute;
+  /* inset 简写在老浏览器不可用，四边先写死再覆盖 */
+  top: 5px;
+  right: 5px;
+  bottom: 5px;
+  left: 5px;
   inset: 5px;
   z-index: 2;
   display: block;
@@ -328,7 +313,7 @@ nmp-player,
   border-radius: inherit;
   background:
     radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.45), transparent 40%),
-    linear-gradient(145deg, rgba(255, 107, 53, 0.82), rgba(122, 102, 255, 0.66), rgba(0, 169, 214, 0.62));
+    var(--nmpv3-accent-gradient, linear-gradient(145deg, rgba(255, 107, 53, 0.82), rgba(122, 102, 255, 0.66), rgba(0, 169, 214, 0.62)));
   color: rgba(255, 255, 255, 0.96);
   font-size: 11px;
   font-weight: 800;
@@ -343,7 +328,7 @@ nmp-player,
   background:
     radial-gradient(circle at center, transparent 0 10.5%, rgba(8, 9, 12, 0.9) 11.2% 14%, transparent 14.8% 80%, rgba(255, 255, 255, 0.13) 83%, rgba(8, 10, 14, 0.54) 87%, transparent 91%),
     radial-gradient(ellipse 46% 36% at 30% 22%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06) 38%, transparent 74%),
-    radial-gradient(ellipse 38% 42% at 76% 74%, rgba(40, 199, 237, 0.12), transparent 72%),
+    radial-gradient(ellipse 38% 42% at 76% 74%, var(--nmpv3-sheen-2, rgba(40, 199, 237, 0.12)), transparent 72%),
     repeating-radial-gradient(circle at center, rgba(255, 255, 255, 0.072) 0 0.72px, rgba(0, 0, 0, 0) 0.8px 4.6px);
   pointer-events: none;
   box-shadow:
@@ -514,6 +499,8 @@ nmp-player,
 }
 
 .nmpv3-lyric-original {
+  /* 不支持 color-mix 的浏览器用 accent 纯色兜底 */
+  color: var(--nmpv3-accent);
   color: color-mix(in srgb, var(--nmpv3-accent) 76%, #d30024);
   font-size: calc(11px * var(--nmpv3-s));
   font-weight: 650;
@@ -593,13 +580,14 @@ nmp-player,
   background: var(--nmpv3-accent);
   color: white;
   box-shadow:
-    0 8px 18px rgba(255, 107, 53, 0.28),
+    0 8px 18px var(--nmpv3-accent-glow, rgba(255, 107, 53, 0.28)),
     2px 2px 4px var(--nmpv3-shadow-dark),
     -2px -2px 4px var(--nmpv3-shadow-light);
 }
 
 .nmpv3-play:hover,
 .nmpv3-play:focus-visible {
+  background: var(--nmpv3-accent);
   background: color-mix(in srgb, var(--nmpv3-accent) 88%, var(--nmpv3-accent-3));
   color: white;
 }
@@ -675,7 +663,7 @@ nmp-player,
   width: 12px;
   height: 12px;
   right: -5px;
-  box-shadow: 0 0 12px rgba(0, 169, 214, 0.72);
+  box-shadow: 0 0 12px var(--nmpv3-accent-ring, rgba(0, 169, 214, 0.72));
 }
 
 .nmpv3-progress-track::before,
@@ -715,7 +703,7 @@ nmp-player,
   height: 8px;
   border-radius: 50%;
   background: var(--nmpv3-accent-3);
-  box-shadow: 0 0 8px rgba(0, 169, 214, 0.45);
+  box-shadow: 0 0 8px var(--nmpv3-accent-ring, rgba(0, 169, 214, 0.45));
   transform: translateY(-50%);
   transition:
     width var(--nmpv3-motion-fast) var(--nmpv3-ease-standard),
@@ -860,6 +848,7 @@ nmp-player,
 .nmpv3-playlist-item:hover,
 .nmpv3-playlist-item:focus-visible,
 .nmpv3-playlist-item.nmpv3-active {
+  background: var(--nmpv3-accent-soft);
   background: color-mix(in srgb, var(--nmpv3-accent-soft) 76%, var(--nmpv3-surface-strong));
   color: var(--nmpv3-accent);
   outline: none;
@@ -1002,8 +991,8 @@ nmp-player,
   border-radius: 50%;
   overflow: visible;
   background:
-    radial-gradient(120px 120px at 30% 30%, rgba(255, 133, 88, 0.24), transparent 60%),
-    radial-gradient(120px 120px at 70% 70%, rgba(0, 169, 214, 0.2), transparent 60%),
+    radial-gradient(120px 120px at 30% 30%, var(--nmpv3-flow-1, rgba(255, 133, 88, 0.24)), transparent 60%),
+    radial-gradient(120px 120px at 70% 70%, var(--nmpv3-flow-2, rgba(0, 169, 214, 0.2)), transparent 60%),
     linear-gradient(135deg, #151515, #1e1e1e);
 }
 
