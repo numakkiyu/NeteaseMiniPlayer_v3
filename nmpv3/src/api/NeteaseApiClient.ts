@@ -8,6 +8,9 @@ interface RawNeteaseArtist {
   name?: string;
 }
 
+/** 单次 API 请求超时（毫秒），代理挂起时避免 UI 永久停留在 loading */
+const REQUEST_TIMEOUT_MS = 10_000;
+
 interface RawNeteaseAlbum {
   name?: string;
   picUrl?: string;
@@ -115,14 +118,66 @@ export class NeteaseApiClient {
     );
 
     return apiResponseCache.getOrSet(url.toString(), async () => {
-      const response = await fetch(url);
+      const response = await this.fetchWithRetry(url);
 
       if (!response.ok) {
         throw new Error(`NMPv3 API request failed: ${response.status}`);
       }
 
-      return response.json() as Promise<T>;
+      try {
+        return (await response.json()) as T;
+      } catch {
+        // 代理返回 HTML 错误页等非 JSON 内容时，给出可读提示而非裸 SyntaxError
+        throw new Error(
+          "NMPv3 API response is not valid JSON. Check that apiBaseUrl points to a Netease API proxy.",
+        );
+      }
     });
+  }
+
+  /** 带超时与一次重试的 fetch，避免代理挂起时无限等待 */
+  private async fetchWithRetry(url: URL): Promise<Response> {
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        return await this.fetchOnce(url);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError instanceof Error
+      ? lastError
+      : new Error("NMPv3 API request failed");
+  }
+
+  private async fetchOnce(url: URL): Promise<Response> {
+    const browserWindow = getWindow();
+    const controller =
+      typeof AbortController === "undefined" ? null : new AbortController();
+    const timer = controller
+      ? browserWindow?.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+      : null;
+
+    try {
+      return await fetch(
+        url,
+        controller ? { signal: controller.signal } : undefined,
+      );
+    } catch (error) {
+      if (controller?.signal.aborted) {
+        throw new Error(
+          `NMPv3 API request timed out after ${REQUEST_TIMEOUT_MS / 1000}s`,
+        );
+      }
+
+      throw error;
+    } finally {
+      if (timer != null) {
+        browserWindow?.clearTimeout(timer);
+      }
+    }
   }
 }
 

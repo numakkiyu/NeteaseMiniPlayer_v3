@@ -36,6 +36,10 @@ interface StoredState {
   showLyrics?: boolean;
   minimized?: boolean;
   position?: StoredPosition;
+  /** 上次播放到的曲目 id，用于刷新/换页后续播同一首 */
+  songId?: string;
+  /** 上次播放的列表索引，songId 缺失或失效时的兜底 */
+  currentIndex?: number;
 }
 
 interface StoredPosition {
@@ -100,6 +104,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   private idleAnimationFallback: number | null = null;
   private idleAnimationCleanup: (() => void) | null = null;
   private viewportSnapFrame: number | null = null;
+  /** 播放失败后延迟重试的定时器句柄，destroy 时清除 */
+  private playbackErrorTimer: number | null = null;
+  /** 空闲时段进度写入的句柄（requestIdleCallback 或 setTimeout 兜底） */
+  private progressWriteHandle: { id: number; cancel: () => void } | null = null;
   private loadGeneration = 0;
   private lyricGeneration = 0;
   private lastProgressPersistedAt = 0;
@@ -173,7 +181,26 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     }
 
     globalAudioManager.pauseAll(this);
-    await this.audio.play(this.currentSong?.url);
+
+    try {
+      await this.audio.play(this.currentSong.url);
+    } catch (error) {
+      // 浏览器自动播放策略拒绝（NotAllowedError）或音频源不可用属于"未开始播放"，
+      // 不是加载失败：不覆盖 status，也不向调用方抛未处理拒绝
+      if (!this.isCurrentLoad(generation)) {
+        return;
+      }
+
+      this.isPlaying = false;
+      this.updateView();
+      logger.warn("Playback was blocked or failed to start", error);
+      emit(this.target, "nmpv3:error", {
+        player: this,
+        message: playErrorMessage(error),
+        error,
+      });
+      return;
+    }
 
     if (!this.isCurrentLoad(generation)) {
       return;
@@ -194,6 +221,22 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     emit(this.target, "nmpv3:pause", { player: this, song: this.currentSong });
   }
 
+  /**
+   * 静默暂停：被其它实例抢占播放时使用
+   * 不派发 nmpv3:pause 事件，避免宿主把"被抢占"误判为用户主动暂停
+   */
+  pauseSilently(): void {
+    if (!this.isPlaying) {
+      return;
+    }
+
+    this.audio.pause();
+    this.isPlaying = false;
+    this.persistProgress(true);
+    this.updateView();
+    mediaSessionManager.update(this);
+  }
+
   async toggle(): Promise<void> {
     if (this.isPlaying) {
       this.pause();
@@ -209,6 +252,9 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     }
 
     if (this.playMode === "single") {
+      // 单曲循环：本曲已播完，清除进度记录后从头重播
+      this.clearProgress();
+      this.currentTime = 0;
       this.audio.seek(0);
       if (this.isPlaying) {
         await this.play();
@@ -461,9 +507,12 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.clearIdleTimer();
     this.clearIdleAnimationWait();
     this.clearViewportSnapFrame();
+    this.cancelProgressWrite();
     this.cleanup.forEach((dispose) => dispose());
     this.cleanup.length = 0;
     mediaSessionManager.release(this);
+    // 从全局实例表移除，避免 pauseAll 继续遍历已销毁实例
+    globalAudioManager.remove(this);
     this.audio.destroy();
     this.target.innerHTML = "";
   }
@@ -479,6 +528,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
     if (this.config.playlistId) {
       await this.loadPlaylist(this.config.playlistId);
+      // 续播：载入列表后定位到上次播放的曲目（默认 loadPlaylist 会停在第一首）
+      await this.restoreStoredTrack();
     } else if (this.config.songId) {
       await this.loadSong(this.config.songId);
     } else {
@@ -494,6 +545,40 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
     this.persistSettings();
     this.startIdleTimer();
+  }
+
+  /**
+   * 换页/刷新续播：把播放位置定位到上次播放的曲目
+   * 优先按 songId 精确匹配（列表顺序变动后仍能命中），退回按索引定位
+   */
+  private async restoreStoredTrack(): Promise<void> {
+    if (this.destroyed || !this.config.remember || this.playlist.length === 0) {
+      return;
+    }
+
+    const storedSongId = this.restoredState.songId;
+    const storedIndex = this.restoredState.currentIndex;
+    let targetIndex = -1;
+
+    if (storedSongId) {
+      targetIndex = this.playlist.findIndex((song) => song.id === storedSongId);
+    }
+
+    if (targetIndex < 0 && typeof storedIndex === "number") {
+      targetIndex = clampIndex(storedIndex, this.playlist);
+    }
+
+    if (targetIndex < 0) {
+      return;
+    }
+
+    if (targetIndex === this.currentIndex) {
+      return;
+    }
+
+    const generation = this.beginSourceLoad();
+    this.currentIndex = targetIndex;
+    await this.loadCurrentSong(false, generation);
   }
 
   private bindEvents(): void {
@@ -673,10 +758,21 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         const shouldResume = this.isPlaying;
         const failedIndex = this.currentIndex;
         this.handleError(new Error("Audio playback failed"), "Playback failed");
-        getWindow()?.setTimeout(
-          () => void this.advanceAfterPlaybackError(shouldResume, failedIndex),
-          900,
-        );
+        // 延迟重试定时器纳入 cleanup，destroy 时一并清除，避免销毁后回调
+        const browserWindow = getWindow();
+        const timer = browserWindow?.setTimeout(() => {
+          this.playbackErrorTimer = null;
+          void this.advanceAfterPlaybackError(shouldResume, failedIndex);
+        }, 900);
+        if (timer != null) {
+          this.playbackErrorTimer = timer;
+          this.cleanup.push(() => {
+            browserWindow?.clearTimeout(timer);
+            if (this.playbackErrorTimer === timer) {
+              this.playbackErrorTimer = null;
+            }
+          });
+        }
       }),
     );
   }
@@ -719,7 +815,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         return;
       }
 
-      this.playlist = playlist.songs;
+      this.playlist = playlist.songs.map((song) => ({ ...song }));
       this.currentIndex = 0;
       await this.loadCurrentSong(shouldResume, generation);
 
@@ -742,11 +838,19 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     shouldResume: boolean,
     failedIndex: number,
   ): Promise<void> {
-    if (
-      this.destroyed ||
-      this.playlist.length <= 1 ||
-      this.currentIndex !== failedIndex
-    ) {
+    if (this.destroyed || this.currentIndex !== failedIndex) {
+      return;
+    }
+
+    // 单曲列表没有可跳过的下一首：明确报错，而不是静默停在错误状态
+    if (this.playlist.length <= 1) {
+      if (this.status !== "error") {
+        this.handleError(
+          new Error("This song is not playable right now"),
+          "Playback failed",
+        );
+      }
+
       return;
     }
 
@@ -830,19 +934,32 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     generation: number,
   ): Promise<boolean> {
     if (!song.url) {
-      try {
-        song.url = await this.api.getSongUrl(song.id);
-      } catch {
-        if (!this.isCurrentLoad(generation)) {
-          return false;
-        }
+      // 依次尝试高品质与标准音质，任一级抛错都继续降级，最终失败则返回 false
+      for (const level of ["exhigh", "standard"] as const) {
+        try {
+          const url = await this.api.getSongUrl(song.id, level);
 
-        // 高品质地址失败时降级到标准音质
-        song.url = await this.api.getSongUrl(song.id, "standard");
+          if (!this.isCurrentLoad(generation)) {
+            return false;
+          }
+
+          if (url) {
+            song.url = url;
+            break;
+          }
+        } catch (error) {
+          if (!this.isCurrentLoad(generation)) {
+            return false;
+          }
+
+          logger.warn(`Failed to resolve song url (${level})`, error);
+        }
       }
     }
 
     if (!this.isCurrentLoad(generation) || !song.url) {
+      // 两级地址均不可用：清掉脏 url，交由调用方走错误/跳过流程
+      song.url = undefined;
       return false;
     }
 
@@ -969,6 +1086,12 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       minimized: this.isMinimized,
     };
 
+    if (this.currentSong) {
+      // 记录当前曲目，刷新/换页后据此续播
+      state.songId = this.currentSong.id;
+      state.currentIndex = this.currentIndex;
+    }
+
     if (this.canPersistPosition()) {
       const position = this.getPersistablePosition();
       if (position) {
@@ -992,8 +1115,66 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       return;
     }
 
-    this.store.set<number>(`progress:${this.currentSong.id}`, this.currentTime);
     this.lastProgressPersistedAt = now;
+
+    // 非强制写入走空闲回调，避免 localStorage 同步写阻塞 timeupdate 主路径
+    if (force) {
+      this.writeProgress();
+      return;
+    }
+
+    this.scheduleProgressWrite();
+  }
+
+  /** 在空闲时段写入进度，浏览器不支持时退回微任务 */
+  private scheduleProgressWrite(): void {
+    if (this.progressWriteHandle !== null) {
+      return;
+    }
+
+    const browserWindow = getWindow();
+    const idle = browserWindow?.requestIdleCallback;
+
+    if (browserWindow && typeof idle === "function") {
+      this.progressWriteHandle = {
+        cancel: () =>
+          browserWindow.cancelIdleCallback?.(
+            this.progressWriteHandle?.id as number,
+          ),
+        id: idle(() => {
+          this.progressWriteHandle = null;
+          this.writeProgress();
+        }),
+      };
+      this.cleanup.push(() => this.cancelProgressWrite());
+      return;
+    }
+
+    const timer = browserWindow?.setTimeout(() => {
+      this.progressWriteHandle = null;
+      this.writeProgress();
+    }, 0);
+
+    if (timer != null) {
+      this.progressWriteHandle = {
+        cancel: () => browserWindow?.clearTimeout(timer),
+        id: timer,
+      };
+      this.cleanup.push(() => this.cancelProgressWrite());
+    }
+  }
+
+  private cancelProgressWrite(): void {
+    this.progressWriteHandle?.cancel();
+    this.progressWriteHandle = null;
+  }
+
+  private writeProgress(): void {
+    if (this.destroyed || !this.config.remember || !this.currentSong) {
+      return;
+    }
+
+    this.store.set<number>(`progress:${this.currentSong.id}`, this.currentTime);
   }
 
   private restoreProgress(song: NMPv3Song): void {
@@ -1018,7 +1199,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
   private clearProgress(): void {
     if (this.config.remember && this.currentSong) {
-      this.store.set<number>(`progress:${this.currentSong.id}`, 0);
+      // 删除条目而非写入 0，避免残留脏数据
+      this.store.remove(`progress:${this.currentSong.id}`);
     }
 
     this.lastProgressPersistedAt = 0;
@@ -1255,6 +1437,13 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   private handleHotkey(event: KeyboardEvent): void {
     if (
       !this.config.hotkeys ||
+      // 带修饰键的组合键属于浏览器/系统快捷键（Ctrl+R 刷新、Ctrl+L 聚焦地址栏等），
+      // 不得被播放器热键吞掉
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey ||
+      // 输入法组字过程中不响应热键，避免误触发
+      event.isComposing ||
       (!this.isHovering && !this.isFocusedWithin) ||
       // 输入框中不拦截键盘事件，避免干扰用户输入
       isEditableTarget(event.target)
@@ -1337,6 +1526,14 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         return;
       }
 
+      // 多指触控时只跟随发起拖拽的那一根手指，避免位置被第二指抢夺
+      if (
+        this.dragState.pointerId !== null &&
+        event.pointerId !== this.dragState.pointerId
+      ) {
+        return;
+      }
+
       const deltaX = event.clientX - this.dragState.startX;
       const deltaY = event.clientY - this.dragState.startY;
       const distance = Math.max(Math.abs(deltaX), Math.abs(deltaY));
@@ -1383,6 +1580,15 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
     const onPointerUp = (event: PointerEvent, cancelled = false) => {
       if (!this.dragState.active) {
+        return;
+      }
+
+      // 其它手指抬起不应结束本次拖拽
+      if (
+        !cancelled &&
+        this.dragState.pointerId !== null &&
+        event.pointerId !== this.dragState.pointerId
+      ) {
         return;
       }
 
@@ -1725,6 +1931,30 @@ function nextPlayMode(mode: NMPv3PlayMode): NMPv3PlayMode {
   return "list";
 }
 
+/**
+ * 把播放失败原因翻译成面向用户的提示
+ * 浏览器自动播放策略拒绝与网络/解码失败需要区分，避免统一显示技术性文案
+ */
+function playErrorMessage(error: unknown): string {
+  const name = error instanceof Error ? error.name : "";
+
+  if (name === "NotAllowedError") {
+    return "Playback needs a user gesture. Click the play button to start.";
+  }
+
+  if (name === "NotSupportedError") {
+    return "This audio format is not supported by the browser.";
+  }
+
+  if (name === "AbortError") {
+    return "Playback was interrupted.";
+  }
+
+  return error instanceof Error && error.message
+    ? error.message
+    : "Playback failed";
+}
+
 function clampIndex(index: number, songs: readonly NMPv3Song[]): number {
   if (!Number.isFinite(index) || songs.length === 0) {
     return 0;
@@ -1733,8 +1963,7 @@ function clampIndex(index: number, songs: readonly NMPv3Song[]): number {
   return Math.max(0, Math.min(songs.length - 1, Math.trunc(index)));
 }
 
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) {
+function isEditableTarget(target: EventTarget | null): boolean {  if (!(target instanceof HTMLElement)) {
     return false;
   }
 

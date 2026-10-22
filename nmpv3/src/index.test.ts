@@ -115,6 +115,7 @@ function createPlayerStub(): NMPv3Player {
   return {
     play: vi.fn(async () => {}),
     pause: vi.fn(),
+    pauseSilently: vi.fn(),
     toggle: vi.fn(async () => {}),
     next: vi.fn(async () => {}),
     previous: vi.fn(async () => {}),

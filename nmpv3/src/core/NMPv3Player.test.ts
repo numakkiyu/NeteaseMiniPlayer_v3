@@ -72,6 +72,7 @@ vi.mock("../ui/render", () => ({
 }));
 
 import { NMPv3PlayerInstance } from "./NMPv3Player";
+import { globalAudioManager } from "./GlobalAudioManager";
 
 describe("NMPv3PlayerInstance async source handling", () => {
   beforeEach(() => {
@@ -135,6 +136,90 @@ describe("NMPv3PlayerInstance async source handling", () => {
     });
 
     expect(audioMocks.instances[0]?.play).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not reject or report a load error when the browser blocks play", async () => {
+    const player = createPlayer();
+    await player.loadPlaylistData({
+      songs: [{ id: "A", name: "Song A", url: "/a.mp3" }],
+    });
+    const audio = audioMocks.instances[0];
+    const blocked = Object.assign(new Error("blocked by autoplay policy"), {
+      name: "NotAllowedError",
+    });
+    audio?.play.mockRejectedValueOnce(blocked);
+    const errors: unknown[] = [];
+    (player as unknown as { target: EventTarget }).target.addEventListener(
+      "nmpv3:error",
+      (event) => errors.push((event as CustomEvent).detail),
+    );
+
+    await expect(player.play()).resolves.toBeUndefined();
+
+    expect(player.getState().isPlaying).toBe(false);
+    // 自动播放被拒绝不是加载失败，不应污染 status
+    expect(player.getState().status).not.toBe("error");
+    expect(errors).toHaveLength(1);
+  });
+
+  it("falls back to the next quality tier when the high tier is unavailable", async () => {
+    const player = createPlayer();
+    apiMocks.getSongUrl.mockImplementation((songId: string, level?: string) => {
+      if (level === "standard") {
+        return Promise.resolve("/standard.mp3");
+      }
+
+      return Promise.reject(new Error("exhigh unavailable"));
+    });
+
+    await player.loadPlaylistData({
+      songs: [{ id: "A", name: "Song A" }],
+    });
+    await player.play();
+
+    expect(apiMocks.getSongUrl).toHaveBeenCalledWith("A", "exhigh");
+    expect(apiMocks.getSongUrl).toHaveBeenCalledWith("A", "standard");
+    expect(audioMocks.instances[0]?.play).toHaveBeenCalledWith("/standard.mp3");
+  });
+
+  it("unregisters itself from the global manager when destroyed", () => {
+    const player = createPlayer();
+    globalAudioManager.add(player);
+
+    expect(globalAudioManager.all()).toContain(player);
+
+    player.destroy();
+
+    expect(globalAudioManager.all()).not.toContain(player);
+  });
+
+  it("pauses other instances silently when one starts playing", async () => {
+    const first = createPlayer();
+    const second = createPlayer();
+    globalAudioManager.add(first);
+    globalAudioManager.add(second);
+    const firstPauseEvents: unknown[] = [];
+    (first as unknown as { target: EventTarget }).target.addEventListener(
+      "nmpv3:pause",
+      (event) => firstPauseEvents.push(event),
+    );
+
+    await first.loadPlaylistData({
+      songs: [{ id: "A", name: "Song A", url: "/a.mp3" }],
+    });
+    await first.play();
+    const secondAudio = audioMocks.instances[1];
+    await second.loadPlaylistData({
+      songs: [{ id: "B", name: "Song B", url: "/b.mp3" }],
+    });
+    await second.play();
+
+    // 被抢占属于被动暂停，不应派发 nmpv3:pause
+    expect(firstPauseEvents).toHaveLength(0);
+    expect(first.getState().isPlaying).toBe(false);
+    expect(secondAudio?.pause).toHaveBeenCalled();
+    globalAudioManager.remove(first);
+    globalAudioManager.remove(second);
   });
 });
 

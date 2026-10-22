@@ -16,6 +16,8 @@ export class MemoryCache {
   private readonly ttlMs: number;
   private readonly maxEntries: number;
   private readonly entries = new Map<string, CacheEntry<unknown>>();
+  /** 正在加载中的 Promise，用于合并同一 key 的并发请求 */
+  private readonly inflight = new Map<string, Promise<unknown>>();
 
   constructor(options: MemoryCacheOptions = {}) {
     this.ttlMs = options.ttlMs ?? 5 * 60 * 1000;
@@ -34,16 +36,25 @@ export class MemoryCache {
       return undefined;
     }
 
+    // LRU：命中后重排到 Map 末尾（Map 保持插入顺序）
+    this.entries.delete(key);
+    this.entries.set(key, entry);
+
     return entry.value as T;
   }
 
   set<T>(key: string, value: T): void {
-    if (this.entries.size >= this.maxEntries) {
-      const firstKey = this.entries.keys().next().value;
+    // 已存在的 key 先删除，保证重排到末尾而不是保留旧插入位置
+    this.entries.delete(key);
 
-      if (firstKey) {
-        this.entries.delete(firstKey);
+    while (this.entries.size >= this.maxEntries) {
+      const oldestKey = this.entries.keys().next().value;
+
+      if (oldestKey === undefined) {
+        break;
       }
+
+      this.entries.delete(oldestKey);
     }
 
     this.entries.set(key, {
@@ -59,13 +70,31 @@ export class MemoryCache {
       return cached;
     }
 
-    const value = await load();
-    this.set(key, value);
-    return value;
+    // 同一 key 的并发调用共享同一个 in-flight Promise，避免重复请求
+    const pending = this.inflight.get(key) as Promise<T> | undefined;
+
+    if (pending) {
+      return pending;
+    }
+
+    const request = (async () => {
+      try {
+        const value = await load();
+        this.set(key, value);
+        return value;
+      } finally {
+        this.inflight.delete(key);
+      }
+    })();
+
+    this.inflight.set(key, request);
+
+    return request;
   }
 
   clear(): void {
     this.entries.clear();
+    this.inflight.clear();
   }
 }
 

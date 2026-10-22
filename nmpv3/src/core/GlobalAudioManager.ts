@@ -19,10 +19,14 @@ export const globalAudioManager = {
     return Array.from(players);
   },
 
+  /**
+   * 暂停除 except 之外的其它实例
+   * 走静默暂停路径：被抢占不算用户主动暂停，不应派发 nmpv3:pause 事件
+   */
   pauseAll(except?: NMPv3Player): void {
     for (const player of players) {
       if (player !== except) {
-        player.pause();
+        player.pauseSilently();
       }
     }
   },

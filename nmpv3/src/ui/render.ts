@@ -275,7 +275,10 @@ export function updatePlayerView(
   elements.lyricTranslation.hidden = !state.showLyrics || !lyric?.translation;
   elements.lyricsButton.classList.toggle(sc.active, state.showLyrics);
 
-  elements.playIcon.innerHTML = state.isPlaying ? icons.pause : icons.play;
+  setIconHtml(
+    elements.playIcon,
+    state.isPlaying ? icons.pause : icons.play,
+  );
   elements.playButton.setAttribute(
     "aria-label",
     state.isPlaying ? "Pause" : "Play",
@@ -284,7 +287,10 @@ export function updatePlayerView(
   elements.currentTime.textContent = formatTime(state.currentTime);
   elements.totalTime.textContent = formatTime(state.duration);
   elements.volumeBar.style.width = `${Math.round(state.volume * 100)}%`;
-  elements.modeButton.innerHTML = `<span>${playModeIcon(state.playMode)}</span>`;
+  setIconHtml(
+    elements.modeButton,
+    `<span>${playModeIcon(state.playMode)}</span>`,
+  );
   elements.modeButton.title = playModeTitle(state.playMode);
   elements.modeButton.setAttribute("aria-label", playModeTitle(state.playMode));
   elements.modeButton.hidden = isSingleSong;
@@ -298,7 +304,10 @@ export function updatePlayerView(
   elements.nextButton.hidden = config.embedMode === "article" || isSingleSong;
   elements.minimizeButton.hidden =
     config.embedMode === "article" || config.position === "static";
-  elements.minimizeButton.innerHTML = `<span>${state.isMinimized ? icons.maximize : icons.minimize}</span>`;
+  setIconHtml(
+    elements.minimizeButton,
+    `<span>${state.isMinimized ? icons.maximize : icons.minimize}</span>`,
+  );
   elements.minimizeButton.setAttribute(
     "aria-label",
     state.isMinimized ? "Expand player" : "Minimize player",
@@ -332,32 +341,50 @@ function renderPlaylist(
   const previousPlaylistSignature =
     elements.playlistList.dataset.playlistSignature;
   const previousActiveIndex = elements.playlistList.dataset.activeIndex;
-  const playlistSignature = state.playlist
-    .map((song) =>
-      [
-        song.id,
-        song.name,
-        song.artists ?? "",
-        song.picUrl ?? "",
-        song.duration ?? "",
-      ].join("\u001f"),
-    )
-    .join("\u001e");
+  // 列表引用与长度未变时复用上次签名，避免 timeupdate 反复遍历上千首歌曲
+  let playlistSignature = playlistSignatureCache.get(elements.playlistList);
+
+  if (
+    !playlistSignature ||
+    playlistSignature.playlistRef !== state.playlist ||
+    playlistSignature.length !== state.playlist.length
+  ) {
+    const signature = state.playlist
+      .map((song) =>
+        [
+          song.id,
+          song.name,
+          song.artists ?? "",
+          song.picUrl ?? "",
+          song.duration ?? "",
+        ].join("\u001f"),
+      )
+      .join("\u001e");
+    playlistSignature = {
+      playlistRef: state.playlist,
+      length: state.playlist.length,
+      signature,
+    };
+    playlistSignatureCache.set(elements.playlistList, playlistSignature);
+  }
+
+  const signature = playlistSignature.signature;
   const shouldSyncActiveScroll = shouldSyncPlaylistScroll({
     isOpen,
     previousPanelState,
     previousPlaylistSignature,
     previousActiveIndex,
-    playlistSignature,
+    playlistSignature: signature,
     currentIndex: state.currentIndex,
   });
 
   elements.playlistPanel.setAttribute("aria-hidden", String(!isOpen));
   elements.playlistPanel.dataset.state = isOpen ? "open" : "closed";
 
-  if (elements.playlistList.dataset.playlistSignature !== playlistSignature) {
+  if (elements.playlistList.dataset.playlistSignature !== signature) {
     elements.playlistList.textContent = "";
-    elements.playlistList.dataset.playlistSignature = playlistSignature;
+    elements.playlistList.dataset.playlistSignature = signature;
+    const items: HTMLButtonElement[] = [];
 
     state.playlist.forEach((song, index) => {
       const item = element("button", c.playlistItem) as HTMLButtonElement;
@@ -392,22 +419,34 @@ function renderPlaylist(
       info.append(name, artist);
       item.append(number, cover, info, duration);
       elements.playlistList.append(item);
+      items.push(item);
     });
+
+    playlistItemCache.set(elements.playlistList, items);
   }
 
-  elements.playlistList
-    .querySelectorAll<HTMLButtonElement>(`.${c.playlistItem}`)
-    .forEach((item) => {
-      const isActive = Number(item.dataset.index) === state.currentIndex;
-      item.classList.toggle(sc.active, isActive);
-      item.setAttribute("aria-current", isActive ? "true" : "false");
-      item.tabIndex = isOpen ? 0 : -1;
-    });
+  // 用缓存的 item 引用直接更新状态，避免每次渲染都全量 querySelectorAll
+  const items =
+    playlistItemCache.get(elements.playlistList) ??
+    Array.from(
+      elements.playlistList.querySelectorAll<HTMLButtonElement>(
+        `.${c.playlistItem}`,
+      ),
+    );
+  let active: HTMLElement | undefined;
+
+  items.forEach((item, index) => {
+    const isActive = index === state.currentIndex;
+    item.classList.toggle(sc.active, isActive);
+    item.setAttribute("aria-current", isActive ? "true" : "false");
+    item.tabIndex = isOpen ? 0 : -1;
+
+    if (isActive) {
+      active = item;
+    }
+  });
   elements.playlistList.dataset.activeIndex = String(state.currentIndex);
 
-  const active = elements.playlistList.querySelector<HTMLElement>(
-    `.${sc.active}`,
-  );
   if (active && shouldSyncActiveScroll) {
     const list = elements.playlistList;
     const activeTop = active.offsetTop;
@@ -420,6 +459,21 @@ function renderPlaylist(
     }
   }
 }
+
+interface PlaylistSignatureCache {
+  playlistRef: readonly NMPv3Song[];
+  length: number;
+  signature: string;
+}
+
+/** 歌单签名缓存：按列表元素隔离，避免 timeupdate 反复重算上千项签名 */
+const playlistSignatureCache = new WeakMap<
+  HTMLElement,
+  PlaylistSignatureCache
+>();
+
+/** 歌单项引用缓存：替代每次渲染的 querySelectorAll 全遍历 */
+const playlistItemCache = new WeakMap<HTMLElement, HTMLButtonElement[]>();
 
 export function shouldSyncPlaylistScroll({
   isOpen,
@@ -469,6 +523,19 @@ function element(tagName: string, className: string): HTMLElement {
   return node;
 }
 
+/**
+ * 仅在内容变化时写入 innerHTML
+ * timeupdate 约每 250ms 触发一次全量刷新，重复写入相同 SVG 会造成无谓的子树重建
+ */
+function setIconHtml(target: HTMLElement, html: string): void {
+  if (target.dataset.iconHtml === html) {
+    return;
+  }
+
+  target.dataset.iconHtml = html;
+  target.innerHTML = html;
+}
+
 function progressPercent(currentTime: number, duration: number): number {
   if (!Number.isFinite(duration) || duration <= 0) {
     return 0;
@@ -477,13 +544,23 @@ function progressPercent(currentTime: number, duration: number): number {
   return Math.max(0, Math.min(100, (currentTime / duration) * 100));
 }
 
-function formatTime(time: number): string {
+export function formatTime(time: number): string {
   if (!Number.isFinite(time) || time <= 0) {
     return "0:00";
   }
 
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
+  const totalSeconds = Math.floor(time);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    // 长音频/播客：超过 60 分钟显示 h:mm:ss，避免出现 61:30 这类错误显示
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  }
+
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 

@@ -8,18 +8,33 @@ export interface LyricLine {
  * 解析标准 LRC 歌词文本
  * 支持 [mm:ss.xxx] 格式，毫秒部分可选
  */
-const linePattern = /^\[(\d{2}):(\d{2})(?:\.(\d{1,3}))?]\s*(.*)$/;
+const timeTagPattern = /\[(\d{2}):(\d{2})(?:\.(\d{1,3}))?]/g;
 
 export function parseLrc(input: string): LyricLine[] {
-  return input
-    .split(/\r?\n/)
-    .map((line) => line.match(linePattern))
-    .filter((match): match is RegExpMatchArray => Boolean(match))
-    .map((match) => ({
-      time: toSeconds(match[1], match[2], match[3]),
-      text: match[4] ?? "",
-    }))
-    .sort((a, b) => a.time - b.time);
+  const lines: LyricLine[] = [];
+
+  for (const rawLine of input.split(/\r?\n/)) {
+    // 一行可能带多个时间标签（网易云副歌重复行形如 [00:12][00:45]歌词），
+    // 逐个展开成独立歌词行，避免第二个标签被当成正文
+    const tags = [...rawLine.matchAll(timeTagPattern)];
+
+    if (tags.length === 0) {
+      continue;
+    }
+
+    // 正文位于最后一个时间标签之后
+    const lastTag = tags[tags.length - 1];
+    const text = rawLine.slice((lastTag.index ?? 0) + lastTag[0].length).trim();
+
+    for (const tag of tags) {
+      lines.push({
+        time: toSeconds(tag[1], tag[2], tag[3]),
+        text,
+      });
+    }
+  }
+
+  return lines.sort((a, b) => a.time - b.time);
 }
 
 /**

@@ -75,6 +75,11 @@ export interface NMPv3State {
 export interface NMPv3Player {
   play(): Promise<void>;
   pause(): void;
+  /**
+   * 静默暂停：仅停止音频与内部状态，不派发 nmpv3:pause 事件
+   * 供全局管理器在"其它实例开始播放"时调用，避免把被动打断误报成用户暂停
+   */
+  pauseSilently(): void;
   toggle(): Promise<void>;
   next(): Promise<void>;
   previous(): Promise<void>;

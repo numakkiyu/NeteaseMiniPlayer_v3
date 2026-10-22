@@ -118,7 +118,7 @@ nmp-player,
   z-index: 1;
 }
 
-.${c.player}[data-draggable="true"]:not([data-position="static"]):not([data-embed-mode="article"]) .${c.main} {
+.${c.player}[data-draggable="true"]:not([data-position="static"]):not([data-embed-mode="article"]) {
   touch-action: none;
 }
 
