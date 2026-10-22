@@ -28,4 +28,26 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# AI assistant artifacts (local tooling, never commit)
 .playwright-mcp/
+.dsh-progress/
+.agents/
+.codex/
+.claude/
+.cursor/
+.dsh/
+.mcp.json
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.aider*
+aider.conf.yml
+.cursorrules
+.clinerules
+
+# AI-generated working documents (plans/reports stay in local workspace)
+FIXPLAN-*.md
+*.scratch.md
+*.debug.md
+ai-notes/
+plans-local/
