@@ -26,9 +26,60 @@ Common attributes:
 | `layout`       | `compact`, `mini`, or `dock`  |
 | `position`     | `static` or a corner position |
 | `embed-mode`   | `article` or `page`           |
+| `scale`        | Size level `1`–`10` or `auto` |
+| `palette`      | Palette id, see below         |
+| `palette-follow-host` | Borrow the host page hue |
 | `lyric`        | Show lyrics                   |
 | `playlist`     | Show playlist control         |
 | `remember`     | Persist player state          |
+
+## NMPv3 scaling
+
+The player scales as a whole: width, height, font size, cover, icons and radius all change
+together, so it never looks stretched.
+
+| Value  | Ratio | Width (compact layout)   |
+| ------ | ----- | ------------------------ |
+| `1`    | 0.6×  | 252px                    |
+| `5`    | 1.0×  | 420px (default)          |
+| `10`   | 1.5×  | 630px                    |
+| `auto` | Same as 5 | 420px, shrinks in a narrow container |
+
+```html
+<nmp-player playlist-id="14273792576" scale="7"></nmp-player>
+<nmp-player song-id="1901371647" scale="auto"></nmp-player>
+```
+
+On a narrow screen the player does not get squeezed horizontally. The effective ratio is
+`level ratio × min(1, available width ÷ design width)`, where the design width is 420px for
+compact/dock, 360px for article and 320px for mini. Picking level 10 on a phone will not
+overflow either — it is simply capped to the container width.
+
+## NMPv3 color palettes
+
+Six palettes ship with the player. Each carries both a light and a dark seed, so switching
+the page between light and dark picks the matching variant automatically.
+
+| Name  | Value   | Accent               |
+| ----- | ------- | -------------------- |
+| Dawn  | `dawn`  | Orange-red, default  |
+| Jade  | `jade`  | Green                |
+| Azure | `azure` | Blue                 |
+| Amber | `amber` | Yellow               |
+| Iris  | `iris`  | Purple               |
+| Mono  | `mono`  | Near-neutral, neumorphic |
+
+```html
+<nmp-player song-id="1901371647" palette="jade"></nmp-player>
+<nmp-player song-id="1901371647" palette="iris" theme="dark"></nmp-player>
+```
+
+Light/dark resolution always follows the same order: an explicit `theme` wins, then the
+sampled host background under `theme="auto"`, and only then the system preference.
+`palette-follow-host` controls the **hue** only and does not affect this order.
+
+Legacy ids (`mint`, `forest`, `ocean`, `sky`, `butter`, `plum`, `lilac`, `pearl`,
+`graphite`, `ember`) map to the new palettes, so existing configuration keeps working.
 
 ## NMPv3 global configuration
 

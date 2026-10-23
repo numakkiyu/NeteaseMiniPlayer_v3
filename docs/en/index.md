@@ -11,8 +11,14 @@ hero:
       text: CDN Usage
       link: /en/guide/cdn
 features:
-  - title: NMPv3
-    details: A one-script player for public websites, blogs, CMS templates, and basic WordPress usage
+  - title: One script to embed
+    details: Just nmpv3.min.js — styles are injected with the script, no CSS to import and no runtime framework
+  - title: Six color palettes
+    details: Each palette carries light and dark seeds, can borrow the host page hue, and swaps variants automatically
+  - title: Equal-ratio scaling, 1–10
+    details: Width, font size, cover and radius scale together; narrow containers shrink the whole player instead of squashing it
+  - title: Card and vinyl forms
+    details: Collapse into a round vinyl docked to the edge and expand back to a card, animated on the compositor at 60 fps
   - title: NMPv3+
     details: An advanced framework for plugins, skins, custom music sources, custom lyrics, and custom deployments
 ---

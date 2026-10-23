@@ -129,6 +129,9 @@ HTML 属性使用 kebab-case：
 | `draggable`         | `true`    |
 | `hotkeys`           | `true`    |
 | `idleOpacity`       | `0.72`    |
+| `scale`             | `5`       |
+| `palette`           | `dawn`    |
+| `paletteFollowHost` | `true`    |
 
 默认 API：
 

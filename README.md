@@ -18,19 +18,19 @@
 </p>
 
 <p>
-  <a href="./docs/guide/getting-started.md">🚀 快速开始</a> ·
-  <a href="./docs/guide/cdn.md">📦 CDN 引用</a> ·
-  <a href="./docs/guide/which-version.md">🧭 选择版本</a> ·
-  <a href="./docs/index.md">📚 完整文档</a> ·
-  <a href="./CONTRIBUTING.md">🤝 参与贡献</a> ·
-  <a href="./CHANGELOG.md">📝 更新日志</a>
+  <a href="./docs/guide/getting-started.md">快速开始</a> ·
+  <a href="./docs/guide/cdn.md">CDN 引用</a> ·
+  <a href="./docs/guide/which-version.md">选择版本</a> ·
+  <a href="./docs/index.md">完整文档</a> ·
+  <a href="./CONTRIBUTING.md">参与贡献</a> ·
+  <a href="./CHANGELOG.md">更新日志</a>
 </p>
 
 </div>
 
 ---
 
-> \[!IMPORTANT]
+> [!IMPORTANT]
 > NeteaseMiniPlayer v3 在同一个开源仓库中维护 **两条独立产品线**：
 >
 > - **NMPv3**：轻量播放器，默认只面向网易云音乐，浏览器部署仅需一个 `nmpv3.min.js`，运行时零依赖。
@@ -40,29 +40,30 @@
 
 ## 目录
 
-- [✨ 项目特性](#-项目特性)
-- [🧭 选择版本](#-选择版本)
-- [🚀 快速开始](#-快速开始)
+- [项目特性](#项目特性)
+- [选择版本](#选择版本)
+- [快速开始](#快速开始)
   - [CDN 引用](#cdn-引用)
   - [npm / pnpm 安装](#npm--pnpm-安装)
-- [🧩 NMPv3+ 入门](#-nmpv3-入门)
-- [📚 文档导航](#-文档导航)
-- [🗂 仓库结构](#-仓库结构)
-- [🛠 本地开发](#-本地开发)
-- [🤝 参与贡献](#-参与贡献)
-- [📄 许可证与声明](#-许可证与声明)
+- [NMPv3+ 入门](#nmpv3-入门)
+- [文档导航](#文档导航)
+- [仓库结构](#仓库结构)
+- [本地开发](#本地开发)
+- [许可证](#许可证)
 
-## ✨ 项目特性
+## 项目特性
 
-- **单文件嵌入**：默认仅一个 `nmpv3.min.js`，无需额外 CSS，样式由 JS 注入。
-- **零运行时依赖**：不依赖 React、Vue、Lit、jQuery 或其他运行时框架。
-- **原生 Web Component**：通过 `<nmp-player>` 自定义元素接入，框架无关。
-- **v2兼容**：保留 v2 的紧凑 / 迷你 / 悬浮播放器形态、短代码 `{nmpv3:...}` 与旧 `.netease-mini-player` DOM 迁移路径。
-- **工程标准化**：实现迁移至 TypeScript + Vite 模块，同时保持轻量运行时形态。
-- **双产品线**：NMPv3 负责轻量嵌入，NMPv3+ 负责高级扩展，边界清晰，按需加载。
+- **单文件嵌入**：只需要一个 `nmpv3.min.js`，样式随 JS 注入，不用额外引 CSS。
+- **零运行时依赖**：不引入 React、Vue、Lit、jQuery 等任何运行时框架。
+- **原生 Web Component**：用 `<nmp-player>` 接入，与页面框架无关。
+- **6 套配色色板**：每套含明暗两份种子，可跟随宿主页面取色，也可固定用色板。
+- **1–10 档等比缩放**：宽度、字号、封面、圆角一起缩放，窄屏等比收进容器而不是压扁。
+- **卡片与唱片形态**：可收成圆形唱片贴边，展开回卡片，形变过程为合成动画，稳定 60fps。
+- **宿主隔离**：挂载时校验容器、只注入一个 style、样式全部带前缀，不污染宿主页面。
+- **v2 兼容**：保留紧凑 / 迷你 / 悬浮形态、短代码 `{nmpv3:...}` 与旧 `.netease-mini-player` 迁移路径。
 - **CDN 友好**：发布至 npm，可通过 jsDelivr / unpkg 直接引用，支持版本锁定。
 
-## 🧭 选择版本
+## 选择版本
 
 | 场景                                                   | 使用版本   | 说明                         |
 | ------------------------------------------------------ | ---------- | ---------------------------- |
@@ -72,9 +73,9 @@
 | 需要本地 JSON、歌词文件、插件、皮肤或页面联动          | **NMPv3+** | 这些能力由高级框架提供       |
 | 需要 WordPress 后台、Gutenberg 区块或资源包构建        | **NMPv3+** | 属于高级集成                 |
 
-> 已有旧站点可先迁移到 NMPv3，确认单曲、歌单、短代码与旧 DOM 兼容路径正常后，再评估是否需要 NMPv3+。详见 [选择版本](./docs/guide/which-version.md)。
+> 旧站点建议先迁到 NMPv3，确认单曲、歌单、短代码和旧 DOM 兼容路径都正常，再考虑是否要用 NMPv3+。详见 [选择版本](./docs/guide/which-version.md)。
 
-## 🚀 快速开始
+## 快速开始
 
 ### CDN 引用
 
@@ -98,7 +99,7 @@
 <nmp-player song-id="1901371647" theme="auto" layout="mini"></nmp-player>
 ```
 
-> \[!TIP]
+> [!TIP]
 > 生产环境应固定版本号，避免 `latest` 带来不可预期的升级：
 >
 > ```html
@@ -127,7 +128,7 @@ import "netease-mini-player-v3/auto";
 <nmp-player playlist-id="14273792576" api-base-url="/api/netease"></nmp-player>
 ```
 
-## 🧩 NMPv3+ 入门
+## NMPv3+ 入门
 
 NMPv3+ 面向需要扩展能力的集成者，需同时安装基础播放器与 Plus 框架：
 
@@ -155,10 +156,10 @@ pnpm add netease-mini-player-v3 netease-mini-player-v3-plus
 <nmp-player playlist-id="14273792576" layout="compact"></nmp-player>
 ```
 
-> \[!NOTE]
-> NMPv3+ 默认从 NMPv3 的基础播放器界面开始，重点是扩展框架清晰，而非把默认界面做得更复杂。完整能力清单（PluginManager / SkinEngine / SourceAdapter / LyricsAdapter / HostBridge / CLI / 框架适配器）见 [NMPv3+ 指南](./docs/nmpv3-plus/index.md) 与子包 README [`nmpv3-plus/README.md`](./nmpv3-plus/README.md)。
+> [!NOTE]
+> NMPv3+ 装好后默认还是 NMPv3 的基础界面，它提供的是扩展框架，不是另一套更花哨的皮肤。完整能力清单（PluginManager / SkinEngine / SourceAdapter / LyricsAdapter / HostBridge / CLI / 框架适配器）见 [NMPv3+ 指南](./docs/nmpv3-plus/index.md) 与子包 README [`nmpv3-plus/README.md`](./nmpv3-plus/README.md)。
 
-## 📚 文档导航
+## 文档导航
 
 完整文档基于 VitePress 构建，源文件位于 [`docs/`](./docs) 目录。以下为各模块文档入口：
 
@@ -176,7 +177,7 @@ pnpm add netease-mini-player-v3 netease-mini-player-v3-plus
 - [NMPv3 指南](./docs/nmpv3/index.md) — 轻量播放器完整说明
 - [NMPv3+ 指南](./docs/nmpv3-plus/index.md) — 高级扩展框架完整说明
 
-## 🗂 仓库结构
+## 仓库结构
 
 ```txt
 .
@@ -190,7 +191,7 @@ pnpm add netease-mini-player-v3 netease-mini-player-v3-plus
 └── NOTICE
 ```
 
-## 🛠 本地开发
+## 本地开发
 
 本仓库使用 pnpm workspace 管理多包。前置要求：Node ≥ 18，pnpm 已安装。
 
@@ -232,6 +233,8 @@ pnpm validate
 | `pnpm docs:preview` | 预览已构建的文档站点              |
 
 ---
+
+## 许可证
 
 本项目基于 [Apache License 2.0](./LICENSE) 开源，版权所有 © 2026 BHCN STUDIO & 贡献者。
 
