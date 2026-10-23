@@ -28,9 +28,9 @@
 
 </div>
 
----
+***
 
-> [!IMPORTANT]
+> \[!IMPORTANT]
 > NeteaseMiniPlayer v3 在同一个开源仓库中维护 **两条独立产品线**：
 >
 > - **NMPv3**：轻量播放器，默认只面向网易云音乐，浏览器部署仅需一个 `nmpv3.min.js`，运行时零依赖。
@@ -65,13 +65,13 @@
 
 ## 选择版本
 
-| 场景                                                   | 使用版本   | 说明                         |
-| ------------------------------------------------------ | ---------- | ---------------------------- |
-| 在公开网页、博客、CMS 或静态站点中嵌入网易云播放器     | **NMPv3**  | 一个 JavaScript 文件即可运行 |
-| 在 React、Vue3、Nuxt、Astro 或 Svelte 中输出基础播放器 | **NMPv3**  | 直接使用原生 `<nmp-player>`  |
-| 需要普通 WordPress 短代码前台                          | **NMPv3**  | 前台只加载 `nmpv3.min.js`    |
-| 需要本地 JSON、歌词文件、插件、皮肤或页面联动          | **NMPv3+** | 这些能力由高级框架提供       |
-| 需要 WordPress 后台、Gutenberg 区块或资源包构建        | **NMPv3+** | 属于高级集成                 |
+| 场景                                        | 使用版本       | 说明                    |
+| ----------------------------------------- | ---------- | --------------------- |
+| 在公开网页、博客、CMS 或静态站点中嵌入网易云播放器               | **NMPv3**  | 一个 JavaScript 文件即可运行  |
+| 在 React、Vue3、Nuxt、Astro 或 Svelte 中输出基础播放器 | **NMPv3**  | 直接使用原生 `<nmp-player>` |
+| 需要普通 WordPress 短代码前台                      | **NMPv3**  | 前台只加载 `nmpv3.min.js`  |
+| 需要本地 JSON、歌词文件、插件、皮肤或页面联动                 | **NMPv3+** | 这些能力由高级框架提供           |
+| 需要 WordPress 后台、Gutenberg 区块或资源包构建        | **NMPv3+** | 属于高级集成                |
 
 > 旧站点建议先迁到 NMPv3，确认单曲、歌单、短代码和旧 DOM 兼容路径都正常，再考虑是否要用 NMPv3+。详见 [选择版本](./docs/guide/which-version.md)。
 
@@ -99,7 +99,7 @@
 <nmp-player song-id="1901371647" theme="auto" layout="mini"></nmp-player>
 ```
 
-> [!TIP]
+> \[!TIP]
 > 生产环境应固定版本号，避免 `latest` 带来不可预期的升级：
 >
 > ```html
@@ -156,7 +156,7 @@ pnpm add netease-mini-player-v3 netease-mini-player-v3-plus
 <nmp-player playlist-id="14273792576" layout="compact"></nmp-player>
 ```
 
-> [!NOTE]
+> \[!NOTE]
 > NMPv3+ 装好后默认还是 NMPv3 的基础界面，它提供的是扩展框架，不是另一套更花哨的皮肤。完整能力清单（PluginManager / SkinEngine / SourceAdapter / LyricsAdapter / HostBridge / CLI / 框架适配器）见 [NMPv3+ 指南](./docs/nmpv3-plus/index.md) 与子包 README [`nmpv3-plus/README.md`](./nmpv3-plus/README.md)。
 
 ## 文档导航
@@ -165,7 +165,7 @@ pnpm add netease-mini-player-v3 netease-mini-player-v3-plus
 
 **指南类**
 
-- [文档首页](./docs/index.md) — 中文首页，按场景接入导航
+- [文档首页](./docs/index.md) — 首页，按场景接入导航
 - [选择版本](./docs/guide/which-version.md) — NMPv3 与 NMPv3+ 的边界与选型建议
 - [快速开始](./docs/guide/getting-started.md) — 从零接入的完整步骤
 - [CDN 引用](./docs/guide/cdn.md) — jsDelivr / unpkg 与包入口字段
@@ -222,17 +222,17 @@ pnpm validate
 
 其他可用脚本：
 
-| 命令                | 作用                              |
-| ------------------- | --------------------------------- |
-| `pnpm typecheck`    | 全仓库 TypeScript 类型检查        |
-| `pnpm test`         | 运行各包测试                      |
+| 命令                  | 作用                            |
+| ------------------- | ----------------------------- |
+| `pnpm typecheck`    | 全仓库 TypeScript 类型检查           |
+| `pnpm test`         | 运行各包测试                        |
 | `pnpm lint`         | ESLint 检查（`--max-warnings=0`） |
-| `pnpm format`       | Prettier 格式化写入               |
+| `pnpm format`       | Prettier 格式化写入                |
 | `pnpm format:check` | Prettier 格式检查                 |
-| `pnpm docs:build`   | 构建文档站点                      |
-| `pnpm docs:preview` | 预览已构建的文档站点              |
+| `pnpm docs:build`   | 构建文档站点                        |
+| `pnpm docs:preview` | 预览已构建的文档站点                    |
 
----
+***
 
 ## 许可证
 

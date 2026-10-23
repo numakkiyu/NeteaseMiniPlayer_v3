@@ -1,6 +1,6 @@
 # 文档站源码
 
-本目录是 NeteaseMiniPlayer v3 的公开 VitePress 文档站源码，面向开发者、贡献者和普通使用
+本目录是 NeteaseMiniPlayer v3 的公开 VitePress 文档站源码，面向贡献者和普通使用
 
 ## 常用命令
 
@@ -28,3 +28,4 @@ pnpm docs:preview
 - `docs/` 只放公开文档和可发布静态资源
 - NMPv3 文档只描述轻量播放器能力
 - NMPv3+ 文档负责插件、皮肤、来源、歌词、宿主联动、框架适配和自定义构建
+
