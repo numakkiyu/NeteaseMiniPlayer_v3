@@ -173,7 +173,7 @@ export function renderPlayerShell(
     "Show or hide lyrics",
     icons.lyrics,
   );
-  const modeButton = iconButton(c.modeButton, "List loop", icons.loop);
+  const modeButton = iconButton(c.modeButton, "切换播放模式", icons.loop);
   const playlistButton = iconButton(
     c.playlistToggle,
     "Show playlist",
@@ -352,32 +352,19 @@ export function scaleFromLevel(level: number): number {
 }
 
 /**
- * 解析最终缩放因子
- * auto 时按视口宽高共同约束，保证在手机 / 平板 / 桌面上都不溢出
+ * 档位对应的基准缩放因子
+ *
+ * `auto` 固定为 5 档（1.0 倍）。
+ * 窄屏适配不在这里做——由 NMPv3Player.applyScaleFit() 按容器实际宽度
+ * 统一收窄，保证「宽度与内部尺寸用同一个因子」，即真正的等比缩小。
  */
 export function resolveScaleFactor(scale: NMPv3Config["scale"]): number {
-  if (scale !== "auto") {
-    return scaleFromLevel(scale);
-  }
-
-  const browserWindow = getWindow();
-
-  if (!browserWindow) {
-    return 1;
-  }
-
-  // 宽度目标：视口宽度的 32%，钳在 260-560px
-  const widthFit =
-    Math.min(560, Math.max(260, browserWindow.innerWidth * 0.32)) / 420;
-  // 高度目标：视口高度的 45%，钳在 110-300px（对应 132px 基准）
-  const heightFit =
-    Math.min(300, Math.max(110, browserWindow.innerHeight * 0.45)) / 132;
-
-  return Math.round(Math.min(widthFit, heightFit, 1.5) * 100) / 100;
+  return scale === "auto" ? 1 : scaleFromLevel(scale);
 }
 
 function applyRootConfig(root: HTMLElement, config: NMPv3Config): void {
-  root.style.setProperty("--nmpv3-s", String(resolveScaleFactor(config.scale)));
+  // --nmpv3-s 由 NMPv3Player.applyScaleFit() 统一写入（档位因子 × 容器适配因子），
+  // 这里不再设置，避免每次 updateView 把适配结果重置回档位原值
   root.dataset.theme = config.theme;
   root.dataset.layout = config.layout;
   root.dataset.embedMode = config.embedMode;
@@ -711,12 +698,12 @@ function playModeIcon(mode: NMPv3PlayMode): string {
 
 function playModeTitle(mode: NMPv3PlayMode): string {
   if (mode === "single") {
-    return "Single loop";
+    return "单曲播放";
   }
 
   if (mode === "shuffle") {
-    return "Shuffle";
+    return "随机播放";
   }
 
-  return "List loop";
+  return "循环播放";
 }

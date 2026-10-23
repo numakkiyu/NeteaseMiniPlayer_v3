@@ -4,10 +4,12 @@ import { normalizeLyrics } from "../lyric/normalizeLyrics";
 import { syncLyric as findActiveLyric } from "../lyric/syncLyric";
 import {
   renderPlayerShell,
+  resolveScaleFactor,
   updatePlayerView,
   type NMPv3RenderedElements,
 } from "../ui/render";
 import { classNames as c, stateClassNames as sc } from "../ui/classNames";
+import { clearTargetMounted } from "../utils/dom";
 import { getDocument, getWindow } from "../utils/env";
 import { emit } from "../utils/event";
 import { logger } from "../utils/logger";
@@ -130,6 +132,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   private hostThemeObserver: MutationObserver | null = null;
   /** 最近一次解析出的配色，供诊断读取 */
   private palette: PaletteResolved | null = null;
+  /** 最终生效的缩放因子（档位 × 容器适配） */
+  private scaleFactor = 1;
+  /** 布局完成后的二次适配帧 */
+  private scaleFitFrame: number | null = null;
   /** 本次按下时命中的元素，用于在 pointerup 判定"点击"落点 */
   private pressTarget: HTMLElement | null = null;
   private loadGeneration = 0;
@@ -187,6 +193,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.setupDragAndDrop();
     this.applyRestoredPosition();
     this.applyResolvedTheme();
+    this.applyScaleFit();
+    this.scheduleScaleFit();
     this.updateView();
     emit(this.target, "nmpv3:ready", { player: this });
     void this.bootstrap();
@@ -512,6 +520,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.observeHostTheme();
     }
 
+    // 档位 / 布局 / 内嵌模式变化都会改变设计宽，需要重新适配
+    this.applyScaleFit();
+    this.scheduleScaleFit();
+
     if (scaleChanged) {
       // 尺寸变了要重新贴回原来那一侧，否则缩小后会浮在中间
       this.scheduleSnapToSide();
@@ -552,16 +564,162 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.clearResizeGuard();
     this.clearSideSnapTimer();
 
+    if (this.scaleFitFrame !== null) {
+      getWindow()?.cancelAnimationFrame(this.scaleFitFrame);
+      this.scaleFitFrame = null;
+    }
+
     this.cleanup.forEach((dispose) => dispose());
     this.cleanup.length = 0;
     mediaSessionManager.release(this);
     // 从全局实例表移除，避免 pauseAll 继续遍历已销毁实例
     globalAudioManager.remove(this);
     this.audio.destroy();
-    this.target.innerHTML = "";
+    // 只移除播放器自己的根节点：宿主可能在挂载后又往容器里放了别的内容，
+    // 直接清空 target 会把这些内容一起删掉
+    const root = this.elements.root;
+    const parent = root.parentNode;
+
+    if (parent && typeof parent.removeChild === "function") {
+      parent.removeChild(root);
+    }
+
+    clearTargetMounted(this.target);
+  }
+
+  /**
+   * 浮动定位前置检查
+   *
+   * 只要祖先带上 transform / filter / perspective / will-change:transform / contain:paint，
+   * position: fixed 就会相对那个祖先定位，播放器会错位到宿主容器里。
+   * 这里做一次性检测并给出明确提示，同时在根节点打标记方便宿主用 CSS 兜底。
+   */
+  /** 当前布局的设计基准宽度，必须与 CSS 的 width 规则一致 */
+  private getDesignWidth(): number {
+    // CSS 覆盖顺序：article(360) 定义在最后，优先级最高
+    if (this.config.embedMode === "article") {
+      return 360;
+    }
+
+    if (this.config.layout === "mini") {
+      return 320;
+    }
+
+    return 420;
+  }
+
+  /**
+   * 窄屏等比适配
+   *
+   * 只靠 CSS 的 max-width:100% 压窄宽度，内部尺寸仍按设计宽渲染，
+   * 结果是「压扁」而不是「等比缩小」。这里把档位因子与容器适配因子相乘后
+   * 写进 --nmpv3-s，让所有 calc() 尺寸一起缩放。
+   */
+  private applyScaleFit(): void {
+    const root = this.elements.root;
+    const base = resolveScaleFactor(this.config.scale);
+    const design = this.getDesignWidth() * base;
+    const browserWindow = getWindow();
+    const isFloating =
+      this.config.position !== "static" && this.config.embedMode !== "article";
+
+    let available = 0;
+
+    if (isFloating) {
+      // 用 clientWidth 而不是 innerWidth：移动端两者可能不等（viewport 缩放），
+      // 而 CSS 的 100vw 跟 clientWidth 同源，两边必须用同一个基准才不会一边算大一边压窄
+      const viewportWidth =
+        getDocument()?.documentElement.clientWidth ??
+        browserWindow?.innerWidth ??
+        0;
+      available = viewportWidth - 16;
+    } else {
+      const host = root.parentElement;
+      const viewportWidth =
+        getDocument()?.documentElement.clientWidth ??
+        browserWindow?.innerWidth ??
+        0;
+
+      if (host) {
+        const style = getComputedStyle(host);
+        const paddingX =
+          (parseFloat(style.paddingLeft) || 0) +
+          (parseFloat(style.paddingRight) || 0);
+        const hostWidth = host.clientWidth || viewportWidth;
+        // 宿主容器可能被内容撑开（flex/grid 项的 min-width:auto），
+        // 再取一次与视口的较小值，保证永远不会超出屏幕
+        available = Math.min(hostWidth - paddingX, viewportWidth - 16);
+      } else {
+        available = viewportWidth - 16;
+      }
+    }
+
+    const fit =
+      available > 0 && design > 0 ? Math.min(1, available / design) : 1;
+    const factor = Math.round(base * fit * 1000) / 1000;
+
+    root.style.setProperty("--nmpv3-s", String(factor));
+    root.dataset.scaleFit = fit < 0.999 ? "true" : "false";
+    this.scaleFactor = factor;
+  }
+
+  /**
+   * 下一帧再算一次适配
+   *
+   * 构造与 updateConfig 时宿主可能还没完成布局（clientWidth 为 0），
+   * 此时会退回视口宽，得出偏大的因子。等一帧再算一次即可拿到真实容器宽度。
+   */
+  private scheduleScaleFit(): void {
+    const browserWindow = getWindow();
+
+    if (!browserWindow || this.scaleFitFrame !== null) {
+      return;
+    }
+
+    this.scaleFitFrame = browserWindow.requestAnimationFrame(() => {
+      this.scaleFitFrame = null;
+
+      if (!this.destroyed) {
+        this.applyScaleFit();
+      }
+    });
+  }
+
+  private warnIfFixedContextBroken(): void {
+    if (this.config.position === "static" || this.config.embedMode === "article") {
+      return;
+    }
+
+    const doc = getDocument();
+    let node: HTMLElement | null = this.target.parentElement;
+
+    while (node && node !== doc?.body && node !== doc?.documentElement) {
+      const style = getComputedStyle(node);
+      const broken =
+        style.transform !== "none" ||
+        style.filter !== "none" ||
+        style.perspective !== "none" ||
+        style.willChange.includes("transform") ||
+        style.contain.includes("paint") ||
+        style.backdropFilter !== "none";
+
+      if (broken) {
+        this.elements.root.dataset.fixedAncestor = "true";
+        console.warn(
+          `[NMPv3] 挂载点祖先 <${node.tagName.toLowerCase()}> 带有 transform/filter/perspective/contain，` +
+            "position: fixed 会相对它偏移，浮动播放器可能错位。" +
+            '建议把挂载点移出该容器，或改用 position="static"。',
+        );
+        return;
+      }
+
+      node = node.parentElement;
+    }
   }
 
   private async bootstrap(): Promise<void> {
+    this.warnIfFixedContextBroken();
+
     if (
       this.config.position !== "static" &&
       this.config.embedMode !== "article"
@@ -769,10 +927,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     const browserWindow = getWindow();
     if (browserWindow) {
       this.listen(browserWindow, "resize", () => {
-        // auto 缩放需要跟随视口重新计算
-        if (this.config.scale === "auto") {
-          this.updateView();
-        }
+        // 任何档位都要按容器可用宽度重新适配，否则窄屏会被压扁
+        this.applyScaleFit();
         // 尺寸变化带 300ms 过渡，等落定后再贴回原来那一侧
         this.scheduleSnapToSide();
       });
@@ -1939,6 +2095,11 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     return this.palette;
   }
 
+  /** 当前实际生效的缩放因子（档位 × 容器适配） */
+  getScaleFactor(): number {
+    return this.scaleFactor;
+  }
+
   /** 宿主切换主题（改 class / style / data-theme）时跟随重算 */
   private observeHostTheme(): void {
     const doc = getDocument();
@@ -1953,28 +2114,48 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     }
 
     const browserWindow = getWindow();
-    let frame: number | null = null;
+    let timer: number | null = null;
+
+    // 只有这些属性会真正影响宿主明暗；其余 attr 变化直接忽略，
+    // 避免宿主拖拽/动画高频改 style 时反复重算配色拖慢宿主
+    const themeAttributes = new Set([
+      "class",
+      "style",
+      "data-theme",
+      "data-page-theme",
+      "data-mode",
+      "data-color-scheme",
+      "data-bs-theme",
+    ]);
+
     const schedule = () => {
-      if (frame !== null) {
+      if (timer !== null) {
         return;
       }
 
+      // 主题切换是低频事件，200ms 节流足够，无需帧级精度
       if (browserWindow) {
-        frame = browserWindow.requestAnimationFrame(() => {
-          frame = null;
+        timer = browserWindow.setTimeout(() => {
+          timer = null;
           this.applyResolvedTheme();
-        });
+        }, 200);
         return;
       }
 
       this.applyResolvedTheme();
     };
 
-    const observer = new MutationObserver(schedule);
-    // 不限制 attributeFilter：宿主可能用任意属性切换主题
-    // （class / style / data-theme / data-page-theme / data-mode ...），
-    // 这里只观察根节点与 body，且回调经 requestAnimationFrame 去抖，
-    // applyResolvedTheme 内部还会比对结果，不会造成重复写入
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        const name = record.attributeName;
+
+        if (name && (themeAttributes.has(name) || name.startsWith("data-"))) {
+          schedule();
+          return;
+        }
+      }
+    });
+
     const options: MutationObserverInit = { attributes: true };
 
     observer.observe(doc.documentElement, options);
@@ -1987,6 +2168,11 @@ export class NMPv3PlayerInstance implements NMPv3Player {
     this.cleanup.push(() => {
       observer.disconnect();
       this.hostThemeObserver = null;
+
+      if (timer !== null) {
+        getWindow()?.clearTimeout(timer);
+        timer = null;
+      }
     });
   }
 

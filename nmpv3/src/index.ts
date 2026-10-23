@@ -13,7 +13,12 @@ import { NMPv3Element } from "./element/NMPv3Element";
 import { parseShortcode } from "./shortcode/parseShortcode";
 import { readLegacyV2Config } from "./shortcode/legacyV2";
 import { nmpv3Css } from "./styles/nmpv3.css";
-import { injectStyleOnce, resolveTarget } from "./utils/dom";
+import {
+  getTargetOwner,
+  injectStyleOnce,
+  markTargetMounted,
+  resolveTarget,
+} from "./utils/dom";
 import { getDocument, getWindow } from "./utils/env";
 import type { NMPv3Config, NMPv3Global, NMPv3Player } from "./types";
 
@@ -45,10 +50,22 @@ export function createNMPv3Player(
   config: Partial<NMPv3Config>,
 ): NMPv3Player {
   defineNMPv3();
+  const element = resolveTarget(target);
+  const previous = getTargetOwner(element);
+
+  // 同一容器二次初始化会清掉上一个实例的 DOM，留下仍在播的僵尸实例
+  if (
+    previous &&
+    typeof (previous as NMPv3PlayerInstance).destroy === "function"
+  ) {
+    (previous as NMPv3PlayerInstance).destroy();
+  }
+
   const player = new NMPv3PlayerInstance(
-    resolveTarget(target),
+    element,
     resolveConfigWithGlobal(config),
   );
+  markTargetMounted(element, player);
   globalAudioManager.add(player);
   return player;
 }

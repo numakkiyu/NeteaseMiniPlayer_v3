@@ -949,7 +949,8 @@ nmp-player,
 
 .nmpv3-player[data-layout="dock"] {
   width: calc(420px * var(--nmpv3-s));
-  max-width: calc(100vw - 32px);
+  /* 与 applyScaleFit 的浮动可用宽公式保持一致：视口宽 - 两侧各 8px */
+  max-width: calc(100vw - 16px);
 }
 
 .nmpv3-player[data-embed-mode="article"] {
@@ -1138,12 +1139,13 @@ nmp-player,
 }
 
 @media (max-width: 520px), (hover: none) and (pointer: coarse) {
-  .nmpv3-player {
-    width: calc(360px * var(--nmpv3-s));
-    max-width: 100%;
-    min-height: calc(116px * var(--nmpv3-s));
-    padding: calc(10px * var(--nmpv3-s));
-  }
+  /*
+   * 移动端只改「结构」，不定义任何绝对尺寸。
+   *
+   * 尺寸（封面/字号/按钮/行高/间距）全部继承桌面规则并乘 --nmpv3-s，
+   * 否则会出现「宽度随因子缩小、封面与字号不动」的压扁效果。
+   * 需要列宽的地方统一写 calc(基准 * var(--nmpv3-s))。
+   */
 
   .nmpv3-player[data-position="top-left"] {
     top: 8px;
@@ -1166,33 +1168,10 @@ nmp-player,
   }
 
   .nmpv3-player[data-position="static"].nmpv3-playlist-open {
-    margin-bottom: min(314px, calc(100vh - 134px));
+    margin-bottom: min(calc(314px * var(--nmpv3-s)), calc(100vh - 134px));
   }
 
-  .nmpv3-main {
-    gap: 10px;
-  }
-
-  .nmpv3-cover-button {
-    flex-basis: 50px;
-    width: 50px;
-    height: 50px;
-    min-width: 50px;
-  }
-
-  .nmpv3-title {
-    font-size: 12px;
-  }
-
-  .nmpv3-artist,
-  .nmpv3-lyric-original {
-    font-size: 10px;
-  }
-
-  .nmpv3-lyric-translation {
-    font-size: 9px;
-  }
-
+  /* 结构：隐藏次要控件，把操作区移到下一行 */
   .nmpv3-previous,
   .nmpv3-next,
   .nmpv3-volume {
@@ -1203,65 +1182,43 @@ nmp-player,
     gap: 0;
   }
 
-  .nmpv3-icon-button,
-  .nmpv3-play {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-  }
-
   .nmpv3-bottom {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 8px;
   }
 
   .nmpv3-progress {
     width: 100%;
     min-width: 0;
     max-width: none;
-    grid-template-columns: 35px minmax(0, 1fr) 35px;
+    grid-template-columns:
+      calc(35px * var(--nmpv3-s))
+      minmax(0, 1fr)
+      calc(35px * var(--nmpv3-s));
   }
 
   .nmpv3-tools {
     width: 100%;
     justify-content: flex-end;
-    gap: 8px;
   }
 
-  .nmpv3-tools .nmpv3-icon-button {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-  }
-
+  /* 歌单：窄屏列宽同步乘因子 */
   .nmpv3-playlist-panel,
   .nmpv3-playlist-list {
-    max-height: min(304px, calc(100vh - 144px));
-  }
-
-  .nmpv3-playlist-list {
-    padding: 5px;
+    max-height: min(calc(304px * var(--nmpv3-s)), calc(100vh - 144px));
   }
 
   .nmpv3-playlist-item {
-    --nmpv3-playlist-row-height: 52px;
-    grid-template-columns: 26px 38px minmax(0, 1fr) 40px;
-    gap: 8px;
-    padding: 7px 8px;
+    grid-template-columns:
+      calc(26px * var(--nmpv3-s))
+      calc(38px * var(--nmpv3-s))
+      minmax(0, 1fr)
+      calc(40px * var(--nmpv3-s));
   }
 
   .nmpv3-playlist-cover {
-    width: 38px;
-    height: 38px;
-  }
-
-  .nmpv3-playlist-name {
-    font-size: 12px;
-  }
-
-  .nmpv3-playlist-artist {
-    font-size: 10.5px;
+    width: calc(38px * var(--nmpv3-s));
+    height: calc(38px * var(--nmpv3-s));
   }
 
   .nmpv3-player[data-layout="mini"] .nmpv3-bottom {

@@ -69,6 +69,9 @@ vi.mock("./AudioController", () => ({
 vi.mock("../ui/render", () => ({
   renderPlayerShell: () => createRenderedElements(),
   updatePlayerView: vi.fn(),
+  // 与真实实现一致：auto = 5 档（1.0 倍），其余档位 0.6 + (n-1)*0.1
+  resolveScaleFactor: (scale: number | "auto") =>
+    scale === "auto" ? 1 : 0.6 + (scale - 1) * 0.1,
 }));
 
 import { NMPv3PlayerInstance } from "./NMPv3Player";
