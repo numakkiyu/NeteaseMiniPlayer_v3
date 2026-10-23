@@ -272,7 +272,10 @@ function applyAttributes(
   }
 
   if (typeof config.paletteFollowHost === "boolean") {
-    element.setAttribute("palette-follow-host", String(config.paletteFollowHost));
+    element.setAttribute(
+      "palette-follow-host",
+      String(config.paletteFollowHost),
+    );
   }
 
   if (config.apiBaseUrl) {

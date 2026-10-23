@@ -52,8 +52,16 @@ describe("NMPv3PlusPluginManager", () => {
             patch: async () => {},
             subscribe: () => () => {},
           },
-          slot: { register: vi.fn(() => () => {}), getContainer: vi.fn(), list: vi.fn(() => []) },
-          command: { register: vi.fn(() => () => {}), execute: vi.fn(), list: vi.fn(() => []) },
+          slot: {
+            register: vi.fn(() => () => {}),
+            getContainer: vi.fn(),
+            list: vi.fn(() => []),
+          },
+          command: {
+            register: vi.fn(() => () => {}),
+            execute: vi.fn(),
+            list: vi.fn(() => []),
+          },
           shortcut: { register: vi.fn(() => () => {}), list: vi.fn(() => []) },
           logger,
         }) as NMPv3PlusPluginContext,

@@ -18,7 +18,11 @@ const createLogger = (): NMPv3PlusLogger => ({
  * 只实现插件关心的读写配置能力，其余方法缺省。
  */
 const createPlayer = (initial: Record<string, unknown> = {}) => {
-  let config: Record<string, unknown> = { palette: "dawn", scale: 5, ...initial };
+  let config: Record<string, unknown> = {
+    palette: "dawn",
+    scale: 5,
+    ...initial,
+  };
   const player: NMPv3PlusPlayerLike = {
     getConfig: () => ({ ...config }),
     updateConfig: vi.fn(async (patch: Record<string, unknown>) => {
@@ -32,14 +36,44 @@ const createPlayer = (initial: Record<string, unknown> = {}) => {
   };
 };
 
+/** 测试用的最小 DOM 替身，只实现插槽会碰到的几个方法 */
+interface FakeElement {
+  tagName: string;
+  children: FakeElement[];
+  dataset: Record<string, string>;
+  style: {
+    setProperty: () => void;
+    removeProperty: () => void;
+    getPropertyValue: () => string;
+  };
+  classList: { add: () => void; remove: () => void };
+  ownerDocument: FakeDocument | null;
+  append: (...nodes: FakeElement[]) => void;
+  remove: () => void;
+  querySelector: (selector: string) => FakeElement | null;
+  addEventListener: () => void;
+  removeEventListener: () => void;
+  setAttribute: () => void;
+  readonly isConnected: boolean;
+  className?: string;
+  appendChild?: (...nodes: FakeElement[]) => void;
+}
+
+interface FakeDocument {
+  createElement: (tag: string) => FakeElement;
+  head: FakeElement;
+  addEventListener: () => void;
+  removeEventListener: () => void;
+}
+
 /** 造一个够用的根节点：只需要 createElement / append / querySelector */
 const createRoot = () => {
-  const children: any[] = [];
+  const children: FakeElement[] = [];
 
-  const makeElement = (tag: string): any => {
-    const element: any = {
+  const makeElement = (tag: string): FakeElement => {
+    const element = {
       tagName: tag.toUpperCase(),
-      children: [] as any[],
+      children: [] as FakeElement[],
       dataset: {} as Record<string, string>,
       style: {
         setProperty: vi.fn(),
@@ -47,8 +81,8 @@ const createRoot = () => {
         getPropertyValue: vi.fn(() => ""),
       },
       classList: { add: vi.fn(), remove: vi.fn() },
-      ownerDocument: null as any,
-      append: (...nodes: any[]) => {
+      ownerDocument: null,
+      append: (...nodes: FakeElement[]) => {
         element.children.push(...nodes);
       },
       remove: () => {},
@@ -60,10 +94,13 @@ const createRoot = () => {
               return child;
             }
           }
-          if (selector.startsWith(".") && child.className === selector.slice(1)) {
+          if (
+            selector.startsWith(".") &&
+            child.className === selector.slice(1)
+          ) {
             return child;
           }
-          const nested = child.querySelector?.(selector);
+          const nested = child.querySelector(selector);
           if (nested) {
             return nested;
           }
@@ -78,7 +115,7 @@ const createRoot = () => {
       },
     };
 
-    return element;
+    return element as unknown as FakeElement;
   };
 
   const doc = {

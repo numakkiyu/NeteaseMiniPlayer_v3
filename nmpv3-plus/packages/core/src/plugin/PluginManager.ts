@@ -92,6 +92,13 @@ export class NMPv3PlusPluginManager {
       return running;
     }
 
+    /*
+     * 超时后 running 仍在后台跑，它若最终 reject 就成了无人处理的拒绝，
+     * 在 Node 里会直接让进程退出。这里先挂一个空 catch 兜住，
+     * 真正的错误仍然通过下面的 race 抛给调用方（超时前失败的情况）。
+     */
+    running.catch(() => {});
+
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     const timeout = new Promise<never>((_, reject) => {

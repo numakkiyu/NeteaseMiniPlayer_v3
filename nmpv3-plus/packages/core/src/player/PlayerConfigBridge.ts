@@ -68,7 +68,9 @@ export interface PlayerConfigChannelOptions {
   /** 接收 nmpv3:configchange 的事件目标，通常是播放器根节点 */
   getEventTarget?: () => EventTarget | null;
   /** 配置写入前的归一化钩子，可用于裁剪未知字段 */
-  sanitize?: (patch: Partial<NMPv3PlusPlayerConfig>) => Partial<NMPv3PlusPlayerConfig>;
+  sanitize?: (
+    patch: Partial<NMPv3PlusPlayerConfig>,
+  ) => Partial<NMPv3PlusPlayerConfig>;
 }
 
 /**
@@ -82,10 +84,7 @@ export function createPlayerConfigChannel(
   options: PlayerConfigChannelOptions,
 ): NMPv3PlusConfigChannel {
   const listeners = new Set<
-    (
-      next: NMPv3PlusPlayerConfig,
-      previous: NMPv3PlusPlayerConfig,
-    ) => void
+    (next: NMPv3PlusPlayerConfig, previous: NMPv3PlusPlayerConfig) => void
   >();
 
   let previousSnapshot = EMPTY_CONFIG;
@@ -133,13 +132,12 @@ export function createPlayerConfigChannel(
 
   return {
     get(): NMPv3PlusPlayerConfig {
-      const next = readPlayerConfig(options.getPlayer());
-
-      if (next !== EMPTY_CONFIG) {
-        previousSnapshot = next;
-      }
-
-      return next;
+      /*
+       * 纯读取，不推进 previousSnapshot。
+       * 上一次值只由 notify 维护，否则「读一次再改配置」会让订阅者收到的
+       * previous 变成读到的值，而不是真正的上一份配置。
+       */
+      return readPlayerConfig(options.getPlayer());
     },
 
     async patch(patch: Partial<NMPv3PlusPlayerConfig>): Promise<void> {

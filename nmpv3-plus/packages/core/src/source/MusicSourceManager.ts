@@ -127,9 +127,7 @@ export class NMPv3PlusMusicSourceManager {
         );
   }
 
-  async loadPlaylist(
-    input: NMPv3PlusSourceInput,
-  ): Promise<NMPv3PlusPlaylist> {
+  async loadPlaylist(input: NMPv3PlusSourceInput): Promise<NMPv3PlusPlaylist> {
     const candidates = this.candidatesFor(input, "getPlaylist");
 
     if (candidates.length === 0) {

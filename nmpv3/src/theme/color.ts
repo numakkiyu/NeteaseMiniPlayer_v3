@@ -106,7 +106,7 @@ export function oklchToRgba(color: Oklch, alpha: number): string {
 
 /** 色相环形距离（0-180） */
 export function hueDistance(a: number, b: number): number {
-  const diff = Math.abs(((a - b) % 360 + 360) % 360);
+  const diff = Math.abs((((a - b) % 360) + 360) % 360);
   return diff > 180 ? 360 - diff : diff;
 }
 

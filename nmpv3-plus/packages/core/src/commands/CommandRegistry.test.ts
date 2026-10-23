@@ -127,13 +127,19 @@ describe("NMPv3PlusShortcutRegistry", () => {
   const createEventTarget = () => {
     const listeners = new Map<string, Set<(event: KeyboardEvent) => void>>();
     return {
-      addEventListener: (type: string, handler: (event: KeyboardEvent) => void) => {
+      addEventListener: (
+        type: string,
+        handler: (event: KeyboardEvent) => void,
+      ) => {
         if (!listeners.has(type)) {
           listeners.set(type, new Set());
         }
         listeners.get(type)!.add(handler);
       },
-      removeEventListener: (type: string, handler: (event: KeyboardEvent) => void) => {
+      removeEventListener: (
+        type: string,
+        handler: (event: KeyboardEvent) => void,
+      ) => {
         listeners.get(type)?.delete(handler);
       },
       dispatch: (event: KeyboardEvent) => {
@@ -246,9 +252,7 @@ describe("NMPv3PlusShortcutRegistry", () => {
   it("目标缺少 addEventListener 时不抛错", () => {
     const registry = new NMPv3PlusShortcutRegistry(createLogger());
 
-    expect(() =>
-      registry.attach({} as unknown as HTMLElement),
-    ).not.toThrow();
+    expect(() => registry.attach({} as unknown as HTMLElement)).not.toThrow();
     expect(registry.list()).toHaveLength(0);
   });
 });

@@ -2,7 +2,11 @@ import type { NMPv3Theme } from "../types";
 import type { NMPv3ResolvedTheme } from "../utils/theme";
 import { rotateHue } from "./color";
 import { derivePalette, type DerivedPalette } from "./derive";
-import { analyzeHostColor, prefersDarkScheme, type HostColorAnalysis } from "./host";
+import {
+  analyzeHostColor,
+  prefersDarkScheme,
+  type HostColorAnalysis,
+} from "./host";
 import { getPalettePreset, type NMPv3PaletteId } from "./presets";
 
 /** 宿主色相拉拢比例：85% 宿主 + 15% 色板，避免「宿主蓝它也蓝」失去辨识度 */
@@ -26,7 +30,11 @@ export interface PaletteResolved {
 }
 
 /** 两个色相按权重插值（走最短弧） */
-function blendHue(baseHue: number, targetHue: number, targetWeight: number): number {
+function blendHue(
+  baseHue: number,
+  targetHue: number,
+  targetWeight: number,
+): number {
   const delta = ((targetHue - baseHue + 540) % 360) - 180;
   return rotateHue(baseHue, delta * targetWeight);
 }
@@ -82,7 +90,6 @@ export function resolvePalette(input: PaletteResolveInput): PaletteResolved {
   }
 
   const palette = derivePalette(preset, scheme, Math.round(hue * 10) / 10);
-
 
   return { palette, host, hueSource, schemeSource };
 }

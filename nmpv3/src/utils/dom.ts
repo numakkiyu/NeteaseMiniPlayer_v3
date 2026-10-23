@@ -15,7 +15,7 @@ function assertSafeMountPoint(element: HTMLElement): void {
 
   if (element === doc.body || element === doc.documentElement) {
     throw new Error(
-      'NMPv3: 挂载点不能是 <body> 或 <html>（初始化会清空挂载点内容，会抹掉宿主页面）。' +
+      "NMPv3: 挂载点不能是 <body> 或 <html>（初始化会清空挂载点内容，会抹掉宿主页面）。" +
         ' 请改用专用容器，例如 document.body.appendChild(document.createElement("div"))。',
     );
   }

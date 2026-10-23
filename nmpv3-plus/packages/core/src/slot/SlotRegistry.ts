@@ -1,8 +1,4 @@
-import type {
-  NMPv3PlusLogger,
-  NMPv3PlusSlotContext,
-  NMPv3PlusSlotRenderer,
-} from "../types";
+import type { NMPv3PlusLogger, NMPv3PlusSlotRenderer } from "../types";
 
 /**
  * 内置插槽名
@@ -13,11 +9,7 @@ import type {
  *
  * 允许传入任意字符串，自定义插槽会挂在播放器根节点的末尾。
  */
-export type NMPv3PlusSlotName =
-  | "toolbar"
-  | "overlay"
-  | "panel"
-  | (string & {});
+export type NMPv3PlusSlotName = "toolbar" | "overlay" | "panel" | (string & {});
 
 interface SlotEntry {
   id: number;
@@ -220,10 +212,7 @@ export class NMPv3PlusSlotRegistry {
       // 渲染失败不影响别的插槽，容器标记状态便于排查
       host.dataset.nmpv3PlusSlotError = "true";
       container.append(host);
-      this.logger.error(
-        `NMPv3+ slot renderer failed: ${entry.name}`,
-        error,
-      );
+      this.logger.error(`NMPv3+ slot renderer failed: ${entry.name}`, error);
     }
   }
 

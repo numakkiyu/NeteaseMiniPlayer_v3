@@ -28,7 +28,7 @@
 
 </div>
 
-***
+---
 
 > \[!IMPORTANT]
 > NeteaseMiniPlayer v3 在同一个开源仓库中维护 **两条独立产品线**：
@@ -65,13 +65,13 @@
 
 ## 选择版本
 
-| 场景                                        | 使用版本       | 说明                    |
-| ----------------------------------------- | ---------- | --------------------- |
-| 在公开网页、博客、CMS 或静态站点中嵌入网易云播放器               | **NMPv3**  | 一个 JavaScript 文件即可运行  |
-| 在 React、Vue3、Nuxt、Astro 或 Svelte 中输出基础播放器 | **NMPv3**  | 直接使用原生 `<nmp-player>` |
-| 需要普通 WordPress 短代码前台                      | **NMPv3**  | 前台只加载 `nmpv3.min.js`  |
-| 需要本地 JSON、歌词文件、插件、皮肤或页面联动                 | **NMPv3+** | 这些能力由高级框架提供           |
-| 需要 WordPress 后台、Gutenberg 区块或资源包构建        | **NMPv3+** | 属于高级集成                |
+| 场景                                                   | 使用版本   | 说明                         |
+| ------------------------------------------------------ | ---------- | ---------------------------- |
+| 在公开网页、博客、CMS 或静态站点中嵌入网易云播放器     | **NMPv3**  | 一个 JavaScript 文件即可运行 |
+| 在 React、Vue3、Nuxt、Astro 或 Svelte 中输出基础播放器 | **NMPv3**  | 直接使用原生 `<nmp-player>`  |
+| 需要普通 WordPress 短代码前台                          | **NMPv3**  | 前台只加载 `nmpv3.min.js`    |
+| 需要本地 JSON、歌词文件、插件、皮肤或页面联动          | **NMPv3+** | 这些能力由高级框架提供       |
+| 需要 WordPress 后台、Gutenberg 区块或资源包构建        | **NMPv3+** | 属于高级集成                 |
 
 > 旧站点建议先迁到 NMPv3，确认单曲、歌单、短代码和旧 DOM 兼容路径都正常，再考虑是否要用 NMPv3+。详见 [选择版本](./docs/guide/which-version.md)。
 
@@ -222,17 +222,17 @@ pnpm validate
 
 其他可用脚本：
 
-| 命令                  | 作用                            |
-| ------------------- | ----------------------------- |
-| `pnpm typecheck`    | 全仓库 TypeScript 类型检查           |
-| `pnpm test`         | 运行各包测试                        |
+| 命令                | 作用                              |
+| ------------------- | --------------------------------- |
+| `pnpm typecheck`    | 全仓库 TypeScript 类型检查        |
+| `pnpm test`         | 运行各包测试                      |
 | `pnpm lint`         | ESLint 检查（`--max-warnings=0`） |
-| `pnpm format`       | Prettier 格式化写入                |
+| `pnpm format`       | Prettier 格式化写入               |
 | `pnpm format:check` | Prettier 格式检查                 |
-| `pnpm docs:build`   | 构建文档站点                        |
-| `pnpm docs:preview` | 预览已构建的文档站点                    |
+| `pnpm docs:build`   | 构建文档站点                      |
+| `pnpm docs:preview` | 预览已构建的文档站点              |
 
-***
+---
 
 ## 许可证
 

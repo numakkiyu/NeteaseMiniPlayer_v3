@@ -104,9 +104,15 @@ describe("融合色板结构", () => {
 
   it("每套都同时具备明暗两份种子", () => {
     for (const preset of palettePresets) {
-      expect(preset.light.hue, `${preset.id}.light.hue`).toBeGreaterThanOrEqual(0);
-      expect(preset.light.chroma, `${preset.id}.light.chroma`).toBeGreaterThan(0);
-      expect(preset.dark.hue, `${preset.id}.dark.hue`).toBeGreaterThanOrEqual(0);
+      expect(preset.light.hue, `${preset.id}.light.hue`).toBeGreaterThanOrEqual(
+        0,
+      );
+      expect(preset.light.chroma, `${preset.id}.light.chroma`).toBeGreaterThan(
+        0,
+      );
+      expect(preset.dark.hue, `${preset.id}.dark.hue`).toBeGreaterThanOrEqual(
+        0,
+      );
       expect(preset.dark.chroma, `${preset.id}.dark.chroma`).toBeGreaterThan(0);
     }
   });
@@ -154,15 +160,21 @@ describe("色板派生（明暗双版）", () => {
         const derived = derivePalette(preset, scheme);
         const tag = `${preset.id}/${scheme}`;
         expect(derived.contrast.text, `${tag} 正文`).toBeGreaterThanOrEqual(7);
-        expect(derived.contrast.muted, `${tag} 次要`).toBeGreaterThanOrEqual(4.5);
-        expect(derived.contrast.accent, `${tag} 强调`).toBeGreaterThanOrEqual(3);
+        expect(derived.contrast.muted, `${tag} 次要`).toBeGreaterThanOrEqual(
+          4.5,
+        );
+        expect(derived.contrast.accent, `${tag} 强调`).toBeGreaterThanOrEqual(
+          3,
+        );
       }
     }
   });
 
   it("明亮系底色偏亮，暗色系底色偏暗", () => {
     for (const preset of palettePresets) {
-      const light = hexToOklch(derivePalette(preset, "light").variables.surface)!;
+      const light = hexToOklch(
+        derivePalette(preset, "light").variables.surface,
+      )!;
       const dark = hexToOklch(derivePalette(preset, "dark").variables.surface)!;
       expect(light.l, `${preset.id} 明亮系底色`).toBeGreaterThan(0.9);
       expect(dark.l, `${preset.id} 暗色系底色`).toBeLessThan(0.35);
@@ -171,7 +183,9 @@ describe("色板派生（明暗双版）", () => {
 
   it("同一套色板在两种明暗下主色亮度不同", () => {
     for (const preset of palettePresets) {
-      const light = hexToOklch(derivePalette(preset, "light").variables.accent)!;
+      const light = hexToOklch(
+        derivePalette(preset, "light").variables.accent,
+      )!;
       const dark = hexToOklch(derivePalette(preset, "dark").variables.accent)!;
       expect(dark.l, preset.id).toBeGreaterThan(light.l);
     }
@@ -192,7 +206,11 @@ describe("色板派生（明暗双版）", () => {
         const derived = derivePalette(preset, scheme);
         const seed = getPaletteSeed(preset, scheme);
         const rgb = (value: string) =>
-          value.match(/\d+/g)!.slice(0, 3).map(Number) as [number, number, number];
+          value.match(/\d+/g)!.slice(0, 3).map(Number) as [
+            number,
+            number,
+            number,
+          ];
 
         const h3 = rgbToOklch(rgb(derived.variables["flow-3"])).h;
         const h4 = rgbToOklch(rgb(derived.variables["flow-4"])).h;

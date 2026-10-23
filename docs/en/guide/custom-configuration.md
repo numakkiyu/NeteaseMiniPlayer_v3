@@ -17,32 +17,32 @@ This page summarizes the configuration model for both product lines. NMPv3 owns 
 
 Common attributes:
 
-| Attribute      | Description                   |
-| -------------- | ----------------------------- |
-| `song-id`      | NetEase song ID               |
-| `playlist-id`  | NetEase playlist ID           |
-| `api-base-url` | API proxy URL                 |
-| `theme`        | `auto`, `light`, or `dark`    |
-| `layout`       | `compact`, `mini`, or `dock`  |
-| `position`     | `static` or a corner position |
-| `embed-mode`   | `article` or `page`           |
-| `scale`        | Size level `1`–`10` or `auto` |
-| `palette`      | Palette id, see below         |
-| `palette-follow-host` | Borrow the host page hue |
-| `lyric`        | Show lyrics                   |
-| `playlist`     | Show playlist control         |
-| `remember`     | Persist player state          |
+| Attribute             | Description                   |
+| --------------------- | ----------------------------- |
+| `song-id`             | NetEase song ID               |
+| `playlist-id`         | NetEase playlist ID           |
+| `api-base-url`        | API proxy URL                 |
+| `theme`               | `auto`, `light`, or `dark`    |
+| `layout`              | `compact`, `mini`, or `dock`  |
+| `position`            | `static` or a corner position |
+| `embed-mode`          | `article` or `page`           |
+| `scale`               | Size level `1`–`10` or `auto` |
+| `palette`             | Palette id, see below         |
+| `palette-follow-host` | Borrow the host page hue      |
+| `lyric`               | Show lyrics                   |
+| `playlist`            | Show playlist control         |
+| `remember`            | Persist player state          |
 
 ## NMPv3 scaling
 
 The player scales as a whole: width, height, font size, cover, icons and radius all change
 together, so it never looks stretched.
 
-| Value  | Ratio | Width (compact layout)   |
-| ------ | ----- | ------------------------ |
-| `1`    | 0.6×  | 252px                    |
-| `5`    | 1.0×  | 420px (default)          |
-| `10`   | 1.5×  | 630px                    |
+| Value  | Ratio     | Width (compact layout)               |
+| ------ | --------- | ------------------------------------ |
+| `1`    | 0.6×      | 252px                                |
+| `5`    | 1.0×      | 420px (default)                      |
+| `10`   | 1.5×      | 630px                                |
 | `auto` | Same as 5 | 420px, shrinks in a narrow container |
 
 ```html
@@ -60,13 +60,13 @@ overflow either — it is simply capped to the container width.
 Six palettes ship with the player. Each carries both a light and a dark seed, so switching
 the page between light and dark picks the matching variant automatically.
 
-| Name  | Value   | Accent               |
-| ----- | ------- | -------------------- |
-| Dawn  | `dawn`  | Orange-red, default  |
-| Jade  | `jade`  | Green                |
-| Azure | `azure` | Blue                 |
-| Amber | `amber` | Yellow               |
-| Iris  | `iris`  | Purple               |
+| Name  | Value   | Accent                   |
+| ----- | ------- | ------------------------ |
+| Dawn  | `dawn`  | Orange-red, default      |
+| Jade  | `jade`  | Green                    |
+| Azure | `azure` | Blue                     |
+| Amber | `amber` | Yellow                   |
+| Iris  | `iris`  | Purple                   |
 | Mono  | `mono`  | Near-neutral, neumorphic |
 
 ```html

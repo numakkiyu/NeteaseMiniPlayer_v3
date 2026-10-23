@@ -722,9 +722,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.morphTimer = null;
     }
 
-    const rawScale = getComputedStyle(root).getPropertyValue(
-      "--nmpv3-slow-mo",
-    );
+    const rawScale = getComputedStyle(root).getPropertyValue("--nmpv3-slow-mo");
     const slowMo = Number.parseFloat(rawScale);
     const total = 300 * (Number.isFinite(slowMo) && slowMo > 0 ? slowMo : 1);
 
@@ -736,7 +734,10 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   }
 
   private warnIfFixedContextBroken(): void {
-    if (this.config.position === "static" || this.config.embedMode === "article") {
+    if (
+      this.config.position === "static" ||
+      this.config.embedMode === "article"
+    ) {
       return;
     }
 
@@ -1299,10 +1300,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         return 0;
       }
 
-      return Math.max(
-        0,
-        Math.min(1, (event.clientX - rect.left) / rect.width),
-      );
+      return Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
     };
 
     const schedulePreview = () => {
@@ -2713,7 +2711,8 @@ function clampIndex(index: number, songs: readonly NMPv3Song[]): number {
   return Math.max(0, Math.min(songs.length - 1, Math.trunc(index)));
 }
 
-function isEditableTarget(target: EventTarget | null): boolean {  if (!(target instanceof HTMLElement)) {
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
     return false;
   }
 

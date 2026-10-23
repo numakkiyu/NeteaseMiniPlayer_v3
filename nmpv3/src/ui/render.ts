@@ -99,10 +99,7 @@ export function renderPlayerShell(
 
   const coverWrap = element("button", c.coverButton) as HTMLButtonElement;
   coverWrap.type = "button";
-  coverWrap.setAttribute(
-    "aria-label",
-    "在网易云音乐打开当前歌曲",
-  );
+  coverWrap.setAttribute("aria-label", "在网易云音乐打开当前歌曲");
 
   const cover = document.createElement("img");
   cover.className = c.cover;
@@ -150,11 +147,7 @@ export function renderPlayerShell(
   body.append(title, artist, meta, lyrics);
 
   const controls = element("div", c.controls);
-  const previousButton = iconButton(
-    c.previousButton,
-    "上一首",
-    icons.previous,
-  );
+  const previousButton = iconButton(c.previousButton, "上一首", icons.previous);
   const playButton = iconButton(c.playButton, "播放", icons.play);
   const playIcon = playButton.querySelector("span") as HTMLElement;
   const nextButton = iconButton(c.nextButton, "下一首", icons.next);
@@ -188,16 +181,8 @@ export function renderPlayerShell(
     icons.lyrics,
   );
   const modeButton = iconButton(c.modeButton, "切换播放模式", icons.loop);
-  const playlistButton = iconButton(
-    c.playlistToggle,
-    "显示歌单",
-    icons.list,
-  );
-  const minimizeButton = iconButton(
-    c.minimizeButton,
-    "收起",
-    icons.minimize,
-  );
+  const playlistButton = iconButton(c.playlistToggle, "显示歌单", icons.list);
+  const minimizeButton = iconButton(c.minimizeButton, "收起", icons.minimize);
   tools.append(
     volume,
     lyricsButton,
@@ -342,10 +327,7 @@ export function updatePlayerView(
   syncMarquee(elements.lyricTranslation, elements.lyricTranslationText, "x");
   elements.lyricsButton.classList.toggle(sc.active, state.showLyrics);
 
-  setIconHtml(
-    elements.playIcon,
-    state.isPlaying ? icons.pause : icons.play,
-  );
+  setIconHtml(elements.playIcon, state.isPlaying ? icons.pause : icons.play);
   elements.playButton.setAttribute(
     "aria-label",
     state.isPlaying ? "暂停" : "播放",
@@ -697,7 +679,8 @@ function progressPercent(currentTime: number, duration: number): number {
   return Math.max(0, Math.min(100, (currentTime / duration) * 100));
 }
 
-export function formatTime(time: number): string {  if (!Number.isFinite(time) || time <= 0) {
+export function formatTime(time: number): string {
+  if (!Number.isFinite(time) || time <= 0) {
     return "0:00";
   }
 
@@ -757,7 +740,9 @@ function playModeIcon(mode: NMPv3PlayMode): string {
  * 原始信息不丢弃，放到状态条的 title 属性里，鼠标悬停或读屏仍可获取。
  * 匹配不到时统一给「加载失败，请稍后重试」，不暴露内部实现细节。
  */
-export function friendlyErrorMessage(message: string | null | undefined): string {
+export function friendlyErrorMessage(
+  message: string | null | undefined,
+): string {
   const raw = (message ?? "").trim();
 
   if (!raw) {
@@ -768,7 +753,9 @@ export function friendlyErrorMessage(message: string | null | undefined): string
     return "歌曲不存在或已下架";
   }
 
-  if (/failed to fetch|networkerror|network error|timeout|timed out/i.test(raw)) {
+  if (
+    /failed to fetch|networkerror|network error|timeout|timed out/i.test(raw)
+  ) {
     return "网络连接失败，请稍后重试";
   }
 

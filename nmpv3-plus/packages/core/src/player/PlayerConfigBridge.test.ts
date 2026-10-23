@@ -56,7 +56,9 @@ describe("patchPlayerConfig", () => {
     const updateConfig = vi.fn(async () => {});
     const player = createPlayer({ updateConfig });
 
-    await expect(patchPlayerConfig(player, { volume: 0.5 })).resolves.toBe(true);
+    await expect(patchPlayerConfig(player, { volume: 0.5 })).resolves.toBe(
+      true,
+    );
     expect(updateConfig).toHaveBeenCalledWith({ volume: 0.5 });
   });
 

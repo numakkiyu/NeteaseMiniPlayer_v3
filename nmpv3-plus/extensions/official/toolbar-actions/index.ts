@@ -15,7 +15,14 @@ import type {
  * 把它当模板看，删掉不需要的部分就是自己的插件。
  */
 
-const PALETTE_CYCLE = ["dawn", "jade", "azure", "amber", "iris", "mono"] as const;
+const PALETTE_CYCLE = [
+  "dawn",
+  "jade",
+  "azure",
+  "amber",
+  "iris",
+  "mono",
+] as const;
 const SCALE_MIN = 1;
 const SCALE_MAX = 10;
 

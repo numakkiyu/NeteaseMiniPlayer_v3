@@ -13,7 +13,9 @@ const DARK_THRESHOLD = 0.38;
 export function colorLuminance(color: string): number | null {
   const match = color
     .trim()
-    .match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?\s*\)$/i);
+    .match(
+      /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?\s*\)$/i,
+    );
 
   if (!match) {
     return null;
@@ -33,9 +35,7 @@ export function colorLuminance(color: string): number | null {
       : ((channel + 0.055) / 1.055) ** 2.4;
   });
 
-  return (
-    0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
-  );
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
 }
 
 /** 宿主背景采样结果 */
@@ -100,7 +100,9 @@ export function prefersDark(): boolean {
  * 优先级：宿主实际背景亮度 > 系统偏好
  * 宿主背景接近中灰（0.38-0.62）时无法判断，回退到系统偏好
  */
-export function resolveAutoTheme(target: HTMLElement | null): NMPv3ResolvedTheme {
+export function resolveAutoTheme(
+  target: HTMLElement | null,
+): NMPv3ResolvedTheme {
   const luminance = sampleHostLuminance(target);
 
   if (luminance == null) {
@@ -122,9 +124,7 @@ export function resolveAutoTheme(target: HTMLElement | null): NMPv3ResolvedTheme
  * 监听系统明暗变化，返回解绑函数
  * 老浏览器没有 addEventListener 时回退到 addListener
  */
-export function watchSystemTheme(
-  handler: () => void,
-): () => void {
+export function watchSystemTheme(handler: () => void): () => void {
   const browserWindow = getWindow();
 
   if (!browserWindow || typeof browserWindow.matchMedia !== "function") {

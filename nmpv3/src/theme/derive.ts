@@ -140,7 +140,12 @@ export function derivePalette(
   faint = ensureContrast(faint, surface, CONTRAST_TARGETS.faint, isLight);
 
   // 强调色若对比不足（浅底上的亮色最容易踩到），同样只压亮度
-  const accentSafe = ensureContrast(accent, surface, CONTRAST_TARGETS.accent, isLight);
+  const accentSafe = ensureContrast(
+    accent,
+    surface,
+    CONTRAST_TARGETS.accent,
+    isLight,
+  );
 
   /* ---------- 阴影 ---------- */
   const shadowBoost = isNeumorphic ? 1.35 : 1;

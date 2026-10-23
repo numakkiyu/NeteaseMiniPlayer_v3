@@ -216,7 +216,7 @@ function normalizePaletteFollowHost(value: unknown): boolean {
 /** 从 HTML 属性读取色板 id */
 function paletteAttribute(element: HTMLElement): NMPv3PaletteId | undefined {
   const raw = element.getAttribute("palette") ?? element.dataset.palette;
-  return raw ? normalizePaletteAlias(raw) ?? undefined : undefined;
+  return raw ? (normalizePaletteAlias(raw) ?? undefined) : undefined;
 }
 
 /** 从 HTML 属性读取「是否跟随宿主」 */
