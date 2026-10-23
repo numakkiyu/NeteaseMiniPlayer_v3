@@ -435,6 +435,17 @@ export class NMPv3PlayerInstance implements NMPv3Player {
 
     this.config = next;
 
+    /*
+     * 配置已落到实例上，先通知订阅者再执行副作用：
+     * 订阅方（如 NMPv3+ 插件）读到的是最新配置，不必等待主题重算完成。
+     */
+    emit(this.target, "nmpv3:configchange", {
+      player: this,
+      config: next,
+      previous,
+      changes: config,
+    });
+
     if (apiChanged) {
       this.api = new NeteaseApiClient(this.config.apiBaseUrl);
     }

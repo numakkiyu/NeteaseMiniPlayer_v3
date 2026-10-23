@@ -21,6 +21,23 @@ export const officialNMPv3PlusExtensionManifests: NMPv3PlusExtensionManifest[] =
       },
     },
     {
+      name: "nmpv3-plus-extension-toolbar-actions",
+      displayName: "Toolbar Actions",
+      version: "3.0.2",
+      author: "BHCN STUDIO",
+      entry: "./index.ts",
+      type: "utility",
+      description:
+        "Reference extension: adds palette and scale buttons to the toolbar, exposes commands, and binds a shortcut.",
+      configSchema: {
+        shortcuts: {
+          type: "boolean",
+          default: true,
+          description: "Register the ctrl+shift+p shortcut.",
+        },
+      },
+    },
+    {
       name: "nmpv3-plus-extension-cover-color",
       displayName: "Cover Color",
       version: "1.0.0",

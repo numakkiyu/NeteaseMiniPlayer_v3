@@ -101,7 +101,7 @@ describe("official NMPv3+ extensions", () => {
       },
     ];
 
-    expect(officialNMPv3PlusExtensionManifests).toHaveLength(9);
+    expect(officialNMPv3PlusExtensionManifests).toHaveLength(10);
 
     for (const item of pluginPackages) {
       expect(item.manifest).toBeDefined();

@@ -1,6 +1,6 @@
 {
   "name": "netease-mini-player-v3",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "type": "module",
   "description": "Lightweight single-JS NetEase Cloud Music player.",
   "license": "Apache-2.0",

@@ -1,4 +1,9 @@
 export * from "./types";
+export {
+  NMPV3_PLUS_API_MAJOR,
+  NMPV3_PLUS_API_VERSION,
+  isApiVersionCompatible,
+} from "./version";
 export * from "./app/NMPv3PlusApp";
 export * from "./bridge/HostBridge";
 export * from "./event/EventBus";

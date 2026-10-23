@@ -3,6 +3,12 @@ import { NMPv3PlusEventBus } from "../event/EventBus";
 import { NMPv3PlusConsoleLogger } from "../logger/Logger";
 import { NMPv3PlusLyricsAdapterManager } from "../lyric/LyricsAdapterManager";
 import { NMPv3PlusPluginManager } from "../plugin/PluginManager";
+import { createPlayerConfigChannel } from "../player/PlayerConfigBridge";
+import { NMPv3PlusSlotRegistry } from "../slot/SlotRegistry";
+import {
+  NMPv3PlusCommandRegistry,
+  NMPv3PlusShortcutRegistry,
+} from "../commands/CommandRegistry";
 import { NMPv3PlusSkinEngine } from "../skin/SkinEngine";
 import { NMPv3PlusMusicSourceManager } from "../source/MusicSourceManager";
 import { NMPv3PlusMemoryStore } from "../store/MemoryStore";
@@ -24,7 +30,29 @@ import type {
  * NMPv3+ runtime core. Composes events, store, sources, lyrics, skins, and
  * plugins behind one start/installPlugin/applySkin/bridgeHost API surface.
  */
+/**
+ * 快捷键监听目标
+ *
+ * 有播放器根节点就监听根节点，避免抢走整页的键盘事件；
+ * 没有的话退回 document，由注册表内部的目标判空逻辑兜住。
+ */
+function resolveKeydownTarget(
+  root: HTMLElement | null,
+): Document | HTMLElement | null {
+  if (root) {
+    return root;
+  }
+
+  return typeof document === "undefined" ? null : document;
+}
+
 export class NMPv3PlusRuntime {
+  /** 插槽注册表，插件通过 ctx.slot 使用 */
+  readonly slots: NMPv3PlusSlotRegistry;
+  /** 命令注册表，插件通过 ctx.command 使用 */
+  readonly commands: NMPv3PlusCommandRegistry;
+  /** 快捷键注册表，插件通过 ctx.shortcut 使用 */
+  readonly shortcuts: NMPv3PlusShortcutRegistry;
   readonly events = new NMPv3PlusEventBus();
   readonly store;
   readonly logger;
@@ -39,10 +67,18 @@ export class NMPv3PlusRuntime {
     this.store = options.store ?? new NMPv3PlusMemoryStore();
     this.logger =
       options.logger ?? new NMPv3PlusConsoleLogger(options.debug ?? true);
+    this.slots = new NMPv3PlusSlotRegistry(this.logger);
+    this.commands = new NMPv3PlusCommandRegistry(this.logger);
+    this.shortcuts = new NMPv3PlusShortcutRegistry(this.logger);
     this.plugins = new NMPv3PlusPluginManager(
       () => this.createPluginContext(),
       this.logger,
+      options.pluginTimeout,
     );
+
+    // 插槽与快捷键都挂在播放器根节点上，先绑定再装插件
+    this.slots.attach(options.root ?? null);
+    this.shortcuts.attach(resolveKeydownTarget(options.root ?? null));
 
     options.sourceAdapters?.forEach((adapter) => this.source.register(adapter));
     options.lyricsAdapters?.forEach((adapter) => this.lyrics.register(adapter));
@@ -159,6 +195,29 @@ export class NMPv3PlusRuntime {
       emit: (event, payload) => this.emit(event, payload),
       getPart: (name) => this.getPart(name),
       setToken: (name, value) => this.setToken(name, value),
+      config: createPlayerConfigChannel({
+        getPlayer: () => this.options.player ?? null,
+        getEventTarget: () => this.options.root ?? null,
+      }),
+      slot: {
+        register: (name, renderer, options) =>
+          this.slots.register(name, renderer, options),
+        getContainer: (name) => this.slots.getContainer(name),
+        list: () => this.slots.list(),
+      },
+      command: {
+        register: (command) => this.commands.register(command),
+        execute: (id, arg) => this.commands.execute(id, arg),
+        list: () =>
+          this.commands.list().map((command) => ({
+            id: command.id,
+            title: command.title,
+          })),
+      },
+      shortcut: {
+        register: (binding) => this.shortcuts.register(binding),
+        list: () => this.shortcuts.list(),
+      },
       logger: this.logger,
     };
   }

@@ -50,25 +50,41 @@ export class NMPv3PlusSkinEngine {
     this.clear();
     const previousTokens = new Map<string, string>();
 
-    for (const [token, value] of Object.entries(skin.tokens ?? {})) {
-      previousTokens.set(token, target.style.getPropertyValue(token));
-      target.style.setProperty(token, value);
+    /*
+     * 应用皮肤时任何一步失败（token 非法、className 冲突、CSS 注入被拦截），
+     * 都把已经改过的 token 还原，保证宿主不会停在「改了一半」的状态。
+     */
+    try {
+      for (const [token, value] of Object.entries(skin.tokens ?? {})) {
+        previousTokens.set(token, target.style.getPropertyValue(token));
+        target.style.setProperty(token, value);
+      }
+
+      if (skin.className) {
+        target.classList.add(skin.className);
+      }
+
+      target.dataset.nmpv3PlusSkin = skin.name;
+      const styleElement = this.injectCss(skin, target);
+
+      this.applied = {
+        skin,
+        target,
+        previousTokens,
+        styleElement,
+      };
+
+      return skin;
+    } catch (error) {
+      restoreTokens(target, previousTokens);
+
+      if (skin.className) {
+        target.classList.remove(skin.className);
+      }
+
+      delete target.dataset.nmpv3PlusSkin;
+      throw error;
     }
-
-    if (skin.className) {
-      target.classList.add(skin.className);
-    }
-
-    target.dataset.nmpv3PlusSkin = skin.name;
-    const styleElement = this.injectCss(skin, target);
-    this.applied = {
-      skin,
-      target,
-      previousTokens,
-      styleElement,
-    };
-
-    return skin;
   }
 
   clear(): void {
@@ -106,8 +122,29 @@ export class NMPv3PlusSkinEngine {
     const styleElement = target.ownerDocument.createElement("style");
     styleElement.dataset.nmpv3PlusSkin = skin.name;
     styleElement.textContent = skin.cssText;
-    target.ownerDocument.head.append(styleElement);
+
+    try {
+      target.ownerDocument.head.append(styleElement);
+    } catch {
+      // 注入失败不影响 token 与 class 生效，返回 undefined 表示没有 style 节点可回收
+      return undefined;
+    }
+
     return styleElement;
+  }
+}
+
+/** 把一组 token 还原成应用前的取值 */
+function restoreTokens(
+  target: HTMLElement,
+  previousTokens: Map<string, string>,
+): void {
+  for (const [token, previousValue] of previousTokens) {
+    if (previousValue !== "") {
+      target.style.setProperty(token, previousValue);
+    } else {
+      target.style.removeProperty(token);
+    }
   }
 }
 

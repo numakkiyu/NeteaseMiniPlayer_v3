@@ -210,6 +210,13 @@ function createPluginContextStub(): NMPv3PlusPluginContext & {
     setToken(name: string, value: string) {
       tokens.set(name, value);
     },
+    config: {
+      get: () => ({}),
+      patch: async () => {},
+      subscribe: () => () => {},
+    },    slot: { register: vi.fn(() => () => {}), getContainer: vi.fn(), list: vi.fn(() => []) },
+    command: { register: vi.fn(() => () => {}), execute: vi.fn(), list: vi.fn(() => []) },
+    shortcut: { register: vi.fn(() => () => {}), list: vi.fn(() => []) },
     logger: {
       info: vi.fn(),
       warn: vi.fn(),

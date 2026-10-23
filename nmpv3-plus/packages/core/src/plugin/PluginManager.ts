@@ -25,6 +25,8 @@ export class NMPv3PlusPluginManager {
   constructor(
     private readonly createContext: () => NMPv3PlusPluginContext,
     private readonly logger: NMPv3PlusLogger,
+    /** setup 超时（毫秒），0 表示不限制 */
+    private readonly setupTimeoutMs = 5000,
   ) {}
 
   async installAll(
@@ -62,7 +64,7 @@ export class NMPv3PlusPluginManager {
     this.plugins.set(plugin.name, record);
 
     try {
-      const cleanup = await plugin.setup(this.createContext());
+      const cleanup = await this.runSetup(plugin);
       if (cleanup) {
         record.cleanup = cleanup;
       }
@@ -72,6 +74,42 @@ export class NMPv3PlusPluginManager {
       record.error = error;
       this.logger.error(`Plugin setup failed: ${plugin.name}`, error);
       throw error;
+    }
+  }
+
+  /**
+   * 执行插件 setup，可带超时
+   *
+   * 超时只用于防住「插件永远不 resolve」导致整个启动卡死，
+   * 超时后插件的副作用由调用方的回滚逻辑处理。
+   */
+  private async runSetup(
+    plugin: NMPv3PlusPlugin,
+  ): Promise<void | NMPv3PlusPluginCleanup> {
+    const running = Promise.resolve(plugin.setup(this.createContext()));
+
+    if (!this.setupTimeoutMs || this.setupTimeoutMs <= 0) {
+      return running;
+    }
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        reject(
+          new Error(
+            `NMPv3+ plugin setup timeout after ${this.setupTimeoutMs}ms: ${plugin.name}`,
+          ),
+        );
+      }, this.setupTimeoutMs);
+    });
+
+    try {
+      return await Promise.race([running, timeout]);
+    } finally {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
     }
   }
 

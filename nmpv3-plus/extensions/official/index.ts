@@ -7,4 +7,5 @@ export * from "./local-lyrics";
 export * from "./manifests";
 export * from "./media-session";
 export * from "./pwa-cache";
+export * from "./toolbar-actions";
 export * from "./visualizer";

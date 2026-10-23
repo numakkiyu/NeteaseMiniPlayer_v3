@@ -31,41 +31,128 @@ export class NMPv3PlusMusicSourceManager {
     return this.sortedAdapters();
   }
 
+  /**
+   * 判断适配器是否接手某个输入
+   *
+   * canHandle 由第三方实现，抛错一律视为「不接手」，
+   * 这样一个写坏的适配器不会拖垮整个解析链。
+   */
+  private canHandleSafely(
+    adapter: NMPv3PlusSourceAdapter,
+    input: NMPv3PlusSourceInput,
+  ): boolean {
+    try {
+      return Boolean(adapter.canHandle(input));
+    } catch {
+      return false;
+    }
+  }
+
   resolve(input: NMPv3PlusSourceInput): NMPv3PlusSourceAdapter | null {
     if (input.source) {
       const adapter = this.adapters.get(input.source);
-      if (adapter?.canHandle(input)) {
+      if (adapter && this.canHandleSafely(adapter, input)) {
         return adapter;
       }
     }
 
     return (
-      this.sortedAdapters().find((adapter) => adapter.canHandle(input)) ?? null
+      this.sortedAdapters().find((adapter) =>
+        this.canHandleSafely(adapter, input),
+      ) ?? null
     );
   }
 
-  async loadSong(input: NMPv3PlusSourceInput): Promise<NMPv3PlusSong> {
-    const adapter = this.resolve(input);
+  /**
+   * 列出所有可以接手该输入的适配器，按「显式指定 > 数值优先级」排序
+   *
+   * 用于失败降级：前一个适配器抛错时接着试下一个。
+   */
+  private candidatesFor(
+    input: NMPv3PlusSourceInput,
+    method: "getSong" | "getPlaylist",
+  ): NMPv3PlusSourceAdapter[] {
+    const ordered: NMPv3PlusSourceAdapter[] = [];
+    const seen = new Set<string>();
 
-    if (!adapter?.getSong) {
+    const push = (adapter: NMPv3PlusSourceAdapter | undefined) => {
+      if (!adapter || seen.has(adapter.name)) {
+        return;
+      }
+      if (typeof adapter[method] !== "function") {
+        return;
+      }
+      if (!this.canHandleSafely(adapter, input)) {
+        return;
+      }
+      seen.add(adapter.name);
+      ordered.push(adapter);
+    };
+
+    if (input.source) {
+      push(this.adapters.get(input.source));
+    }
+
+    for (const adapter of this.sortedAdapters()) {
+      push(adapter);
+    }
+
+    return ordered;
+  }
+
+  async loadSong(input: NMPv3PlusSourceInput): Promise<NMPv3PlusSong> {
+    const candidates = this.candidatesFor(input, "getSong");
+
+    if (candidates.length === 0) {
       throw new Error(
         `NMPv3+ cannot load song from source: ${input.source ?? "unknown"}`,
       );
     }
 
-    return adapter.getSong(input);
+    let lastError: unknown = null;
+
+    for (const adapter of candidates) {
+      try {
+        return await adapter.getSong!(input);
+      } catch (error) {
+        // 记录后继续尝试下一个适配器，全部失败才把最后一个错误抛给调用方
+        lastError = error;
+      }
+    }
+
+    throw lastError instanceof Error
+      ? lastError
+      : new Error(
+          `NMPv3+ cannot load song from source: ${input.source ?? "unknown"}`,
+        );
   }
 
-  async loadPlaylist(input: NMPv3PlusSourceInput): Promise<NMPv3PlusPlaylist> {
-    const adapter = this.resolve(input);
+  async loadPlaylist(
+    input: NMPv3PlusSourceInput,
+  ): Promise<NMPv3PlusPlaylist> {
+    const candidates = this.candidatesFor(input, "getPlaylist");
 
-    if (!adapter?.getPlaylist) {
+    if (candidates.length === 0) {
       throw new Error(
         `NMPv3+ cannot load playlist from source: ${input.source ?? "unknown"}`,
       );
     }
 
-    return adapter.getPlaylist(input);
+    let lastError: unknown = null;
+
+    for (const adapter of candidates) {
+      try {
+        return await adapter.getPlaylist!(input);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError instanceof Error
+      ? lastError
+      : new Error(
+          `NMPv3+ cannot load playlist from source: ${input.source ?? "unknown"}`,
+        );
   }
 
   private sortedAdapters(): NMPv3PlusSourceAdapter[] {
