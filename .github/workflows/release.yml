@@ -59,7 +59,8 @@ jobs:
       - name: Publish npm packages
         env:
           VERSION: ${{ steps.version.outputs.version }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # 同时兼容 NPM_TOKEN 与 NPM 两种命名，任一配置即可
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN || secrets.NPM }}
         shell: bash
         run: |
           if [ -n "${NPM_TOKEN:-}" ]; then
