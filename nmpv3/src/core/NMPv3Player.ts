@@ -1149,6 +1149,13 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       return null;
     }
 
+    /*
+     * 换到新曲目前，先丢弃上一首的进度记录。
+     * 切歌意味着用户主动离开了那首，回头再放应当从头开始；
+     * 暂停/离开页面仍然保留进度，由 persistProgress 负责。
+     */
+    this.clearProgress();
+
     this.currentSong = song;
     this.currentTime = 0;
     this.duration = song.duration ? song.duration / 1000 : 0;
@@ -1179,6 +1186,12 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         player: this,
         song: this.currentSong,
       });
+
+      /*
+       * 切歌后立刻把「当前是哪一首」写进存储。
+       * 之前只在配置变更、最小化等动作时才落盘，导致换页后回到的是旧歌。
+       */
+      this.persistSettings();
 
       if (shouldResume) {
         await this.play();
