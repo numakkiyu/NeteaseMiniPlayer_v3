@@ -108,6 +108,20 @@ export function renderPlayerShell(
   cover.className = c.cover;
   cover.alt = "";
   cover.loading = "lazy";
+  /*
+   * 封面加载失败兜底
+   * display:none 的 img 触发 error 后浏览器会显示破图图标，
+   * 这里标记 dataset.failed 让 updatePlayerView 切到 NMP 占位块。
+   */
+  cover.addEventListener("error", () => {
+    cover.dataset.failed = "true";
+    // 立即切到占位块，不等下一次 updatePlayerView
+    cover.hidden = true;
+    fallbackCover.hidden = false;
+  });
+  cover.addEventListener("load", () => {
+    delete cover.dataset.failed;
+  });
 
   const fallbackCover = element("span", c.coverFallback);
   fallbackCover.textContent = "NMP";
@@ -296,10 +310,24 @@ export function updatePlayerView(
     playModeClassNames[state.playMode],
   );
   elements.modeBadge.hidden = isSingleSong;
-  elements.cover.hidden = !song?.picUrl;
-  elements.fallbackCover.hidden = Boolean(song?.picUrl);
-  if (song?.picUrl && elements.cover.src !== song.picUrl) {
-    elements.cover.src = song.picUrl;
+  /*
+   * 封面显隐：
+   * - 没图 → 占位块
+   * - 有图但上一次加载失败（dataset.failed）→ 占位块
+   * - 换了新地址则先清掉失败标记，给它一次重试机会
+   */
+  const coverFailed = elements.cover.dataset.failed === "true";
+  const picUrl = song?.picUrl ?? "";
+  const hasPic = picUrl.length > 0;
+
+  elements.cover.hidden = !hasPic || coverFailed;
+  elements.fallbackCover.hidden = hasPic && !coverFailed;
+
+  if (hasPic && elements.cover.src !== picUrl) {
+    delete elements.cover.dataset.failed;
+    elements.cover.hidden = false;
+    elements.fallbackCover.hidden = true;
+    elements.cover.src = picUrl;
   }
 
   const lyric = state.lyric;
