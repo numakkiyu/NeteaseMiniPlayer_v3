@@ -99,19 +99,67 @@ await runtime.installPlugin(createCoverColorPlugin());
 
 官方扩展包括：
 
-| 扩展               | 用途                              |
-| ------------------ | --------------------------------- |
-| `advanced-layouts` | 启用 `card` 和 `cover` 等高级布局 |
-| `visualizer`       | 添加播放频谱、波形或氛围视觉层    |
-| `cover-color`      | 从封面提取主色并写入 CSS 变量     |
-| `host-sync`        | 将播放状态同步到宿主页面          |
-| `cross-tab-sync`   | 在多个标签页之间同步选定事件      |
-| `media-session`    | 配置系统媒体控制信息              |
-| `custom-source`    | 注册自定义音乐来源                |
-| `local-lyrics`     | 注册本地或静态歌词                |
-| `pwa-cache`        | 为运行时和资源提供可选缓存        |
+| 扩展               | 用途                                 |
+| ------------------ | ------------------------------------ |
+| `advanced-layouts` | 启用 `card` 和 `cover` 等高级布局    |
+| `visualizer`       | 添加播放频谱、波形或氛围视觉层       |
+| `cover-color`      | 从封面提取主色并写入 CSS 变量        |
+| `host-sync`        | 将播放状态同步到宿主页面             |
+| `cross-tab-sync`   | 在多个标签页之间同步选定事件         |
+| `media-session`    | 配置系统媒体控制信息                 |
+| `custom-source`    | 注册自定义音乐来源                   |
+| `local-lyrics`     | 注册本地或静态歌词                   |
+| `pwa-cache`        | 为运行时和资源提供可选缓存           |
+| `toolbar-actions`  | 样板插件：工具栏按钮 + 命令 + 快捷键 |
 
 高级布局和视觉扩展需要显式启用，不会自动改变 NMPv3 的默认界面。
+
+### 插件能用的四个通道
+
+3.0.2 起，`setup(ctx)` 的上下文提供四组能力，插件不需要碰 DOM 结构也不需要 import 内部模块：
+
+| 通道           | 用途                                                     |
+| -------------- | -------------------------------------------------------- |
+| `ctx.config`   | `get()` 读快照、`patch()` 写配置、`subscribe()` 订阅变化 |
+| `ctx.slot`     | 往 `toolbar` / `overlay` / `panel` 或自定义位置挂 UI     |
+| `ctx.command`  | 注册可被宿主或其它插件按 id 调用的命令                   |
+| `ctx.shortcut` | 注册组合键，默认跳过输入框                               |
+
+```ts
+export default {
+  name: "my-plugin",
+  version: "1.0.0",
+  setup(ctx) {
+    const stopSlot = ctx.slot.register("toolbar", ({ container }) => {
+      const button = document.createElement("button");
+      button.textContent = "调色";
+      button.addEventListener("click", () => {
+        void ctx.config.patch({ palette: "iris" });
+      });
+      container.append(button);
+    });
+
+    const stopCommand = ctx.command.register({
+      id: "myplugin.cycle",
+      handler: () => ctx.config.patch({ palette: "jade" }),
+    });
+
+    const stopShortcut = ctx.shortcut.register({
+      keys: "ctrl+shift+p",
+      handler: () => void ctx.command.execute("myplugin.cycle"),
+    });
+
+    return () => {
+      stopSlot();
+      stopCommand();
+      stopShortcut();
+    };
+  },
+};
+```
+
+完整示例见 [`extensions/official/toolbar-actions`](./extensions/official/toolbar-actions/index.ts)，
+它同时用满四个通道，可以直接复制改。
 
 ```html
 <nmp-player

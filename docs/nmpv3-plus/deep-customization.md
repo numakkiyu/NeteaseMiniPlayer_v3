@@ -71,22 +71,140 @@ await runtime.loadPlaylist({
 
 ## 开发一个插件
 
-插件只处理行为。它不应该修改 NMPv3 基础包，也不应该假设宿主页面结构固定。
+插件只处理行为，不修改 NMPv3 基础包，也不假设宿主页面结构固定。
+
+### 上下文里有什么
+
+`setup(ctx)` 拿到的上下文分成四类能力：
+
+| 能力                        | 说明                                   |
+| --------------------------- | -------------------------------------- |
+| `ctx.player` / `ctx.audio`  | 底层播放器与 audio 元素，可能为 `null` |
+| `ctx.store`                 | 键值存储，带 `subscribe`               |
+| `ctx.source` / `ctx.lyrics` | 加载与注册来源、歌词适配器             |
+| `ctx.config`                | 读写播放器配置                         |
+| `ctx.slot`                  | 往播放器里挂自定义 UI                  |
+| `ctx.command`               | 注册可被外部调用的命令                 |
+| `ctx.shortcut`              | 注册快捷键                             |
+| `ctx.logger`                | 分级日志                               |
+
+`ctx.config` / `ctx.slot` / `ctx.command` / `ctx.shortcut` 是 3.0.2 新增的，
+老插件不实现也能继续运行。
+
+### 配置通道
+
+读写播放器配置，不需要自己去找实例、也不需要猜 DOM：
+
+```ts
+setup(ctx) {
+  // 当前快照，播放器不支持时返回空对象，不需要判空
+  const config = ctx.config.get();
+
+  // 写回播放器，失败返回 false，不抛错
+  await ctx.config.patch({ palette: "jade", paletteFollowHost: false });
+
+  // 订阅变化，返回取消订阅函数
+  const stop = ctx.config.subscribe((next, previous) => {
+    ctx.logger.info("palette", previous.palette, "→", next.palette);
+  });
+
+  return () => stop();
+}
+```
+
+明暗判定顺序是固定的：显式 `theme` > 宿主背景亮度 > 系统偏好。
+`paletteFollowHost` 只影响色相，不改变这个顺序。
+
+### 插槽
+
+`ctx.slot.register(name, renderer)` 往播放器里挂 DOM。内置三个位置：
+
+| 插槽名    | 位置                       |
+| --------- | -------------------------- |
+| `toolbar` | 底部工具按钮行前面         |
+| `overlay` | 覆盖整个播放器的浮层       |
+| `panel`   | 底部行下方，适合展开式面板 |
+
+其它名字会挂到播放器根节点末尾。同一插槽可以注册多个渲染器，`order` 小的靠前。
+
+```ts
+setup(ctx) {
+  return ctx.slot.register("toolbar", ({ container, onCleanup }) => {
+    const button = document.createElement("button");
+    button.textContent = "调色";
+    button.addEventListener("click", () => {
+      void ctx.config.patch({ palette: "iris" });
+    });
+
+    container.append(button);
+
+    // 卸载时执行，用来断开自己加的外部引用
+    onCleanup(() => button.remove());
+  });
+}
+```
+
+插槽只负责定位，不提供样式——外观由插件自己的 CSS 决定，
+这样官方皮肤和第三方插件不会互相覆盖。
+某个渲染器抛错只影响它自己，不会连带其它插槽。
+
+### 命令与快捷键
+
+命令给宿主页面或其它插件一个统一的调用入口，不需要互相 import：
+
+```ts
+setup(ctx) {
+  const disposeCommand = ctx.command.register({
+    id: "myplugin.setPalette",
+    title: "设置配色",
+    handler: (palette) => ctx.config.patch({ palette: String(palette) }),
+  });
+
+  const disposeShortcut = ctx.shortcut.register({
+    keys: "ctrl+shift+p",
+    handler: () => {
+      void ctx.command.execute("myplugin.setPalette", "jade");
+    },
+  });
+
+  return () => {
+    disposeCommand();
+    disposeShortcut();
+  };
+}
+```
+
+命令 id 重复注册会抛错，执行不存在的命令也会抛错，需要静默时用 `executeSafe`。
+快捷键默认跳过输入框，表格里填内容不会误触发；确实要在输入框里响应时传
+`allowInEditable: true`。
+
+### 生命周期
+
+`setup` 返回的函数在插件卸载时执行。需要清理的东西：事件监听、定时器、
+自己挂到播放器外面的 DOM。
+
+`setup` 默认有 5 秒超时（`pluginTimeout` 可调），防止某个插件永远不 resolve
+卡住整个启动。
+
+依赖与版本：
 
 ```ts
 export default {
-  name: "nmpv3-plus-extension-user-wave",
+  name: "my-plugin",
+  version: "1.0.0",
+  dependencies: { "official-toolbar-actions": "^3.0.0" },
   setup(ctx) {
-    const stop = ctx.on("songchange", ({ song }) => {
-      ctx.setToken("--nmpv3-user-wave-active", song ? "1" : "0");
-    });
-
-    return () => stop();
+    /* ... */
   },
 };
 ```
 
-插件需要清理自己注册的事件、定时器和 DOM 副作用。
+框架会按依赖排序安装，遇到循环依赖或版本不满足直接报错。
+插件想声明兼容的契约版本，参考 `isApiVersionCompatible`。
+
+完整的四通道示例见
+`nmpv3-plus/extensions/official/toolbar-actions/index.ts`，
+可以直接复制改。
 
 ## 开发一个皮肤
 

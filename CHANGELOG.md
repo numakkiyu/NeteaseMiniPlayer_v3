@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- NMPv3+ 3.0.2: plugin config channel (`ctx.config.get/patch/subscribe`) backed by a new `nmpv3:configchange` event from the base player
+- NMPv3+ 3.0.2: slot registry with built-in `toolbar`, `overlay` and `panel` positions, per-renderer failure isolation and cleanup on uninstall
+- NMPv3+ 3.0.2: command registry (`ctx.command`) and shortcut registry (`ctx.shortcut`) with editable-target protection
+- NMPv3+ 3.0.2: `apiVersion` contract plus `isApiVersionCompatible` so plugins can declare a compatible range
+- NMPv3+ 3.0.2: `toolbar-actions` reference extension demonstrating all four channels
+
 - Six fused color palettes (dawn / jade / azure / amber / iris / mono), each with light and dark seeds; legacy ids map to the new ones automatically
 - `palette` and `palette-follow-host` options to pick a palette and borrow the host page hue
 - Equal-ratio scaling with levels 1–10 and `auto`; narrow containers shrink the whole player instead of squashing it
@@ -20,6 +26,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- NMPv3+ 3.0.2: a failing source adapter now falls through to the next candidate instead of aborting the whole load
+- NMPv3+ 3.0.2: skin application rolls back tokens when any step fails, and CSS injection errors no longer propagate
+- NMPv3+ 3.0.2: plugin `setup` gets a 5 second timeout so a hung plugin cannot block startup
+- NMPv3+ 3.0.2: `parseShortcut` no longer treats a trailing modifier as a key, and editable-target detection works without a DOM global
+- Event dispatch is a no-op when the target is not an event target, instead of throwing mid-update
 - Mounting on `<body>` or `<html>` is rejected instead of clearing the host page
 - `destroy()` removes only the player's own root node
 - Re-initializing the same container now destroys the previous instance instead of leaving a zombie

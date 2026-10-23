@@ -15,6 +15,18 @@
 | `custom-source`    | 注册自定义来源                                    |
 | `local-lyrics`     | 注册本地或静态歌词                                |
 | `pwa-cache`        | 可选 Cache API 缓存能力                           |
+| `toolbar-actions`  | 样板插件，演示插槽、命令、快捷键与配置四个通道    |
+
+插件在 `setup(ctx)` 里拿到的能力：
+
+| 通道                        | 用途                        |
+| --------------------------- | --------------------------- |
+| `ctx.config`                | 读写播放器配置并订阅变化    |
+| `ctx.slot`                  | 往播放器固定位置挂自定义 UI |
+| `ctx.command`               | 注册可被外部调用的命令      |
+| `ctx.shortcut`              | 注册快捷键                  |
+| `ctx.source` / `ctx.lyrics` | 注册来源与歌词适配器        |
+| `ctx.store` / `ctx.logger`  | 键值存储与分级日志          |
 
 安装插件：
 
