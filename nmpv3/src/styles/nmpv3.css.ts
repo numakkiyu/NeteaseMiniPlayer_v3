@@ -53,9 +53,16 @@ nmp-player,
   --nmpv3-dock-ease-out: cubic-bezier(0.18, 0.9, 0.2, 1);
   --nmpv3-popout-ease: cubic-bezier(0.4, 0, 0.2, 1);
   /* 统一动效令牌：入场用 decelerate、退场用 accelerate、位移落定用 settle */
-  --nmpv3-motion-fast: 140ms;
-  --nmpv3-motion-base: 220ms;
-  --nmpv3-motion-slow: 300ms;
+  /*
+   * 动效时长。
+   * --nmpv3-slow-mo 故意不在这里定义：留给宿主或验证台从外部注入，
+   * 用 fallback 保证未设置时为 1。若在此定义会阻断从祖先继承，
+   * 导致「设到 :root 不生效、每新建实例都要重设」。
+   */
+  --nmpv3-motion-fast: calc(140ms * var(--nmpv3-slow-mo, 1));
+  --nmpv3-motion-base: calc(220ms * var(--nmpv3-slow-mo, 1));
+  --nmpv3-motion-slow: calc(300ms * var(--nmpv3-slow-mo, 1));
+  --nmpv3-motion-morph: calc(260ms * var(--nmpv3-slow-mo, 1));
   --nmpv3-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --nmpv3-ease-entrance: cubic-bezier(0.05, 0.7, 0.1, 1);
   --nmpv3-ease-exit: cubic-bezier(0.3, 0, 1, 1);
@@ -91,14 +98,16 @@ nmp-player,
     box-shadow var(--nmpv3-motion-base) ease,
     background-color var(--nmpv3-motion-base) ease,
     color var(--nmpv3-motion-base) ease,
-    border-radius var(--nmpv3-motion-base) var(--nmpv3-ease-standard),
-    /* 位置与尺寸使用同一时长与缓动：最小化时"边缩边靠边"，展开时"边向外靠边放大" */
-    left var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
-    top var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
-    width var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
-    height var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
-    min-height var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance),
-    padding var(--nmpv3-motion-slow) var(--nmpv3-ease-entrance);
+    border-radius var(--nmpv3-motion-morph) var(--nmpv3-ease-settle),
+    /*
+     * 卡片 ↔ 唱片：位置与尺寸同步过渡才能"边缩边靠"。
+     * 用 ease-settle 让收尾更柔和；不再过渡 min-height / padding，
+     * 少两个布局属性，每帧要重算的东西明显减少。
+     */
+    left var(--nmpv3-motion-morph) var(--nmpv3-ease-settle),
+    top var(--nmpv3-motion-morph) var(--nmpv3-ease-settle),
+    width var(--nmpv3-motion-morph) var(--nmpv3-ease-settle),
+    height var(--nmpv3-motion-morph) var(--nmpv3-ease-settle);
   /* 把重排范围限制在组件内部，尺寸变化不再引起宿主页面 reflow */
   contain: layout style;
 }
@@ -597,28 +606,33 @@ nmp-player,
   height: calc(19px * var(--nmpv3-s));
 }
 
+/*
+ * 底部一行：进度条组 + 音量 + 工具。
+ * 间距收一点，把省下的宽度让给进度条本身（太挤会误触、太松显散）。
+ */
 .nmpv3-bottom {
   display: grid;
   grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
   width: 100%;
   min-width: 0;
 }
 
 .nmpv3-progress {
   width: 100%;
-  min-width: 154px;
+  min-width: 150px;
   max-width: none;
   display: grid;
-  grid-template-columns: 38px minmax(72px, 1fr) 38px;
+  /* 时间列收窄 4px×2，轨道至少 90px，视觉上进度条明显变长 */
+  grid-template-columns: 34px minmax(90px, 1fr) 34px;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
 }
 
 .nmpv3-time {
   display: block;
-  min-width: 38px;
+  min-width: 34px;
   color: var(--nmpv3-faint);
   font-size: 10px;
   line-height: 1;
@@ -717,7 +731,7 @@ nmp-player,
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 7px;
+  gap: 6px;
   margin-left: auto;
 }
 
@@ -742,8 +756,8 @@ nmp-player,
 }
 
 .nmpv3-volume {
-  flex: 0 0 68px;
-  width: 68px;
+  flex: 0 0 60px;
+  width: 60px;
   display: grid;
   grid-template-columns: 14px minmax(0, 1fr);
   align-items: center;
@@ -981,6 +995,25 @@ nmp-player,
 .nmpv3-player[data-embed-mode="article"] .nmpv3-progress {
   min-width: 0;
   max-width: none;
+}
+
+/*
+ * 卡片 ↔ 唱片 形变期间
+ * 1. 把重排范围锁死（contain: layout paint）
+ * 2. 内部内容快速淡出，避免被逐帧压扁造成抖动
+ */
+.nmpv3-player[data-morphing="true"] {
+  contain: layout paint;
+  will-change: width, height, left, top;
+}
+
+.nmpv3-player[data-morphing="true"] .nmpv3-body,
+.nmpv3-player[data-morphing="true"] .nmpv3-controls,
+.nmpv3-player[data-morphing="true"] .nmpv3-bottom,
+.nmpv3-player[data-morphing="true"] .nmpv3-status {
+  opacity: 0;
+  transition: opacity calc(90ms * var(--nmpv3-slow-mo)) var(--nmpv3-ease-exit);
+  pointer-events: none;
 }
 
 .nmpv3-player.nmpv3-is-minimized {

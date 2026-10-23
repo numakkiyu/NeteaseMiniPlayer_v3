@@ -38,22 +38,32 @@ function blendHue(baseHue: number, targetHue: number, targetWeight: number): num
  */
 export function resolvePalette(input: PaletteResolveInput): PaletteResolved {
   const preset = getPalettePreset(input.paletteId);
-  const host = input.paletteFollowHost
-    ? analyzeHostColor(input.hostElement)
-    : null;
+
+  /*
+   * 无论是否「跟随宿主」，都先采样一次宿主背景。
+   *
+   * 原因：auto 模式的明暗必须由「用户正在看的页面」决定。
+   * 若只在 paletteFollowHost 打开时才采样，那么关掉色相跟随后，
+   * 明暗会掉回系统偏好 —— 系统是深色时，亮色页面里的播放器却变成深色。
+   * paletteFollowHost 只应决定「色相」要不要借宿主的，与明暗无关。
+   */
+  const hostAnalysis = analyzeHostColor(input.hostElement);
+  const host = hostAnalysis;
 
   /* ---------- 明暗 ---------- */
   let scheme: NMPv3ResolvedTheme;
   let schemeSource: PaletteResolved["schemeSource"];
 
-  // 显式 theme 永远优先；auto 时跟随宿主（跟随开关打开）或系统偏好
   if (input.theme !== "auto") {
+    // 显式 light / dark 永远最高优先
     scheme = input.theme;
     schemeSource = "theme";
-  } else if (input.paletteFollowHost && host) {
-    scheme = host.scheme;
+  } else if (hostAnalysis) {
+    // auto：跟随宿主页面背景的明暗
+    scheme = hostAnalysis.scheme;
     schemeSource = "host";
   } else {
+    // 采不到宿主背景（如全透明）才回退系统偏好
     scheme = prefersDarkScheme() ? "dark" : "light";
     schemeSource = "system";
   }

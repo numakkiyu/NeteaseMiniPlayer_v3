@@ -106,6 +106,8 @@ export class NMPv3PlayerInstance implements NMPv3Player {
   private isPlaying = false;
   private isPlaylistOpen = false;
   private isMinimized = false;
+  /** 形变（卡片 ↔ 唱片）标记的清除定时器 */
+  private morphTimer: number | null = null;
   private wasPlayingBeforeHidden = false;
   private currentTime = 0;
   private duration = 0;
@@ -569,6 +571,11 @@ export class NMPv3PlayerInstance implements NMPv3Player {
       this.scaleFitFrame = null;
     }
 
+    if (this.morphTimer !== null) {
+      getWindow()?.clearTimeout(this.morphTimer);
+      this.morphTimer = null;
+    }
+
     this.cleanup.forEach((dispose) => dispose());
     this.cleanup.length = 0;
     mediaSessionManager.release(this);
@@ -683,6 +690,38 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         this.applyScaleFit();
       }
     });
+  }
+
+  /**
+   * 标记「正在卡片 ↔ 唱片形变」
+   *
+   * 形变期间给根节点打上 data-morphing，
+   * 由 CSS 收紧重排范围、并让内部内容先淡出，
+   * 避免逐帧压缩内部元素造成的抖动。
+   * 时长跟随慢动作倍率，动画结束后自动清除。
+   */
+  private enterMorphState(): void {
+    const root = this.elements.root;
+    const browserWindow = getWindow();
+
+    root.dataset.morphing = "true";
+
+    if (this.morphTimer !== null) {
+      browserWindow?.clearTimeout(this.morphTimer);
+      this.morphTimer = null;
+    }
+
+    const rawScale = getComputedStyle(root).getPropertyValue(
+      "--nmpv3-slow-mo",
+    );
+    const slowMo = Number.parseFloat(rawScale);
+    const total = 300 * (Number.isFinite(slowMo) && slowMo > 0 ? slowMo : 1);
+
+    this.morphTimer =
+      browserWindow?.setTimeout(() => {
+        this.morphTimer = null;
+        delete root.dataset.morphing;
+      }, total + 40) ?? null;
   }
 
   private warnIfFixedContextBroken(): void {
@@ -844,6 +883,7 @@ export class NMPv3PlayerInstance implements NMPv3Player {
         return;
       }
 
+      this.enterMorphState();
       this.isMinimized = !this.isMinimized;
       if (!this.isMinimized) {
         this.clearIdleStateClasses();

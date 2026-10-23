@@ -101,7 +101,7 @@ export function renderPlayerShell(
   coverWrap.type = "button";
   coverWrap.setAttribute(
     "aria-label",
-    "Open current song on NetEase Cloud Music",
+    "在网易云音乐打开当前歌曲",
   );
 
   const cover = document.createElement("img");
@@ -138,12 +138,12 @@ export function renderPlayerShell(
   const controls = element("div", c.controls);
   const previousButton = iconButton(
     c.previousButton,
-    "Previous song",
+    "上一首",
     icons.previous,
   );
-  const playButton = iconButton(c.playButton, "Play", icons.play);
+  const playButton = iconButton(c.playButton, "播放", icons.play);
   const playIcon = playButton.querySelector("span") as HTMLElement;
-  const nextButton = iconButton(c.nextButton, "Next song", icons.next);
+  const nextButton = iconButton(c.nextButton, "下一首", icons.next);
   controls.append(previousButton, playButton, nextButton);
   main.append(coverWrap, miniPanel, body, controls);
 
@@ -152,7 +152,7 @@ export function renderPlayerShell(
   const currentTime = element("span", cx(c.time, c.currentTime));
   const progressTrack = element("button", c.progressTrack) as HTMLButtonElement;
   progressTrack.type = "button";
-  progressTrack.setAttribute("aria-label", "Seek");
+  progressTrack.setAttribute("aria-label", "调整播放进度");
   const progressBar = element("span", c.progressBar);
   progressTrack.append(progressBar);
   const totalTime = element("span", cx(c.time, c.totalTime));
@@ -163,25 +163,25 @@ export function renderPlayerShell(
   volume.innerHTML = icons.volume;
   const volumeTrack = element("button", c.volumeTrack) as HTMLButtonElement;
   volumeTrack.type = "button";
-  volumeTrack.setAttribute("aria-label", "Set volume");
+  volumeTrack.setAttribute("aria-label", "调整音量");
   const volumeBar = element("span", c.volumeBar);
   volumeTrack.append(volumeBar);
   volume.append(volumeTrack);
 
   const lyricsButton = iconButton(
     c.lyricsToggle,
-    "Show or hide lyrics",
+    "显示或隐藏歌词",
     icons.lyrics,
   );
   const modeButton = iconButton(c.modeButton, "切换播放模式", icons.loop);
   const playlistButton = iconButton(
     c.playlistToggle,
-    "Show playlist",
+    "显示歌单",
     icons.list,
   );
   const minimizeButton = iconButton(
     c.minimizeButton,
-    "Minimize",
+    "收起",
     icons.minimize,
   );
   tools.append(
@@ -258,15 +258,32 @@ export function updatePlayerView(
 
   const song = state.song;
   const isSingleSong = state.playlist.length <= 1;
-  elements.titleText.textContent =
-    state.errorMessage || song?.name || "NeteaseMiniPlayer";
-  elements.artistText.textContent =
-    state.status === "loading"
-      ? "Loading NetEase Cloud Music"
-      : song?.artists || "Ready";
+  /*
+   * 标题只放「内容」：歌名 > 加载提示 > 空。
+   * 错误信息不再顶替歌名 —— 它属于状态，交给底部状态条表述。
+   */
+  const hasError = state.status === "error";
+  const isLoading = state.status === "loading";
+
+  elements.titleText.textContent = song?.name
+    ? song.name
+    : hasError
+      ? "暂时无法播放"
+      : isLoading
+        ? "正在加载…"
+        : "网易云音乐";
+  /*
+   * 副标题放歌手。
+   * 加载中/无歌时不显示英文长句，留空比堆 SEO 式文案更干净。
+   */
+  elements.artistText.textContent = hasError
+    ? ""
+    : isLoading
+      ? ""
+      : song?.artists || "";
   syncMarquee(elements.title, elements.titleText, "x");
   syncMarquee(elements.artist, elements.artistText, "x");
-  elements.album.textContent = song?.album ? `Album: ${song.album}` : "";
+  elements.album.textContent = song?.album ? `专辑：${song.album}` : "";
   elements.album.hidden = !song?.album;
   elements.order.textContent =
     state.playlist.length > 0
@@ -303,11 +320,11 @@ export function updatePlayerView(
   );
   elements.playButton.setAttribute(
     "aria-label",
-    state.isPlaying ? "Pause" : "Play",
+    state.isPlaying ? "暂停" : "播放",
   );
   elements.progressBar.style.width = `${progressPercent(state.currentTime, state.duration)}%`;
   elements.currentTime.textContent = formatTime(state.currentTime);
-  elements.totalTime.textContent = formatTime(state.duration);
+  elements.totalTime.textContent = formatDurationLabel(state.duration);
   elements.volumeBar.style.width = `${Math.round(state.volume * 100)}%`;
   setIconHtml(
     elements.modeButton,
@@ -332,13 +349,23 @@ export function updatePlayerView(
   );
   elements.minimizeButton.setAttribute(
     "aria-label",
-    state.isMinimized ? "Expand player" : "Minimize player",
+    state.isMinimized ? "展开播放器" : "收起成唱片",
   );
-  elements.status.textContent =
-    state.status === "error" ? (state.errorMessage ?? "Playback error") : "";
-  elements.status.hidden = state.status !== "error";
-  elements.miniTitle.textContent = song?.name || "Loading...";
-  elements.miniSubtitle.textContent = song?.artists || "Ready";
+  /*
+   * 错误只在状态条出现一次。
+   * 文案中文化；原始技术信息放进 title，方便排查又不吓到用户。
+   */
+  if (state.status === "error") {
+    elements.status.textContent = friendlyErrorMessage(state.errorMessage);
+    elements.status.title = state.errorMessage ?? "";
+    elements.status.hidden = false;
+  } else {
+    elements.status.textContent = "";
+    elements.status.removeAttribute("title");
+    elements.status.hidden = true;
+  }
+  elements.miniTitle.textContent = song?.name || "正在加载…";
+  elements.miniSubtitle.textContent = song?.artists || "";
   elements.miniMode.textContent = playModeTitle(state.playMode);
   elements.miniMode.hidden = isSingleSong;
 
@@ -452,7 +479,7 @@ function renderPlaylist(
       const name = element("span", c.playlistName);
       name.textContent = song.name;
       const artist = element("span", c.playlistArtist);
-      artist.textContent = song.artists || "Unknown artist";
+      artist.textContent = song.artists || "未知歌手";
       const duration = element("span", c.playlistDuration);
       duration.textContent = formatTime(
         song.duration ? song.duration / 1000 : 0,
@@ -666,22 +693,22 @@ function lyricFallback(
   lyricStatus: NMPv3LyricStatus,
 ): string {
   if (status === "loading" || lyricStatus === "loading") {
-    return "Loading lyrics";
+    return "正在加载歌词";
   }
 
   if (lyricStatus === "instrumental") {
-    return "Pure music";
+    return "纯音乐";
   }
 
   if (lyricStatus === "empty") {
-    return "No lyrics available";
+    return "暂无歌词";
   }
 
   if (lyricStatus === "error") {
-    return "Lyrics unavailable";
+    return "歌词加载失败";
   }
 
-  return "Waiting for lyrics";
+  return "等待歌词";
 }
 
 function playModeIcon(mode: NMPv3PlayMode): string {
@@ -694,6 +721,55 @@ function playModeIcon(mode: NMPv3PlayMode): string {
   }
 
   return icons.loop;
+}
+
+/**
+ * 把技术错误映射成用户看得懂的一句话
+ *
+ * 原始信息不丢弃，放到状态条的 title 属性里，鼠标悬停或读屏仍可获取。
+ * 匹配不到时统一给「加载失败，请稍后重试」，不暴露内部实现细节。
+ */
+export function friendlyErrorMessage(message: string | null | undefined): string {
+  const raw = (message ?? "").trim();
+
+  if (!raw) {
+    return "加载失败，请稍后重试";
+  }
+
+  if (/not found|找不到|不存在/i.test(raw)) {
+    return "歌曲不存在或已下架";
+  }
+
+  if (/failed to fetch|networkerror|network error|timeout|timed out/i.test(raw)) {
+    return "网络连接失败，请稍后重试";
+  }
+
+  if (/notallowed|user gesture|user didn't interact|autoplay/i.test(raw)) {
+    return "点一下播放按钮开始播放";
+  }
+
+  if (/abort/i.test(raw)) {
+    return "加载已取消";
+  }
+
+  if (/403|404|500|502|503/i.test(raw)) {
+    return "服务暂时不可用，请稍后重试";
+  }
+
+  return "加载失败，请稍后重试";
+}
+
+/** 时间占位：未知总时长显示 --:-- 而不是 0:00 */
+export function formatDurationLabel(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return "--:--";
+  }
+
+  const total = Math.floor(seconds);
+  const minutes = Math.floor(total / 60);
+  const rest = total % 60;
+
+  return `${minutes}:${rest < 10 ? "0" : ""}${rest}`;
 }
 
 function playModeTitle(mode: NMPv3PlayMode): string {
