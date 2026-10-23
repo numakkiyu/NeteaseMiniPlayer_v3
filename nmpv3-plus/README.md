@@ -111,6 +111,8 @@ await runtime.installPlugin(createCoverColorPlugin());
 | `local-lyrics`     | 注册本地或静态歌词                   |
 | `pwa-cache`        | 为运行时和资源提供可选缓存           |
 | `toolbar-actions`  | 样板插件：工具栏按钮 + 命令 + 快捷键 |
+| `mini-lyric`       | 显示当前歌词行，可开关               |
+| `playlist-panel`   | 可展开歌单，点击切歌                 |
 
 高级布局和视觉扩展需要显式启用，不会自动改变 NMPv3 的默认界面。
 

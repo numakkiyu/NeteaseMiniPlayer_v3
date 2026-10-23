@@ -1,0 +1,14 @@
+{
+  "name": "nmpv3-plus-extension-playlist-panel",
+  "displayName": "Playlist Panel",
+  "version": "3.0.2",
+  "author": "BHCN STUDIO",
+  "entry": "./index.ts",
+  "type": "layout",
+  "description": "Renders an expandable playlist in a panel slot and switches tracks on click.",
+  "configSchema": {
+    "open": { "type": "boolean", "default": false },
+    "limit": { "type": "number", "default": 50 },
+    "shortcut": { "type": "string", "default": "ctrl+shift+o" }
+  }
+}

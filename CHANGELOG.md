@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 - NMPv3+ 3.0.2: command registry (`ctx.command`) and shortcut registry (`ctx.shortcut`) with editable-target protection
 - NMPv3+ 3.0.2: `apiVersion` contract plus `isApiVersionCompatible` so plugins can declare a compatible range
 - NMPv3+ 3.0.2: `toolbar-actions` reference extension demonstrating all four channels
+- NMPv3+ 3.0.2: `mini-lyric` (overlay lyric line synced from the player clock) and `playlist-panel` (expandable playlist with click-to-play) sample extensions
+- NMPv3+ 3.0.2: `templates/minimal-plugin` copy-and-rename starter with README and tests
 
 - Six fused color palettes (dawn / jade / azure / amber / iris / mono), each with light and dark seeds; legacy ids map to the new ones automatically
 - `palette` and `palette-follow-host` options to pick a palette and borrow the host page hue

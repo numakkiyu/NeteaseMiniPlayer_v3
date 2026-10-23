@@ -1,0 +1,16 @@
+{
+  "name": "nmpv3-plus-extension-my-plugin",
+  "displayName": "My Plugin",
+  "version": "1.0.0",
+  "author": "your name",
+  "entry": "./index.ts",
+  "type": "utility",
+  "description": "One sentence describing what this plugin does.",
+  "configSchema": {
+    "greeting": {
+      "type": "string",
+      "default": "hello",
+      "description": "Message printed on install."
+    }
+  }
+}

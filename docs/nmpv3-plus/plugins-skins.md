@@ -16,6 +16,8 @@
 | `local-lyrics`     | 注册本地或静态歌词                                |
 | `pwa-cache`        | 可选 Cache API 缓存能力                           |
 | `toolbar-actions`  | 样板插件，演示插槽、命令、快捷键与配置四个通道    |
+| `mini-lyric`       | 在 overlay 插槽显示当前歌词行，靠播放时钟同步     |
+| `playlist-panel`   | 在 panel 插槽显示可展开歌单，点击直接切歌         |
 
 插件在 `setup(ctx)` 里拿到的能力：
 

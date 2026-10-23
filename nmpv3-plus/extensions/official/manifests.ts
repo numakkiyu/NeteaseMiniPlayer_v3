@@ -38,6 +38,21 @@ export const officialNMPv3PlusExtensionManifests: NMPv3PlusExtensionManifest[] =
       },
     },
     {
+      name: "nmpv3-plus-extension-mini-lyric",
+      displayName: "Mini Lyric",
+      version: "3.0.2",
+      author: "BHCN STUDIO",
+      entry: "./index.ts",
+      type: "visual",
+      description:
+        "Shows the current lyric line in an overlay slot and syncs it from the player clock.",
+      configSchema: {
+        visible: { type: "boolean", default: true },
+        interval: { type: "number", default: 250 },
+        shortcut: { type: "string", default: "ctrl+shift+l" },
+      },
+    },
+    {
       name: "nmpv3-plus-extension-cover-color",
       displayName: "Cover Color",
       version: "1.0.0",
@@ -93,6 +108,21 @@ export const officialNMPv3PlusExtensionManifests: NMPv3PlusExtensionManifest[] =
       entry: "./index.ts",
       type: "media",
       description: "Updates browser Media Session metadata and handlers.",
+    },
+    {
+      name: "nmpv3-plus-extension-playlist-panel",
+      displayName: "Playlist Panel",
+      version: "3.0.2",
+      author: "BHCN STUDIO",
+      entry: "./index.ts",
+      type: "layout",
+      description:
+        "Renders an expandable playlist in a panel slot and switches tracks on click.",
+      configSchema: {
+        open: { type: "boolean", default: false },
+        limit: { type: "number", default: 50 },
+        shortcut: { type: "string", default: "ctrl+shift+o" },
+      },
     },
     {
       name: "nmpv3-plus-extension-pwa-cache",

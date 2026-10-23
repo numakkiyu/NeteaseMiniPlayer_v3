@@ -4,17 +4,20 @@ Plugins add behavior. Skins change visuals. Both belong to NMPv3+.
 
 ## Official plugins
 
-| Plugin             | Purpose                                               |
-| ------------------ | ----------------------------------------------------- |
-| `advanced-layouts` | Opt-in `card` and `cover` layouts                     |
-| `visualizer`       | Bars, wave, or ambient visual layers                  |
-| `cover-color`      | Cover color extraction to CSS tokens                  |
-| `host-sync`        | Host page attributes, classes, styles, and page links |
-| `cross-tab-sync`   | BroadcastChannel-based playback sync                  |
-| `media-session`    | Media Session metadata and handlers                   |
-| `custom-source`    | Custom source registration                            |
-| `local-lyrics`     | Local and static lyrics                               |
-| `pwa-cache`        | Optional Cache API integration                        |
+| Plugin             | Purpose                                                 |
+| ------------------ | ------------------------------------------------------- |
+| `advanced-layouts` | Opt-in `card` and `cover` layouts                       |
+| `visualizer`       | Bars, wave, or ambient visual layers                    |
+| `cover-color`      | Cover color extraction to CSS tokens                    |
+| `host-sync`        | Host page attributes, classes, styles, and page links   |
+| `cross-tab-sync`   | BroadcastChannel-based playback sync                    |
+| `media-session`    | Media Session metadata and handlers                     |
+| `custom-source`    | Custom source registration                              |
+| `local-lyrics`     | Local and static lyrics                                 |
+| `pwa-cache`        | Optional Cache API integration                          |
+| `toolbar-actions`  | Reference plugin: toolbar buttons, command and shortcut |
+| `mini-lyric`       | Current lyric line in an overlay slot                   |
+| `playlist-panel`   | Expandable playlist with click-to-play                  |
 
 ## User plugin package
 

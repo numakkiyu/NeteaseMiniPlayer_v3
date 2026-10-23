@@ -1,0 +1,14 @@
+{
+  "name": "nmpv3-plus-extension-mini-lyric",
+  "displayName": "Mini Lyric",
+  "version": "3.0.2",
+  "author": "BHCN STUDIO",
+  "entry": "./index.ts",
+  "type": "visual",
+  "description": "Shows the current lyric line in an overlay slot and syncs it from the player clock.",
+  "configSchema": {
+    "visible": { "type": "boolean", "default": true },
+    "interval": { "type": "number", "default": 250 },
+    "shortcut": { "type": "string", "default": "ctrl+shift+l" }
+  }
+}

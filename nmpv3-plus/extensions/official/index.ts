@@ -6,6 +6,8 @@ export * from "./host-sync";
 export * from "./local-lyrics";
 export * from "./manifests";
 export * from "./media-session";
+export * from "./mini-lyric";
+export * from "./playlist-panel";
 export * from "./pwa-cache";
 export * from "./toolbar-actions";
 export * from "./visualizer";
